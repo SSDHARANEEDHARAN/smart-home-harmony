@@ -2,98 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smart Home IoT - Dark & Futuristic Design System */
+/* Smart Home IoT - Minimalist Black & White Design System */
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 180 100% 50%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 3%;
 
-    --secondary: 270 100% 60%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 222 30% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 150 100% 50%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 15%;
-    --ring: 180 100% 50%;
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 80%;
 
     --radius: 0.75rem;
 
-    /* Custom glow colors */
+    /* Custom glow colors for devices */
     --glow-cyan: 180 100% 50%;
     --glow-purple: 270 100% 60%;
     --glow-green: 150 100% 50%;
     --glow-orange: 30 100% 50%;
     --glow-pink: 330 100% 60%;
+    --glow-white: 0 0% 100%;
+    --glow-blue: 210 100% 60%;
+    --glow-red: 0 100% 50%;
+    --glow-yellow: 50 100% 50%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-    --gradient-card: linear-gradient(145deg, hsl(222 47% 10%), hsl(222 47% 6%));
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 180 100% 50%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 180 100% 50%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 80%;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 180 100% 50%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 3%;
 
-    --secondary: 270 100% 60%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 222 30% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 150 100% 50%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 15%;
-    --ring: 180 100% 50%;
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 80%;
 
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 180 100% 50%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 180 100% 50%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 80%;
   }
 }
 
@@ -110,36 +110,47 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    @apply bg-card/90 backdrop-blur-xl border border-border/50;
   }
 
-  .glow-card {
-    box-shadow: 0 0 30px -5px var(--glow-color, hsl(var(--primary) / 0.3));
-    transition: box-shadow 0.3s ease;
+  /* Internal glow effect - glow stays INSIDE the card */
+  .internal-glow {
+    position: relative;
+    overflow: hidden;
   }
 
-  .glow-card-on {
-    box-shadow: 0 0 40px -5px var(--glow-color, hsl(var(--primary))),
-                0 0 60px -10px var(--glow-color, hsl(var(--primary) / 0.5)),
-                inset 0 0 20px -10px var(--glow-color, hsl(var(--primary) / 0.2));
+  .internal-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, var(--glow-color, hsl(0 0% 100%)) 0%, transparent 70%);
+  }
+
+  .internal-glow.glow-active::before {
+    opacity: 0.15;
+  }
+
+  .internal-glow-intense::before {
+    opacity: 0.25;
+  }
+
+  /* Subtle border glow (internal) */
+  .internal-border-glow {
+    box-shadow: inset 0 0 20px -5px var(--glow-color, hsl(0 0% 100% / 0.3));
   }
 
   .neon-text {
-    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
-  }
-
-  .gradient-border {
-    position: relative;
-    background: linear-gradient(var(--background), var(--background)) padding-box,
-                var(--gradient-primary) border-box;
-    border: 2px solid transparent;
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -148,7 +159,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted));
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

@@ -4,16 +4,41 @@ import { Layout } from '@/components/layout/Layout';
 import { RoomCard } from '@/components/rooms/RoomCard';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EnergyStats } from '@/components/energy/EnergyStats';
+import { SceneCard } from '@/components/scenes/SceneCard';
+import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
+import { VoiceControl } from '@/components/voice/VoiceControl';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
-import { Loader2, Home } from 'lucide-react';
+import { useScenes } from '@/hooks/useScenes';
+import { useVoiceControl } from '@/hooks/useVoiceControl';
+import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
+import { Loader2, Home, Zap } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading, toggleDevice } = useDevices();
+  const { scenes, activateScene, deleteScene } = useScenes();
+
+  // Enable device notifications
+  useDeviceNotifications(devices);
+
+  const handleToggleDevice = (deviceId: string, isOn: boolean) => {
+    toggleDevice.mutate({ id: deviceId, is_on: isOn });
+  };
+
+  const handleActivateScene = (scene: typeof scenes[0]) => {
+    activateScene.mutate(scene);
+  };
+
+  const voiceControl = useVoiceControl({
+    devices,
+    scenes,
+    onToggleDevice: handleToggleDevice,
+    onActivateScene: handleActivateScene,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -25,15 +50,11 @@ export default function Dashboard() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
         </div>
       </Layout>
     );
   }
-
-  const handleToggleDevice = (deviceId: string, isOn: boolean) => {
-    toggleDevice.mutate({ id: deviceId, is_on: isOn });
-  };
 
   const activeDevicesCount = devices.filter((d) => d.is_on).length;
 
@@ -41,10 +62,10 @@ export default function Dashboard() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Home className="w-6 h-6 text-primary-foreground" />
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-foreground/10 flex items-center justify-center">
+              <Home className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -53,6 +74,15 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+          
+          {/* Voice Control */}
+          <VoiceControl
+            isListening={voiceControl.isListening}
+            isSupported={voiceControl.isSupported}
+            transcript={voiceControl.transcript}
+            onStart={voiceControl.startListening}
+            onStop={voiceControl.stopListening}
+          />
         </div>
 
         {/* Energy Stats */}
@@ -60,10 +90,36 @@ export default function Dashboard() {
           <EnergyStats devices={devices} />
         </div>
 
+        {/* Scenes Section */}
+        {scenes.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">Quick Scenes</h2>
+              </div>
+              <CreateSceneDialog devices={devices} />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {scenes.map((scene) => (
+                <SceneCard
+                  key={scene.id}
+                  scene={scene}
+                  onActivate={() => handleActivateScene(scene)}
+                  onDelete={() => deleteScene.mutate(scene.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Rooms Section */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Rooms</h2>
-          <CreateRoomDialog />
+          <div className="flex items-center gap-2">
+            {scenes.length === 0 && <CreateSceneDialog devices={devices} />}
+            <CreateRoomDialog />
+          </div>
         </div>
 
         {rooms.length === 0 ? (
