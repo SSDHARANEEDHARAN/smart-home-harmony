@@ -26,24 +26,14 @@ export function DeviceCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-500 border-border/50",
-        device.is_on ? "glow-card-on" : "glow-card",
+        "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow",
+        device.is_on && "glow-active internal-border-glow border-foreground/20",
         compact ? "p-3" : ""
       )}
       style={{
         '--glow-color': device.glow_color,
       } as React.CSSProperties}
     >
-      {/* Animated background gradient when on */}
-      {device.is_on && (
-        <div
-          className="absolute inset-0 opacity-10 animate-pulse"
-          style={{
-            background: `radial-gradient(circle at center, ${device.glow_color}, transparent 70%)`,
-          }}
-        />
-      )}
-
       <CardContent className={cn("relative z-10", compact ? "p-0" : "p-4")}>
         <div className="flex items-center justify-between gap-4">
           {/* Device Info */}
@@ -51,7 +41,7 @@ export function DeviceCard({
             <div
               className={cn(
                 "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
-                device.is_on ? "bg-primary/20" : "bg-muted"
+                device.is_on ? "bg-foreground/10" : "bg-muted"
               )}
               style={{
                 color: device.is_on ? device.glow_color : undefined,
@@ -89,7 +79,7 @@ export function DeviceCard({
                 variant="ghost"
                 size="sm"
                 onClick={onEdit}
-                className="text-muted-foreground hover:text-primary"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <Edit2 className="w-4 h-4 mr-1" />
                 Edit

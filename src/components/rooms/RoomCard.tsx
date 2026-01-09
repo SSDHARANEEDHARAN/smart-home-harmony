@@ -31,14 +31,14 @@ export function RoomCard({
   return (
     <Card className={cn(
       "glass border-border/50 overflow-hidden transition-all duration-300",
-      activeDevices > 0 && "border-primary/30"
+      activeDevices > 0 && "border-foreground/20"
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-10 h-10 rounded-lg flex items-center justify-center",
-              activeDevices > 0 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+              activeDevices > 0 ? "bg-foreground/10 text-foreground" : "bg-muted text-muted-foreground"
             )}>
               <IconComponent className="w-5 h-5" />
             </div>
@@ -52,12 +52,12 @@ export function RoomCard({
 
           <div className="flex items-center gap-1">
             {onAddDevice && (
-              <Button variant="ghost" size="icon" onClick={onAddDevice} className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" onClick={onAddDevice} className="text-muted-foreground hover:text-foreground">
                 <Plus className="w-4 h-4" />
               </Button>
             )}
             {onEditRoom && (
-              <Button variant="ghost" size="icon" onClick={onEditRoom} className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" onClick={onEditRoom} className="text-muted-foreground hover:text-foreground">
                 <Edit2 className="w-4 h-4" />
               </Button>
             )}
@@ -94,7 +94,7 @@ export function RoomCard({
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
                   device.is_on
-                    ? "bg-primary/20 text-primary"
+                    ? "bg-foreground/10 text-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 )}
                 onClick={() => onToggleDevice(device.id, !device.is_on)}
