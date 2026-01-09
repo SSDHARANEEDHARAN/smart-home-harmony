@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Cpu, Zap, Settings, LogOut, LogIn, Home } from 'lucide-react';
+import { LayoutDashboard, Cpu, Zap, Workflow, Settings, LogOut, LogIn, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -8,7 +8,8 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/devices', label: 'Devices', icon: Cpu },
   { path: '/energy', label: 'Energy', icon: Zap },
-  { path: '/automation', label: 'Automation', icon: Settings },
+  { path: '/automation', label: 'Automation', icon: Workflow },
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Navbar() {

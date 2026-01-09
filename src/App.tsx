@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import Energy from "./pages/Energy";
 import Automation from "./pages/Automation";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/devices" element={<Devices />} />
           <Route path="/energy" element={<Energy />} />
           <Route path="/automation" element={<Automation />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
