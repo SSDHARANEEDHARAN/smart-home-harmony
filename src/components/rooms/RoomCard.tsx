@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Room, Device } from '@/types/smarthome';
 import { DeviceCard } from '@/components/devices/DeviceCard';
+import { DeviceToggle } from '@/components/devices/DeviceToggle';
+import { DeviceIcon } from '@/components/devices/DeviceIcon';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,68 +13,79 @@ interface RoomCardProps {
   room: Room;
   devices: Device[];
   onToggleDevice: (deviceId: string, isOn: boolean) => void;
-  onEditRoom?: () => void;
-  onDeleteRoom?: () => void;
-  onAddDevice?: () => void;
-  expanded?: boolean;
+  showFullControls?: boolean;
 }
 
 export function RoomCard({
   room,
   devices,
   onToggleDevice,
-  onEditRoom,
-  onDeleteRoom,
-  onAddDevice,
-  expanded = false,
+  showFullControls = false,
 }: RoomCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const activeDevices = devices.filter((d) => d.is_on).length;
   const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
 
+  // Calculate room glow based on active devices
+  const activeDeviceColors = devices.filter(d => d.is_on).map(d => d.glow_color);
+  const roomGlowColor = activeDeviceColors[0] || '#ffffff';
+
   return (
-    <Card className={cn(
-      "glass border-border/50 overflow-hidden transition-all duration-300",
-      activeDevices > 0 && "border-foreground/20"
-    )}>
+    <Card 
+      className={cn(
+        "glass border-border/50 overflow-hidden transition-all duration-300 internal-glow",
+        activeDevices > 0 && "glow-active internal-border-glow border-foreground/20"
+      )}
+      style={{
+        '--glow-color': roomGlowColor,
+      } as React.CSSProperties}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center",
-              activeDevices > 0 ? "bg-foreground/10 text-foreground" : "bg-muted text-muted-foreground"
-            )}>
+            <div 
+              className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+                activeDevices > 0 ? "bg-foreground/10" : "bg-muted"
+              )}
+              style={{
+                color: activeDevices > 0 ? roomGlowColor : undefined,
+              }}
+            >
               <IconComponent className="w-5 h-5" />
             </div>
             <div>
               <CardTitle className="text-lg">{room.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {devices.length} devices • {activeDevices} active
+                {devices.length} device{devices.length !== 1 ? 's' : ''} • {activeDevices} active
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {onAddDevice && (
-              <Button variant="ghost" size="icon" onClick={onAddDevice} className="text-muted-foreground hover:text-foreground">
-                <Plus className="w-4 h-4" />
-              </Button>
-            )}
-            {onEditRoom && (
-              <Button variant="ghost" size="icon" onClick={onEditRoom} className="text-muted-foreground hover:text-foreground">
-                <Edit2 className="w-4 h-4" />
-              </Button>
-            )}
-            {onDeleteRoom && (
-              <Button variant="ghost" size="icon" onClick={onDeleteRoom} className="text-muted-foreground hover:text-destructive">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+          {devices.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          )}
         </div>
       </CardHeader>
 
-      {expanded && devices.length > 0 && (
-        <CardContent className="pt-2">
+      <CardContent className="pt-2">
+        {devices.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No devices in this room. Add devices from the Devices page.
+          </p>
+        ) : isExpanded || showFullControls ? (
+          // Expanded view - show full device cards
           <div className="grid gap-3">
             {devices.map((device) => (
               <DeviceCard
@@ -82,45 +96,48 @@ export function RoomCard({
               />
             ))}
           </div>
-        </CardContent>
-      )}
-
-      {!expanded && devices.length > 0 && (
-        <CardContent className="pt-2">
-          <div className="flex flex-wrap gap-2">
-            {devices.slice(0, 4).map((device) => (
-              <div
-                key={device.id}
+        ) : (
+          // Compact view - show device controls inline
+          <div className="space-y-2">
+            {devices.map((device) => (
+              <div 
+                key={device.id} 
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
-                  device.is_on
-                    ? "bg-foreground/10 text-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  "flex items-center justify-between p-3 rounded-lg transition-all internal-glow",
+                  device.is_on 
+                    ? "bg-foreground/5 glow-active internal-border-glow" 
+                    : "bg-muted/50 hover:bg-muted"
                 )}
-                onClick={() => onToggleDevice(device.id, !device.is_on)}
                 style={{
-                  boxShadow: device.is_on ? `0 0 10px ${device.glow_color}40` : undefined,
-                }}
+                  '--glow-color': device.glow_color,
+                } as React.CSSProperties}
               >
-                {device.name}
+                <div className="flex items-center gap-3">
+                  <div 
+                    className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                      device.is_on ? "bg-foreground/10" : "bg-muted"
+                    )}
+                    style={{
+                      color: device.is_on ? device.glow_color : undefined,
+                    }}
+                  >
+                    <DeviceIcon type={device.device_type} className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium">{device.name}</span>
+                </div>
+                <DeviceToggle
+                  isOn={device.is_on}
+                  style={device.toggle_style}
+                  glowColor={device.glow_color}
+                  onToggle={(isOn) => onToggleDevice(device.id, isOn)}
+                  value={device.brightness}
+                />
               </div>
             ))}
-            {devices.length > 4 && (
-              <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                +{devices.length - 4} more
-              </div>
-            )}
           </div>
-        </CardContent>
-      )}
-
-      {devices.length === 0 && (
-        <CardContent className="pt-2">
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No devices in this room
-          </p>
-        </CardContent>
-      )}
+        )}
+      </CardContent>
     </Card>
   );
 }
