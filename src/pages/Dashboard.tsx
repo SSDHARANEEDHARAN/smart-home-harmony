@@ -1,19 +1,19 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { RoomCard } from '@/components/rooms/RoomCard';
-import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EnergyStats } from '@/components/energy/EnergyStats';
 import { SceneCard } from '@/components/scenes/SceneCard';
 import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
 import { VoiceControl } from '@/components/voice/VoiceControl';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useScenes } from '@/hooks/useScenes';
 import { useVoiceControl } from '@/hooks/useVoiceControl';
 import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
-import { Loader2, Home, Zap } from 'lucide-react';
+import { Loader2, Home, Zap, Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -115,10 +115,15 @@ export default function Dashboard() {
 
         {/* Rooms Section */}
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Rooms</h2>
+          <h2 className="text-xl font-semibold">Rooms & Controls</h2>
           <div className="flex items-center gap-2">
             {scenes.length === 0 && <CreateSceneDialog devices={devices} />}
-            <CreateRoomDialog />
+            <Link to="/devices">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Devices
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -127,9 +132,14 @@ export default function Dashboard() {
             <Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No rooms yet</h3>
             <p className="text-muted-foreground mb-4">
-              Create your first room to start adding devices
+              Create rooms and add devices from the Devices page
             </p>
-            <CreateRoomDialog />
+            <Link to="/devices">
+              <Button variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Go to Devices
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -146,6 +156,17 @@ export default function Dashboard() {
             })}
           </div>
         )}
+
+        {/* Info Card */}
+        <div className="mt-8 p-4 bg-muted/30 rounded-lg border border-border/50">
+          <p className="text-sm text-muted-foreground text-center">
+            💡 <strong>Tip:</strong> Add and customize devices on the{' '}
+            <Link to="/devices" className="text-foreground underline underline-offset-2 hover:no-underline">
+              Devices page
+            </Link>
+            . Changes will automatically reflect here.
+          </p>
+        </div>
       </div>
     </Layout>
   );
