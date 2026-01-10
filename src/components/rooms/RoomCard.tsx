@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Power } from 'lucide-react';
 import { Room, Device } from '@/types/smarthome';
-import { DeviceCard } from '@/components/devices/DeviceCard';
 import { DeviceToggle } from '@/components/devices/DeviceToggle';
 import { DeviceIcon } from '@/components/devices/DeviceIcon';
 import * as LucideIcons from 'lucide-react';
@@ -13,22 +12,29 @@ interface RoomCardProps {
   room: Room;
   devices: Device[];
   onToggleDevice: (deviceId: string, isOn: boolean) => void;
-  showFullControls?: boolean;
+  onToggleAllDevices?: (roomId: string, isOn: boolean) => void;
 }
 
 export function RoomCard({
   room,
   devices,
   onToggleDevice,
-  showFullControls = false,
+  onToggleAllDevices,
 }: RoomCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const activeDevices = devices.filter((d) => d.is_on).length;
+  const allOn = devices.length > 0 && activeDevices === devices.length;
   const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
 
   // Calculate room glow based on active devices
   const activeDeviceColors = devices.filter(d => d.is_on).map(d => d.glow_color);
   const roomGlowColor = activeDeviceColors[0] || '#ffffff';
+
+  const handleToggleAll = () => {
+    if (onToggleAllDevices) {
+      onToggleAllDevices(room.id, !allOn);
+    }
+  };
 
   return (
     <Card 
@@ -57,47 +63,56 @@ export function RoomCard({
             <div>
               <CardTitle className="text-lg">{room.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {devices.length} device{devices.length !== 1 ? 's' : ''} • {activeDevices} active
+                {activeDevices}/{devices.length} active
               </p>
             </div>
           </div>
 
-          {devices.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Room Power Button */}
+            {devices.length > 0 && (
+              <Button
+                variant={allOn ? 'default' : 'outline'}
+                size="icon"
+                onClick={handleToggleAll}
+                className={cn(
+                  "w-10 h-10 rounded-full transition-all duration-300",
+                  allOn && "shadow-lg"
+                )}
+                style={{
+                  backgroundColor: allOn ? roomGlowColor : undefined,
+                  boxShadow: allOn ? `inset 0 0 15px rgba(255,255,255,0.3)` : undefined,
+                }}
+              >
+                <Power className={cn("w-4 h-4", allOn ? "text-background" : "text-foreground")} />
+              </Button>
+            )}
+
+            {devices.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-2">
         {devices.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No devices in this room. Add devices from the Devices page.
+            No devices. Add from Devices page.
           </p>
-        ) : isExpanded || showFullControls ? (
-          // Expanded view - show full device cards
-          <div className="grid gap-3">
-            {devices.map((device) => (
-              <DeviceCard
-                key={device.id}
-                device={device}
-                onToggle={(isOn) => onToggleDevice(device.id, isOn)}
-                compact
-              />
-            ))}
-          </div>
-        ) : (
-          // Compact view - show device controls inline
+        ) : isExpanded ? (
+          // Expanded view - show individual device controls
           <div className="space-y-2">
             {devices.map((device) => (
               <div 
@@ -133,6 +148,24 @@ export function RoomCard({
                   onToggle={(isOn) => onToggleDevice(device.id, isOn)}
                   value={device.brightness}
                 />
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Compact view - show device names as chips
+          <div className="flex flex-wrap gap-2">
+            {devices.map((device) => (
+              <div
+                key={device.id}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
+                  device.is_on
+                    ? "bg-foreground/10 text-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+                onClick={() => onToggleDevice(device.id, !device.is_on)}
+              >
+                {device.name}
               </div>
             ))}
           </div>

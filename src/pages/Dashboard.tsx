@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { RoomCard } from '@/components/rooms/RoomCard';
-import { EnergyStats } from '@/components/energy/EnergyStats';
 import { SceneCard } from '@/components/scenes/SceneCard';
 import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
 import { VoiceControl } from '@/components/voice/VoiceControl';
@@ -13,7 +12,7 @@ import { useDevices } from '@/hooks/useDevices';
 import { useScenes } from '@/hooks/useScenes';
 import { useVoiceControl } from '@/hooks/useVoiceControl';
 import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
-import { Loader2, Home, Zap, Plus } from 'lucide-react';
+import { Loader2, Home, Zap, Plus, Power } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -27,6 +26,15 @@ export default function Dashboard() {
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
     toggleDevice.mutate({ id: deviceId, is_on: isOn });
+  };
+
+  const handleToggleAllDevices = (roomId: string, isOn: boolean) => {
+    const roomDevices = devices.filter(d => d.room_id === roomId);
+    roomDevices.forEach(device => {
+      if (device.is_on !== isOn) {
+        toggleDevice.mutate({ id: device.id, is_on: isOn });
+      }
+    });
   };
 
   const handleActivateScene = (scene: typeof scenes[0]) => {
@@ -69,9 +77,10 @@ export default function Dashboard() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">
-                {activeDevicesCount} device{activeDevicesCount !== 1 ? 's' : ''} active
-              </p>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Power className="w-4 h-4" />
+                <span>{activeDevicesCount}/{devices.length} devices active</span>
+              </div>
             </div>
           </div>
           
@@ -83,11 +92,6 @@ export default function Dashboard() {
             onStart={voiceControl.startListening}
             onStop={voiceControl.stopListening}
           />
-        </div>
-
-        {/* Energy Stats */}
-        <div className="mb-8">
-          <EnergyStats devices={devices} />
         </div>
 
         {/* Scenes Section */}
@@ -151,6 +155,7 @@ export default function Dashboard() {
                   room={room}
                   devices={roomDevices}
                   onToggleDevice={handleToggleDevice}
+                  onToggleAllDevices={handleToggleAllDevices}
                 />
               );
             })}
@@ -160,11 +165,10 @@ export default function Dashboard() {
         {/* Info Card */}
         <div className="mt-8 p-4 bg-muted/30 rounded-lg border border-border/50">
           <p className="text-sm text-muted-foreground text-center">
-            💡 <strong>Tip:</strong> Add and customize devices on the{' '}
+            💡 Customize devices on the{' '}
             <Link to="/devices" className="text-foreground underline underline-offset-2 hover:no-underline">
               Devices page
             </Link>
-            . Changes will automatically reflect here.
           </p>
         </div>
       </div>
