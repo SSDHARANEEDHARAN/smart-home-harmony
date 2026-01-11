@@ -76,6 +76,14 @@ export function useScenes() {
     mutationFn: async (scene: Scene) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Get all devices to check for relay pins
+      const { data: devices } = await supabase
+        .from('devices')
+        .select('id, relay_pin')
+        .eq('user_id', user.id);
+      
+      const deviceRelayMap = new Map(devices?.map(d => [d.id, d.relay_pin]) || []);
+      
       // Update all devices in the scene
       for (const state of scene.device_states) {
         await supabase
@@ -86,6 +94,18 @@ export function useScenes() {
           })
           .eq('id', state.device_id)
           .eq('user_id', user.id);
+        
+        // Trigger relay if configured
+        const relayPin = deviceRelayMap.get(state.device_id);
+        if (relayPin) {
+          try {
+            await supabase.functions.invoke('trigger-relay', {
+              body: { relay_pin: relayPin, state: state.is_on },
+            });
+          } catch (error) {
+            console.error('Relay trigger failed:', error);
+          }
+        }
       }
       
       return scene;

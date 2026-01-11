@@ -25,6 +25,7 @@ export interface Device {
   toggle_style: ToggleStyle;
   power_consumption: number;
   api_endpoint: string | null;
+  relay_pin: number | null;
   created_at: string;
   updated_at: string;
   room?: Room;

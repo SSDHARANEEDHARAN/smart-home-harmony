@@ -76,6 +76,7 @@ export type Database = {
           is_on: boolean
           name: string
           power_consumption: number | null
+          relay_pin: number | null
           room_id: string
           speed: number | null
           temperature: number | null
@@ -94,6 +95,7 @@ export type Database = {
           is_on?: boolean
           name: string
           power_consumption?: number | null
+          relay_pin?: number | null
           room_id: string
           speed?: number | null
           temperature?: number | null
@@ -112,6 +114,7 @@ export type Database = {
           is_on?: boolean
           name?: string
           power_consumption?: number | null
+          relay_pin?: number | null
           room_id?: string
           speed?: number | null
           temperature?: number | null

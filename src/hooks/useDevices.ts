@@ -91,7 +91,8 @@ export function useDevices() {
   });
 
   const toggleDevice = useMutation({
-    mutationFn: async ({ id, is_on }: { id: string; is_on: boolean }) => {
+    mutationFn: async ({ id, is_on, relay_pin }: { id: string; is_on: boolean; relay_pin?: number | null }) => {
+      // Update the device state in database
       const { data, error } = await supabase
         .from('devices')
         .update({ is_on })
@@ -100,6 +101,19 @@ export function useDevices() {
         .single();
       
       if (error) throw error;
+
+      // Trigger relay if pin is configured
+      if (relay_pin) {
+        try {
+          await supabase.functions.invoke('trigger-relay', {
+            body: { relay_pin, state: is_on },
+          });
+        } catch (relayError) {
+          console.error('Relay trigger failed:', relayError);
+          // Don't throw - device state is already updated
+        }
+      }
+
       return data;
     },
     onSuccess: (data) => {

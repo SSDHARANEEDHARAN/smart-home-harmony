@@ -25,14 +25,15 @@ export default function Dashboard() {
   useDeviceNotifications(devices);
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
-    toggleDevice.mutate({ id: deviceId, is_on: isOn });
+    const device = devices.find(d => d.id === deviceId);
+    toggleDevice.mutate({ id: deviceId, is_on: isOn, relay_pin: device?.relay_pin });
   };
 
   const handleToggleAllDevices = (roomId: string, isOn: boolean) => {
     const roomDevices = devices.filter(d => d.room_id === roomId);
     roomDevices.forEach(device => {
       if (device.is_on !== isOn) {
-        toggleDevice.mutate({ id: device.id, is_on: isOn });
+        toggleDevice.mutate({ id: device.id, is_on: isOn, relay_pin: device.relay_pin });
       }
     });
   };
