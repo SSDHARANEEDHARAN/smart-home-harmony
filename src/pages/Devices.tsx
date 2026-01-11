@@ -4,10 +4,12 @@ import { Layout } from '@/components/layout/Layout';
 import { DeviceCard } from '@/components/devices/DeviceCard';
 import { CreateDeviceDialog } from '@/components/devices/CreateDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
+import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
-import { Loader2, Cpu, Search, Filter, Trash2, Home } from 'lucide-react';
+import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil } from 'lucide-react';
+import { Room } from '@/types/smarthome';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +46,8 @@ export default function Devices() {
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null);
   const [roomDeleteDialogOpen, setRoomDeleteDialogOpen] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+  const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
+  const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -154,17 +158,30 @@ export default function Devices() {
                             </p>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            setRoomToDelete(room.id);
-                            setRoomDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                            onClick={() => {
+                              setRoomToEdit(room);
+                              setEditRoomDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              setRoomToDelete(room.id);
+                              setRoomDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-2">
@@ -322,6 +339,18 @@ export default function Devices() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit Room Dialog */}
+        {roomToEdit && (
+          <EditRoomDialog
+            room={roomToEdit}
+            open={editRoomDialogOpen}
+            onOpenChange={(open) => {
+              setEditRoomDialogOpen(open);
+              if (!open) setRoomToEdit(null);
+            }}
+          />
+        )}
       </div>
     </Layout>
   );
