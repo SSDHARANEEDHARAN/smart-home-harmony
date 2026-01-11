@@ -55,7 +55,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
     glow_color: '#00ffff',
     toggle_style: 'switch' as ToggleStyle,
     power_consumption: 10,
-    api_endpoint: '',
+    relay_pin: '' as string | number,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +68,8 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       speed: 0,
       temperature: 24,
       icon: 'power',
-      api_endpoint: formData.api_endpoint || null,
+      relay_pin: formData.relay_pin ? Number(formData.relay_pin) : null,
+      api_endpoint: null,
     });
 
     setOpen(false);
@@ -79,7 +80,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       glow_color: '#00ffff',
       toggle_style: 'switch',
       power_consumption: 10,
-      api_endpoint: '',
+      relay_pin: '',
     });
   };
 
@@ -206,13 +207,20 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="api">API Endpoint (Optional)</Label>
+            <Label htmlFor="relay">Relay Pin (1-1000)</Label>
             <Input
-              id="api"
-              value={formData.api_endpoint}
-              onChange={(e) => setFormData({ ...formData, api_endpoint: e.target.value })}
-              placeholder="https://api.example.com/device"
+              id="relay"
+              type="number"
+              value={formData.relay_pin}
+              onChange={(e) => setFormData({ ...formData, relay_pin: e.target.value })}
+              placeholder="Enter relay pin number"
+              min={1}
+              max={1000}
+              required
             />
+            <p className="text-xs text-muted-foreground">
+              This pin will be triggered when the device is toggled
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

@@ -73,7 +73,8 @@ export default function Devices() {
   });
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
-    toggleDevice.mutate({ id: deviceId, is_on: isOn });
+    const device = devices.find(d => d.id === deviceId);
+    toggleDevice.mutate({ id: deviceId, is_on: isOn, relay_pin: device?.relay_pin });
   };
 
   const handleDeleteDevice = () => {
