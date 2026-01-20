@@ -1,7 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings } from '@/hooks/useSettings';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -9,21 +9,33 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette } from 'lucide-react';
+import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette, Moon, Sun, Laptop, Terminal, Volume2, Play } from 'lucide-react';
 import { toast } from 'sonner';
-import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
-import { TerminalAccess } from '@/components/settings/TerminalAccess';
-import { SoundSelector } from '@/components/settings/SoundSelector';
+import { useTheme } from '@/components/theme/ThemeProvider';
+import { useState } from 'react';
+import { SOUND_TYPES, playNotificationSound, SoundType } from '@/utils/sound';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function Settings() {
   const { user, loading, signOut } = useAuth();
   const { settings, updateNotificationSettings, updateVoiceCommandSettings, resetToDefaults } = useSettings();
+  const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const [passkeyOpen, setPasskeyOpen] = useState(false);
+  const [passkey, setPasskey] = useState('');
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="animate-pulse text-muted-foreground">Loading...</div>
+          <p className="animate-pulse text-muted-foreground">Loading...</p>
         </div>
       </Layout>
     );
@@ -41,6 +53,15 @@ export default function Settings() {
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out successfully');
+  };
+
+  const handleTerminalCheck = () => {
+    if (passkey === '1234567890') {
+      setPasskeyOpen(false);
+      window.open('/terminal', '_blank');
+    } else {
+      toast.error('Invalid passkey');
+    }
   };
 
   return (
@@ -67,19 +88,19 @@ export default function Settings() {
           <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="w-4 h-4" />
-              <span className="hidden sm:inline">Notifications</span>
+              Notifications
             </TabsTrigger>
             <TabsTrigger value="voice" className="gap-2">
               <Mic className="w-4 h-4" />
-              <span className="hidden sm:inline">Voice</span>
+              Voice
             </TabsTrigger>
             <TabsTrigger value="appearance" className="gap-2">
               <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Appearance</span>
+              Appearance
             </TabsTrigger>
             <TabsTrigger value="account" className="gap-2">
               <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Account</span>
+              Account
             </TabsTrigger>
           </TabsList>
 
@@ -165,13 +186,41 @@ export default function Settings() {
                 </div>
 
                 {settings.notifications.soundEnabled && (
-                  <>
-                    <Separator />
-                    <SoundSelector
-                      selectedSound={settings.notifications.soundType}
-                      onSoundChange={(sound) => updateNotificationSettings({ soundType: sound })}
-                    />
-                  </>
+                  <div className="space-y-4 pt-4">
+                    <Label className="font-medium">Notification Sound</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {SOUND_TYPES.map((sound) => (
+                        <div
+                          key={sound.value}
+                          className={`flex items-center justify-between p-3 border cursor-pointer transition-all ${
+                            settings.notifications.soundType === sound.value
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:bg-muted/50'
+                          }`}
+                          onClick={() => {
+                            updateNotificationSettings({ soundType: sound.value });
+                            playNotificationSound(sound.value);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Volume2 className="w-4 h-4" />
+                            {sound.label}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playNotificationSound(sound.value);
+                            }}
+                          >
+                            <Play className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -277,28 +326,39 @@ export default function Settings() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <Label className="text-base font-medium">Theme</Label>
-                  <ThemeSwitcher />
+                  <Label className="font-medium">Theme Mode</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={theme === 'light' ? 'default' : 'outline'}
+                      className="flex-1 gap-2"
+                      onClick={() => setTheme('light')}
+                    >
+                      <Sun className="w-4 h-4" />
+                      Light
+                    </Button>
+                    <Button
+                      variant={theme === 'dark' ? 'default' : 'outline'}
+                      className="flex-1 gap-2"
+                      onClick={() => setTheme('dark')}
+                    >
+                      <Moon className="w-4 h-4" />
+                      Dark
+                    </Button>
+                    <Button
+                      variant={theme === 'system' ? 'default' : 'outline'}
+                      className="flex-1 gap-2"
+                      onClick={() => setTheme('system')}
+                    >
+                      <Laptop className="w-4 h-4" />
+                      System
+                    </Button>
+                  </div>
                 </div>
 
-                <Separator />
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="p-4 border border-border text-center">
-                    <div className="w-8 h-8 bg-foreground mx-auto mb-2" />
-                    <p className="text-sm font-medium">Primary</p>
-                    <p className="text-xs text-muted-foreground">Foreground</p>
-                  </div>
-                  <div className="p-4 border border-border text-center">
-                    <div className="w-8 h-8 bg-background border border-border mx-auto mb-2" />
-                    <p className="text-sm font-medium">Background</p>
-                    <p className="text-xs text-muted-foreground">Base</p>
-                  </div>
-                  <div className="p-4 border border-border text-center">
-                    <div className="w-8 h-8 bg-muted mx-auto mb-2" />
-                    <p className="text-sm font-medium">Muted</p>
-                    <p className="text-xs text-muted-foreground">Secondary</p>
-                  </div>
+                <div className="p-4 bg-muted/50">
+                  <p className="text-sm text-muted-foreground">
+                    Device colors can be customized on the Devices page.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -325,9 +385,17 @@ export default function Settings() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <h4 className="font-medium">Developer Tools</h4>
-                  <TerminalAccess />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="font-medium">Terminal Check</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Access system terminal logs and relay status
+                    </p>
+                  </div>
+                  <Button variant="outline" className="gap-2" onClick={() => setPasskeyOpen(true)}>
+                    <Terminal className="w-4 h-4" />
+                    Open Terminal
+                  </Button>
                 </div>
 
                 <Separator />
@@ -342,6 +410,28 @@ export default function Settings() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={passkeyOpen} onOpenChange={setPasskeyOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Enter Passkey</DialogTitle>
+              <DialogDescription>
+                Please enter the administrator passkey to access the terminal.
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              type="password"
+              placeholder="Enter passkey..."
+              value={passkey}
+              onChange={(e) => setPasskey(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleTerminalCheck()}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPasskeyOpen(false)}>Cancel</Button>
+              <Button onClick={handleTerminalCheck}>Access Terminal</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
