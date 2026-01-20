@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { DeviceCard } from '@/components/devices/DeviceCard';
 import { CreateDeviceDialog } from '@/components/devices/CreateDeviceDialog';
+import { EditDeviceDialog } from '@/components/devices/EditDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil } from 'lucide-react';
-import { Room } from '@/types/smarthome';
+import { Room, Device } from '@/types/smarthome';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,8 @@ export default function Devices() {
   const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
   const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
+  const [editDeviceDialogOpen, setEditDeviceDialogOpen] = useState(false);
+  const [deviceToEdit, setDeviceToEdit] = useState<Device | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -288,6 +291,10 @@ export default function Devices() {
                   key={device.id}
                   device={device}
                   onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                  onEdit={() => {
+                    setDeviceToEdit(device);
+                    setEditDeviceDialogOpen(true);
+                  }}
                   onDelete={() => {
                     setDeviceToDelete(device.id);
                     setDeleteDialogOpen(true);
@@ -349,6 +356,19 @@ export default function Devices() {
             onOpenChange={(open) => {
               setEditRoomDialogOpen(open);
               if (!open) setRoomToEdit(null);
+            }}
+          />
+        )}
+
+        {/* Edit Device Dialog */}
+        {deviceToEdit && (
+          <EditDeviceDialog
+            device={deviceToEdit}
+            rooms={rooms}
+            open={editDeviceDialogOpen}
+            onOpenChange={(open) => {
+              setEditDeviceDialogOpen(open);
+              if (!open) setDeviceToEdit(null);
             }}
           />
         )}
