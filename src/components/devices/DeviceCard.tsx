@@ -20,6 +20,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface DeviceCardProps {
   device: Device;
@@ -31,33 +37,56 @@ interface DeviceCardProps {
   compact?: boolean;
 }
 
-function ScheduleDialog({ deviceId }: { deviceId: string }) {
+function ScheduleDialog({ deviceId, deviceName }: { deviceId: string; deviceName: string }) {
   const [open, setOpen] = useState(false);
   const [time, setTime] = useState('');
   const [action, setAction] = useState<'on' | 'off'>('off');
+  const { createRule } = useAutomationRules();
 
-  const handleSave = () => {
-    if (!time) return;
-    // In a real app, this would use the useAutomationRules hook
-    // For now, we'll simulate setting a schedule
-    toast.success(`Schedule set: Turn ${action} at ${time}`);
-    setOpen(false);
-    setTime('');
+  const handleSave = async () => {
+    if (!time) {
+      toast.error('Please select a time');
+      return;
+    }
+
+    try {
+      await createRule.mutateAsync({
+        name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
+        device_id: deviceId,
+        trigger_time: time,
+        action: action === 'on' ? 'turn_on' : 'turn_off',
+        target_state: action === 'on',
+        is_enabled: true,
+        days_of_week: [0, 1, 2, 3, 4, 5, 6],
+      });
+      setOpen(false);
+      setTime('');
+    } catch (error) {
+      // Error handled in hook
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs">
-          <Clock className="w-3 h-3 mr-1" />
-          Schedule
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                <Clock className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Schedule</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="rounded-xl">
         <DialogHeader>
           <DialogTitle>Set Schedule</DialogTitle>
           <DialogDescription>
-            Automatically turn this device on or off at a specific time.
+            Automatically turn {deviceName} on or off at a specific time.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -70,7 +99,7 @@ function ScheduleDialog({ deviceId }: { deviceId: string }) {
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="col-span-3"
+              className="col-span-3 rounded-lg"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -80,6 +109,7 @@ function ScheduleDialog({ deviceId }: { deviceId: string }) {
                 variant={action === 'on' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setAction('on')}
+                className="rounded-lg"
               >
                 Turn On
               </Button>
@@ -87,6 +117,7 @@ function ScheduleDialog({ deviceId }: { deviceId: string }) {
                 variant={action === 'off' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setAction('off')}
+                className="rounded-lg"
               >
                 Turn Off
               </Button>
@@ -94,7 +125,9 @@ function ScheduleDialog({ deviceId }: { deviceId: string }) {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Save Schedule</Button>
+          <Button onClick={handleSave} disabled={createRule.isPending} className="rounded-lg">
+            {createRule.isPending ? 'Saving...' : 'Save Schedule'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -167,7 +200,6 @@ export function DeviceCard({
     
     checkDark();
     
-    // Add listener for system theme changes if needed
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
@@ -176,10 +208,8 @@ export function DeviceCard({
     }
   }, [theme]);
 
-  // Determine if we should use the glow color as background
-  // Only apply background color if device is on, has a glow color, AND we are in dark mode
   const bgColorStyle = device.is_on && device.glow_color && isDark
-    ? { backgroundColor: device.glow_color + '20' } // 20 is hex for ~12% opacity
+    ? { backgroundColor: device.glow_color + '20' }
     : {};
 
   const cardStyle: React.CSSProperties & Record<string, string | undefined> = {
@@ -190,7 +220,7 @@ export function DeviceCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow",
+        "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
         device.is_on && "glow-active internal-border-glow border-foreground/20",
         "p-2"
       )}
@@ -202,7 +232,7 @@ export function DeviceCard({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div
               className={cn(
-                "flex items-center justify-center w-8 h-8 transition-all duration-300",
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
                 device.is_on ? "bg-foreground/10" : "bg-muted"
               )}
               style={{
@@ -243,34 +273,48 @@ export function DeviceCard({
 
         {/* Additional Controls (only on full cards, not compact Dashboard cards) */}
         {showControls && !compact && (
-          <div className="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-border/50">
-            <div className="flex items-center gap-1">
-              <ScheduleDialog deviceId={device.id} />
-            </div>
-            <div className="flex items-center gap-1">
-              {onEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onEdit}
-                  className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs"
-                >
-                  <Edit2 className="w-3 h-3 mr-1" />
-                  Edit
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDelete}
-                  className="text-muted-foreground hover:text-destructive h-7 px-2 text-xs"
-                >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Delete
-                </Button>
-              )}
-            </div>
+          <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
+            <ScheduleDialog deviceId={device.id} deviceName={device.name} />
+            
+            {onEdit && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onEdit}
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
+            {onDelete && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onDelete}
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         )}
       </CardContent>

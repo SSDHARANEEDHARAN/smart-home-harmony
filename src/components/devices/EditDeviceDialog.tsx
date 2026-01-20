@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -51,6 +52,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
 
   const [formData, setFormData] = useState({
     name: device.name,
+    description: (device as any).description || '',
     device_type: device.device_type,
     room_id: device.room_id,
     glow_color: device.glow_color || '#00ffff',
@@ -64,6 +66,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
     if (open) {
       setFormData({
         name: device.name,
+        description: (device as any).description || '',
         device_type: device.device_type,
         room_id: device.room_id,
         glow_color: device.glow_color || '#00ffff',
@@ -78,6 +81,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
 
   const changes = {
     name: formData.name !== device.name,
+    description: formData.description !== ((device as any).description || ''),
     device_type: formData.device_type !== device.device_type,
     room_id: formData.room_id !== device.room_id,
     glow_color: formData.glow_color !== (device.glow_color || '#00ffff'),
@@ -118,7 +122,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass border-border/50">
+      <DialogContent className="glass border-border/50 rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {step === 'edit' ? 'Edit Device' : 'Review Changes'}
@@ -134,6 +138,18 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Device name"
+                className="rounded-lg"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description (Optional)</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief description of the device..."
+                className="rounded-lg resize-none h-20"
               />
             </div>
 
@@ -144,7 +160,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.device_type}
                   onValueChange={(v) => setFormData({ ...formData, device_type: v as DeviceType })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -163,7 +179,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.room_id}
                   onValueChange={(v) => setFormData({ ...formData, room_id: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-lg">
                     <SelectValue placeholder="Select room" />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,7 +200,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.toggle_style}
                   onValueChange={(v) => setFormData({ ...formData, toggle_style: v as ToggleStyle })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -203,7 +219,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.glow_color}
                   onValueChange={(v) => setFormData({ ...formData, glow_color: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -232,6 +248,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.power_consumption}
                   onChange={(e) => setFormData({ ...formData, power_consumption: Number(e.target.value) })}
                   min={0}
+                  className="rounded-lg"
                 />
               </div>
 
@@ -245,6 +262,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   placeholder="Relay pin"
                   min={1}
                   max={1000}
+                  className="rounded-lg"
                 />
               </div>
             </div>
@@ -256,7 +274,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                   value={formData.slider_step.toString()}
                   onValueChange={(v) => setFormData({ ...formData, slider_step: Number(v) })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,13 +291,13 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
             )}
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="rounded-lg">
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={!hasChanges || !formData.name}
-                className="gap-2"
+                className="gap-2 rounded-lg"
               >
                 Review Changes
                 <ArrowRight className="w-4 h-4" />
@@ -288,7 +306,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
           </div>
         ) : (
           <div className="space-y-4 mt-4">
-            <div className="space-y-3 p-4 bg-muted/30 border border-border/50">
+            <div className="space-y-3 p-4 bg-muted/30 border border-border/50 rounded-lg">
               {changes.name && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Name:</span>
@@ -296,6 +314,18 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                     <span className="line-through text-muted-foreground">{device.name}</span>
                     <ArrowRight className="w-3 h-3" />
                     <span className="font-medium">{formData.name}</span>
+                  </div>
+                </div>
+              )}
+              {changes.description && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Description:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="line-through text-muted-foreground truncate max-w-20">
+                      {(device as any).description || 'None'}
+                    </span>
+                    <ArrowRight className="w-3 h-3" />
+                    <span className="font-medium truncate max-w-20">{formData.description || 'None'}</span>
                   </div>
                 </div>
               )}
@@ -372,14 +402,14 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button type="button" variant="ghost" onClick={() => setStep('edit')} className="gap-2">
+              <Button type="button" variant="ghost" onClick={() => setStep('edit')} className="gap-2 rounded-lg">
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={updateDevice.isPending}
-                className="gap-2"
+                className="gap-2 rounded-lg"
               >
                 <Check className="w-4 h-4" />
                 Confirm Changes
