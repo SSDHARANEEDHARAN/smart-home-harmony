@@ -26,10 +26,13 @@ export interface Device {
   power_consumption: number;
   api_endpoint: string | null;
   relay_pin: number | null;
+  slider_step: number;
   created_at: string;
   updated_at: string;
   room?: Room;
 }
+
+export type SliderStep = 5 | 10 | 25 | 50;
 
 export interface AutomationRule {
   id: string;

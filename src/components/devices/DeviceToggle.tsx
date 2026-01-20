@@ -13,6 +13,7 @@ interface DeviceToggleProps {
   value?: number;
   onValueChange?: (value: number) => void;
   disabled?: boolean;
+  step?: number;
 }
 
 export function DeviceToggle({
@@ -23,15 +24,16 @@ export function DeviceToggle({
   value = 100,
   onValueChange,
   disabled = false,
+  step = 10,
 }: DeviceToggleProps) {
   const handleDecrement = () => {
-    const newValue = Math.max(0, (isOn ? value : 0) - 10);
+    const newValue = Math.max(0, (isOn ? value : 0) - step);
     if (newValue === 0 && isOn) onToggle(false);
     onValueChange?.(newValue);
   };
 
   const handleIncrement = () => {
-    const newValue = Math.min(100, (isOn ? value : 0) + 10);
+    const newValue = Math.min(100, (isOn ? value : 0) + step);
     if (newValue > 0 && !isOn) onToggle(true);
     onValueChange?.(newValue);
   };

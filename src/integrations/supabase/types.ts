@@ -78,6 +78,7 @@ export type Database = {
           power_consumption: number | null
           relay_pin: number | null
           room_id: string
+          slider_step: number | null
           speed: number | null
           temperature: number | null
           toggle_style: Database["public"]["Enums"]["toggle_style"] | null
@@ -97,6 +98,7 @@ export type Database = {
           power_consumption?: number | null
           relay_pin?: number | null
           room_id: string
+          slider_step?: number | null
           speed?: number | null
           temperature?: number | null
           toggle_style?: Database["public"]["Enums"]["toggle_style"] | null
@@ -116,6 +118,7 @@ export type Database = {
           power_consumption?: number | null
           relay_pin?: number | null
           room_id?: string
+          slider_step?: number | null
           speed?: number | null
           temperature?: number | null
           toggle_style?: Database["public"]["Enums"]["toggle_style"] | null

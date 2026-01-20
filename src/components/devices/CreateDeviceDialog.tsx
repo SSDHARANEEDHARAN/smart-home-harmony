@@ -56,6 +56,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
     toggle_style: 'switch' as ToggleStyle,
     power_consumption: 10,
     relay_pin: '' as string | number,
+    slider_step: 10,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,6 +71,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       icon: 'power',
       relay_pin: formData.relay_pin ? Number(formData.relay_pin) : null,
       api_endpoint: null,
+      slider_step: formData.slider_step,
     });
 
     setOpen(false);
@@ -81,6 +83,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       toggle_style: 'switch',
       power_consumption: 10,
       relay_pin: '',
+      slider_step: 10,
     });
   };
 
@@ -194,6 +197,29 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
               </Select>
             </div>
           </div>
+
+          {formData.toggle_style === 'slider' && (
+            <div className="space-y-2">
+              <Label>Slider Step Size</Label>
+              <Select
+                value={formData.slider_step.toString()}
+                onValueChange={(v) => setFormData({ ...formData, slider_step: Number(v) })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5%</SelectItem>
+                  <SelectItem value="10">10%</SelectItem>
+                  <SelectItem value="25">25%</SelectItem>
+                  <SelectItem value="50">50%</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Amount to change per arrow click
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="power">Power Consumption (Watts)</Label>
