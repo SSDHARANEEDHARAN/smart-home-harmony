@@ -1,7 +1,7 @@
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Power } from 'lucide-react';
+import { Power, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ToggleStyle } from '@/types/smarthome';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +24,30 @@ export function DeviceToggle({
   onValueChange,
   disabled = false,
 }: DeviceToggleProps) {
+  const handleDecrement = () => {
+    const newValue = Math.max(0, (isOn ? value : 0) - 10);
+    if (newValue === 0 && isOn) onToggle(false);
+    onValueChange?.(newValue);
+  };
+
+  const handleIncrement = () => {
+    const newValue = Math.min(100, (isOn ? value : 0) + 10);
+    if (newValue > 0 && !isOn) onToggle(true);
+    onValueChange?.(newValue);
+  };
+
   if (style === 'slider') {
     return (
-      <div className="flex items-center gap-3 w-full">
+      <div className="flex items-center gap-1 w-full">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleDecrement}
+          disabled={disabled}
+          className="h-7 w-7 shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
         <Slider
           value={[isOn ? value : 0]}
           max={100}
@@ -42,7 +63,16 @@ export function DeviceToggle({
             '--slider-color': glowColor,
           } as React.CSSProperties}
         />
-        <span className="text-sm text-muted-foreground w-10 text-right">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleIncrement}
+          disabled={disabled}
+          className="h-7 w-7 shrink-0"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground w-8 text-right">
           {isOn ? value : 0}%
         </span>
       </div>
@@ -57,7 +87,7 @@ export function DeviceToggle({
         onClick={() => onToggle(!isOn)}
         disabled={disabled}
         className={cn(
-          "w-12 h-12 rounded-full transition-all duration-300",
+          "w-10 h-10 rounded-full transition-all duration-300",
           isOn && "shadow-lg"
         )}
         style={{
@@ -65,7 +95,7 @@ export function DeviceToggle({
           boxShadow: isOn ? `0 0 20px ${glowColor}` : undefined,
         }}
       >
-        <Power className={cn("w-5 h-5", isOn ? "text-background" : "text-foreground")} />
+        <Power className={cn("w-4 h-4", isOn ? "text-background" : "text-foreground")} />
       </Button>
     );
   }
