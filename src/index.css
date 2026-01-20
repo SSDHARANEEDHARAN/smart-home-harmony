@@ -34,7 +34,7 @@
     --input: 0 0% 12%;
     --ring: 0 0% 80%;
 
-    --radius: 0.75rem;
+    --radius: 0;
 
     /* Custom glow colors for devices */
     --glow-cyan: 180 100% 50%;
