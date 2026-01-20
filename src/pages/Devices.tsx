@@ -6,9 +6,11 @@ import { CreateDeviceDialog } from '@/components/devices/CreateDeviceDialog';
 import { EditDeviceDialog } from '@/components/devices/EditDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
+import { HomeSelector } from '@/components/home/HomeSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
+import { useHome } from '@/contexts/HomeContext';
 import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil } from 'lucide-react';
 import { Room, Device } from '@/types/smarthome';
 import { Input } from '@/components/ui/input';
@@ -38,7 +40,8 @@ export default function Devices() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { rooms, isLoading: roomsLoading, deleteRoom } = useRooms();
-  const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice } = useDevices();
+  const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice, updateDevice } = useDevices();
+  const { getHomeForRoom, currentHomeId } = useHome();
 
   const [search, setSearch] = useState('');
   const [roomFilter, setRoomFilter] = useState('all');
@@ -62,22 +65,29 @@ export default function Devices() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
         </div>
       </Layout>
     );
   }
 
+  const filteredRooms = rooms.filter(room => getHomeForRoom(room.id) === currentHomeId);
+  
   const filteredDevices = devices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(search.toLowerCase());
     const matchesRoom = roomFilter === 'all' || device.room_id === roomFilter;
     const matchesType = typeFilter === 'all' || device.device_type === typeFilter;
-    return matchesSearch && matchesRoom && matchesType;
+    const deviceInHome = filteredRooms.some(r => r.id === device.room_id);
+    return matchesSearch && matchesRoom && matchesType && deviceInHome;
   });
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
     const device = devices.find(d => d.id === deviceId);
     toggleDevice.mutate({ id: deviceId, is_on: isOn, relay_pin: device?.relay_pin });
+  };
+
+  const handleValueChange = (deviceId: string, value: number) => {
+    updateDevice.mutate({ id: deviceId, brightness: value });
   };
 
   const handleDeleteDevice = () => {
@@ -98,18 +108,14 @@ export default function Devices() {
 
   const deviceTypes = [...new Set(devices.map((d) => d.device_type))];
 
-  // Get devices for each room
-  const getDevicesForRoom = (roomId: string) =>
-    devices.filter((d) => d.room_id === roomId);
-
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Cpu className="w-6 h-6 text-primary-foreground" />
+            <div className="w-12 h-12 bg-foreground/10 flex items-center justify-center">
+              <Cpu className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <h1 className="text-3xl font-bold">Devices</h1>
@@ -119,39 +125,37 @@ export default function Devices() {
             </div>
           </div>
           <div className="flex gap-2">
+            <HomeSelector />
             <CreateRoomDialog />
-            <CreateDeviceDialog rooms={rooms} />
+            <CreateDeviceDialog rooms={filteredRooms} />
           </div>
         </div>
 
         {/* Rooms Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Home className="w-5 h-5" />
-            Rooms
-          </h2>
-          {rooms.length === 0 ? (
-            <div className="text-center py-8 glass rounded-xl border border-border/50">
+          <div className="flex items-center gap-2 mb-4">
+            <Home className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Rooms</h2>
+          </div>
+          {filteredRooms.length === 0 ? (
+            <div className="text-center py-8 glass border border-border/50">
               <Home className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground mb-4">No rooms yet. Create your first room.</p>
+              <p className="text-muted-foreground mb-4">No rooms in this workspace. Create your first room.</p>
               <CreateRoomDialog />
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {rooms.map((room) => {
+              {filteredRooms.map((room) => {
                 const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
-                const roomDevices = getDevicesForRoom(room.id);
+                const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
                 const activeCount = roomDevices.filter((d) => d.is_on).length;
 
                 return (
-                  <Card
-                    key={room.id}
-                    className="glass border-border/50 overflow-hidden group"
-                  >
+                  <Card key={room.id} className="glass border-border/50 overflow-hidden group">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                          <div className="w-10 h-10 bg-muted flex items-center justify-center">
                             <IconComponent className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <div>
@@ -166,7 +170,7 @@ export default function Devices() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                             onClick={() => {
                               setRoomToEdit(room);
                               setEditRoomDialogOpen(true);
@@ -195,9 +199,9 @@ export default function Devices() {
                             <span
                               key={device.id}
                               className={cn(
-                                "px-2 py-1 rounded-full text-xs",
+                                "px-2 py-1 text-xs",
                                 device.is_on
-                                  ? "bg-primary/20 text-primary"
+                                  ? "bg-foreground/10 text-foreground"
                                   : "bg-muted text-muted-foreground"
                               )}
                             >
@@ -205,7 +209,7 @@ export default function Devices() {
                             </span>
                           ))}
                           {roomDevices.length > 4 && (
-                            <span className="px-2 py-1 rounded-full text-xs bg-muted text-muted-foreground">
+                            <span className="px-2 py-1 text-xs bg-muted text-muted-foreground">
                               +{roomDevices.length - 4} more
                             </span>
                           )}
@@ -223,10 +227,12 @@ export default function Devices() {
 
         {/* Devices Section */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Cpu className="w-5 h-5" />
-            Devices
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-xl font-semibold">Devices</h2>
+            </div>
+          </div>
 
           {/* Filters */}
           <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -247,7 +253,7 @@ export default function Devices() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Rooms</SelectItem>
-                  {rooms.map((room) => (
+                  {filteredRooms.map((room) => (
                     <SelectItem key={room.id} value={room.id}>
                       {room.name}
                     </SelectItem>
@@ -270,9 +276,9 @@ export default function Devices() {
             </div>
           </div>
 
-          {/* Devices Grid */}
+          {/* Devices Grid - Grouped by Room */}
           {filteredDevices.length === 0 ? (
-            <div className="text-center py-12 glass rounded-xl border border-border/50">
+            <div className="text-center py-12 glass border border-border/50">
               <Cpu className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">
                 {devices.length === 0 ? 'No devices yet' : 'No matching devices'}
@@ -282,26 +288,77 @@ export default function Devices() {
                   ? 'Add your first device to get started'
                   : 'Try adjusting your filters'}
               </p>
-              {devices.length === 0 && <CreateDeviceDialog rooms={rooms} />}
+              {devices.length === 0 && <CreateDeviceDialog rooms={filteredRooms} />}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredDevices.map((device) => (
-                <DeviceCard
-                  key={device.id}
-                  device={device}
-                  onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                  onEdit={() => {
-                    setDeviceToEdit(device);
-                    setEditDeviceDialogOpen(true);
-                  }}
-                  onDelete={() => {
-                    setDeviceToDelete(device.id);
-                    setDeleteDialogOpen(true);
-                  }}
-                  showControls
-                />
-              ))}
+            <div className="space-y-8">
+              {filteredRooms.map((room) => {
+                if (roomFilter !== 'all' && room.id !== roomFilter) return null;
+                
+                const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
+                if (roomDevices.length === 0) return null;
+
+                return (
+                  <div key={room.id} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">{room.name}</h3>
+                      <span className="text-sm text-muted-foreground">
+                        {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {roomDevices.map((device) => (
+                        <DeviceCard
+                          key={device.id}
+                          device={device}
+                          onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                          onValueChange={(value) => handleValueChange(device.id, value)}
+                          onEdit={() => {
+                            setDeviceToEdit(device);
+                            setEditDeviceDialogOpen(true);
+                          }}
+                          onDelete={() => {
+                            setDeviceToDelete(device.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                          showControls
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Unassigned Devices */}
+              {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Unassigned Devices</h3>
+                    <span className="text-sm text-muted-foreground">
+                      {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length} devices
+                    </span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).map((device) => (
+                      <DeviceCard
+                        key={device.id}
+                        device={device}
+                        onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                        onValueChange={(value) => handleValueChange(device.id, value)}
+                        onEdit={() => {
+                          setDeviceToEdit(device);
+                          setEditDeviceDialogOpen(true);
+                        }}
+                        onDelete={() => {
+                          setDeviceToDelete(device.id);
+                          setDeleteDialogOpen(true);
+                        }}
+                        showControls
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -364,7 +421,7 @@ export default function Devices() {
         {deviceToEdit && (
           <EditDeviceDialog
             device={deviceToEdit}
-            rooms={rooms}
+            rooms={filteredRooms}
             open={editDeviceDialogOpen}
             onOpenChange={(open) => {
               setEditDeviceDialogOpen(open);
