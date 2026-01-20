@@ -38,43 +38,31 @@ export function DeviceToggle({
 
   if (style === 'slider') {
     return (
-      <div className="flex items-center gap-1 w-full">
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleDecrement}
           disabled={disabled}
-          className="h-7 w-7 shrink-0"
+          className="h-8 w-8 shrink-0"
         >
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <Slider
-          value={[isOn ? value : 0]}
-          max={100}
-          step={1}
-          onValueChange={(v) => {
-            if (v[0] > 0 && !isOn) onToggle(true);
-            if (v[0] === 0 && isOn) onToggle(false);
-            onValueChange?.(v[0]);
-          }}
-          disabled={disabled}
-          className="flex-1"
-          style={{
-            '--slider-color': glowColor,
-          } as React.CSSProperties}
-        />
+        <span 
+          className="text-sm font-medium w-10 text-center"
+          style={{ color: isOn ? glowColor : undefined }}
+        >
+          {isOn ? value : 0}%
+        </span>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleIncrement}
           disabled={disabled}
-          className="h-7 w-7 shrink-0"
+          className="h-8 w-8 shrink-0"
         >
           <ChevronRight className="w-4 h-4" />
         </Button>
-        <span className="text-xs text-muted-foreground w-8 text-right">
-          {isOn ? value : 0}%
-        </span>
       </div>
     );
   }
