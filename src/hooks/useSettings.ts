@@ -5,6 +5,7 @@ export interface NotificationSettings {
   automationTriggers: boolean;
   sceneActivations: boolean;
   soundEnabled: boolean;
+  soundType: string;
 }
 
 export interface VoiceCommandSettings {
@@ -25,6 +26,7 @@ const defaultSettings: AppSettings = {
     automationTriggers: true,
     sceneActivations: true,
     soundEnabled: false,
+    soundType: 'ding',
   },
   voiceCommands: {
     turnOnKeyword: 'turn on',

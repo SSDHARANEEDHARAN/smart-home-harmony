@@ -11,6 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette } from 'lucide-react';
 import { toast } from 'sonner';
+import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
+import { TerminalAccess } from '@/components/settings/TerminalAccess';
+import { SoundSelector } from '@/components/settings/SoundSelector';
 
 export default function Settings() {
   const { user, loading, signOut } = useAuth();
@@ -46,7 +49,7 @@ export default function Settings() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-foreground/10 flex items-center justify-center">
+            <div className="w-12 h-12 bg-foreground/10 flex items-center justify-center">
               <SettingsIcon className="w-6 h-6 text-foreground" />
             </div>
             <div>
@@ -160,6 +163,16 @@ export default function Settings() {
                     }
                   />
                 </div>
+
+                {settings.notifications.soundEnabled && (
+                  <>
+                    <Separator />
+                    <SoundSelector
+                      selectedSound={settings.notifications.soundType}
+                      onSoundChange={(sound) => updateNotificationSettings({ soundType: sound })}
+                    />
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -239,7 +252,7 @@ export default function Settings() {
 
                 <Separator />
 
-                <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="p-4 bg-muted/50">
                   <h4 className="font-medium mb-2">Voice Command Examples</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• "{settings.voiceCommands.turnOnKeyword} living room light"</li>
@@ -263,27 +276,28 @@ export default function Settings() {
                 <CardDescription>Customize how the app looks</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-muted-foreground">
-                    The app uses a black and white minimalist theme. Device colors can be customized on the Devices page.
-                  </p>
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Theme</Label>
+                  <ThemeSwitcher />
                 </div>
 
+                <Separator />
+
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="p-4 border border-border rounded-lg text-center">
-                    <div className="w-8 h-8 rounded-full bg-foreground mx-auto mb-2" />
+                  <div className="p-4 border border-border text-center">
+                    <div className="w-8 h-8 bg-foreground mx-auto mb-2" />
                     <p className="text-sm font-medium">Primary</p>
-                    <p className="text-xs text-muted-foreground">White</p>
+                    <p className="text-xs text-muted-foreground">Foreground</p>
                   </div>
-                  <div className="p-4 border border-border rounded-lg text-center">
-                    <div className="w-8 h-8 rounded-full bg-background border border-border mx-auto mb-2" />
+                  <div className="p-4 border border-border text-center">
+                    <div className="w-8 h-8 bg-background border border-border mx-auto mb-2" />
                     <p className="text-sm font-medium">Background</p>
-                    <p className="text-xs text-muted-foreground">Black</p>
+                    <p className="text-xs text-muted-foreground">Base</p>
                   </div>
-                  <div className="p-4 border border-border rounded-lg text-center">
-                    <div className="w-8 h-8 rounded-full bg-muted mx-auto mb-2" />
+                  <div className="p-4 border border-border text-center">
+                    <div className="w-8 h-8 bg-muted mx-auto mb-2" />
                     <p className="text-sm font-medium">Muted</p>
-                    <p className="text-xs text-muted-foreground">Dark Gray</p>
+                    <p className="text-xs text-muted-foreground">Secondary</p>
                   </div>
                 </div>
               </CardContent>
@@ -301,12 +315,19 @@ export default function Settings() {
                 <CardDescription>Manage your account settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-muted/50">
                   <div>
                     <p className="font-medium">Email</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                   <Shield className="w-5 h-5 text-muted-foreground" />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Developer Tools</h4>
+                  <TerminalAccess />
                 </div>
 
                 <Separator />
