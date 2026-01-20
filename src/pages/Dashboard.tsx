@@ -7,20 +7,26 @@ import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useScenes } from '@/hooks/useScenes';
 import { useVoiceControl } from '@/hooks/useVoiceControl';
 import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
 import { useSettings } from '@/hooks/useSettings';
+import { useHome } from '@/contexts/HomeContext';
 import { HomeSelector } from '@/components/home/HomeSelector';
 import { Loader2, Home, Zap, Plus, Power } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading, toggleDevice, updateDevice } = useDevices();
   const { scenes, activateScene, deleteScene } = useScenes();
   const { settings } = useSettings();
+  const { getHomeForRoom, currentHomeId } = useHome();
 
   // Enable device notifications
   useDeviceNotifications(devices);
