@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface DeviceCardProps {
   device: Device;
   onToggle: (isOn: boolean) => void;
+  onValueChange?: (value: number) => void;
   onEdit?: () => void;
   onDelete?: () => void;
   showControls?: boolean;
@@ -18,6 +19,7 @@ interface DeviceCardProps {
 export function DeviceCard({
   device,
   onToggle,
+  onValueChange,
   onEdit,
   onDelete,
   showControls = false,
@@ -67,6 +69,7 @@ export function DeviceCard({
               glowColor={device.glow_color}
               onToggle={onToggle}
               value={device.brightness}
+              onValueChange={onValueChange}
               step={device.slider_step || 10}
             />
           </div>
