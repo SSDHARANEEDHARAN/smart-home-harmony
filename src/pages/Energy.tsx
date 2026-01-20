@@ -4,9 +4,11 @@ import { Layout } from '@/components/layout/Layout';
 import { EnergyStats } from '@/components/energy/EnergyStats';
 import { DeviceConsumptionList } from '@/components/energy/DeviceConsumptionList';
 import { RoomConsumptionChart } from '@/components/energy/RoomConsumptionChart';
+import { DeviceUsageHistory } from '@/components/energy/DeviceUsageHistory';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
+import { useEnergyStats } from '@/hooks/useEnergyStats';
 import { Loader2, Zap } from 'lucide-react';
 
 export default function Energy() {
@@ -14,6 +16,7 @@ export default function Energy() {
   const { user, loading: authLoading } = useAuth();
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading } = useDevices();
+  const { data: logs = [], isLoading: logsLoading } = useEnergyStats();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -21,7 +24,7 @@ export default function Energy() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading || roomsLoading || devicesLoading) {
+  if (authLoading || roomsLoading || devicesLoading || logsLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -53,9 +56,14 @@ export default function Energy() {
         </div>
 
         {/* Charts and Lists */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 mb-8">
           <RoomConsumptionChart devices={devices} rooms={rooms} />
           <DeviceConsumptionList devices={devices} />
+        </div>
+
+        {/* Usage History */}
+        <div className="mb-8">
+          <DeviceUsageHistory logs={logs} devices={devices} />
         </div>
       </div>
     </Layout>
