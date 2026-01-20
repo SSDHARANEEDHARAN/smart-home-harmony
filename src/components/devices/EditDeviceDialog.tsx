@@ -57,6 +57,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
     toggle_style: device.toggle_style || 'switch',
     power_consumption: device.power_consumption || 10,
     relay_pin: device.relay_pin?.toString() || '',
+    slider_step: device.slider_step || 10,
   });
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
         toggle_style: device.toggle_style || 'switch',
         power_consumption: device.power_consumption || 10,
         relay_pin: device.relay_pin?.toString() || '',
+        slider_step: device.slider_step || 10,
       });
       setStep('edit');
     }
@@ -82,6 +84,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
     toggle_style: formData.toggle_style !== (device.toggle_style || 'switch'),
     power_consumption: formData.power_consumption !== (device.power_consumption || 10),
     relay_pin: formData.relay_pin !== (device.relay_pin?.toString() || ''),
+    slider_step: formData.slider_step !== (device.slider_step || 10),
   };
 
   const hasChanges = Object.values(changes).some(Boolean);
@@ -103,6 +106,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
       toggle_style: formData.toggle_style as ToggleStyle,
       power_consumption: formData.power_consumption,
       relay_pin: formData.relay_pin ? Number(formData.relay_pin) : null,
+      slider_step: formData.slider_step,
     });
 
     onOpenChange(false);
@@ -245,6 +249,29 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
               </div>
             </div>
 
+            {formData.toggle_style === 'slider' && (
+              <div className="space-y-2">
+                <Label>Slider Step Size</Label>
+                <Select
+                  value={formData.slider_step.toString()}
+                  onValueChange={(v) => setFormData({ ...formData, slider_step: Number(v) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5%</SelectItem>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="25">25%</SelectItem>
+                    <SelectItem value="50">50%</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Amount to change per arrow click
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -329,6 +356,16 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
                     <span className="line-through text-muted-foreground">{device.power_consumption || 10}W</span>
                     <ArrowRight className="w-3 h-3" />
                     <span className="font-medium">{formData.power_consumption}W</span>
+                  </div>
+                </div>
+              )}
+              {changes.slider_step && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Slider Step:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="line-through text-muted-foreground">{device.slider_step || 10}%</span>
+                    <ArrowRight className="w-3 h-3" />
+                    <span className="font-medium">{formData.slider_step}%</span>
                   </div>
                 </div>
               )}

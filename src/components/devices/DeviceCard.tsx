@@ -67,6 +67,7 @@ export function DeviceCard({
               glowColor={device.glow_color}
               onToggle={onToggle}
               value={device.brightness}
+              step={device.slider_step || 10}
             />
           </div>
         </div>
