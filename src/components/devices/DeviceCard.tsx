@@ -335,11 +335,53 @@ export function DeviceCard({
     ...bgColorStyle
   };
 
-  return <Card className={cn("relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl", device.is_on && "glow-active internal-border-glow border-foreground/20", compact ? "min-h-[160px]" : "min-h-[120px]", "p-3")} style={cardStyle}>
+  // Compact mode: minimal horizontal layout (for Dashboard)
+  if (compact) {
+    return (
+      <Card 
+        className={cn(
+          "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
+          device.is_on && "glow-active internal-border-glow border-foreground/20",
+          "min-h-[60px] p-4"
+        )} 
+        style={cardStyle}
+      >
+        <CardContent className="relative z-10 p-0 h-full flex items-center justify-between">
+          {/* Left: Switch Name */}
+          <span className="text-sm font-medium pl-2">{getSwitchLabel()}</span>
+          
+          {/* Right: Power Button/Toggle */}
+          <DeviceToggle 
+            isOn={device.is_on} 
+            style={device.toggle_style} 
+            glowColor={device.glow_color} 
+            onToggle={onToggle} 
+            value={device.brightness} 
+            onValueChange={onValueChange} 
+            step={device.slider_step || 10} 
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Full mode: detailed card with controls (for Devices page)
+  return (
+    <Card 
+      className={cn(
+        "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
+        device.is_on && "glow-active internal-border-glow border-foreground/20",
+        "min-h-[120px] p-3"
+      )} 
+      style={cardStyle}
+    >
       <CardContent className="relative z-10 p-0 h-full flex flex-col">
         {/* Device Icon - Top */}
         <div className="flex items-center justify-center">
-          <div className={cn("flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300", device.is_on ? "bg-foreground/10" : "bg-muted")} style={{
+          <div className={cn(
+            "flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300",
+            device.is_on ? "bg-foreground/10" : "bg-muted"
+          )} style={{
             color: device.is_on ? device.glow_color : undefined
           }}>
             <DeviceIcon type={device.device_type} className="w-6 h-6" />
@@ -367,25 +409,28 @@ export function DeviceCard({
           </p>
         )}
 
-        {/* Next schedule indicator */}
-        {nextSchedule && compact && (
-          <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1">
-            <Calendar className="w-3 h-3" />
-            {nextSchedule.action ? 'On' : 'Off'} {formatNextRun(nextSchedule.date)}
-          </p>
+        {/* Schedules List */}
+        {showControls && deviceRules.length > 0 && (
+          <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
+            <p className="text-xs text-muted-foreground mb-1">Schedules</p>
+            {deviceRules.map(rule => (
+              <ScheduleItem 
+                key={rule.id} 
+                rule={rule} 
+                deviceName={device.name} 
+                onDelete={() => deleteRule.mutate(rule.id)} 
+              />
+            ))}
+          </div>
         )}
 
-        {/* Schedules List (only on full cards) */}
-        {showControls && !compact && deviceRules.length > 0 && <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
-            <p className="text-xs text-muted-foreground mb-1">Schedules</p>
-            {deviceRules.map(rule => <ScheduleItem key={rule.id} rule={rule} deviceName={device.name} onDelete={() => deleteRule.mutate(rule.id)} />)}
-          </div>}
-
-        {/* Additional Controls (only on full cards, not compact Dashboard cards) */}
-        {showControls && !compact && <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
+        {/* Additional Controls */}
+        {showControls && (
+          <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
             <ScheduleDialog deviceId={device.id} deviceName={device.name} />
             
-            {onEdit && <TooltipProvider>
+            {onEdit && (
+              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={onEdit} className="h-7 w-7 text-muted-foreground hover:text-foreground">
@@ -396,9 +441,11 @@ export function DeviceCard({
                     <p>Edit</p>
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>}
+              </TooltipProvider>
+            )}
             
-            {onDelete && <TooltipProvider>
+            {onDelete && (
+              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={onDelete} className="h-7 w-7 text-muted-foreground hover:text-destructive">
@@ -409,8 +456,11 @@ export function DeviceCard({
                     <p>Delete</p>
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>}
-          </div>}
+              </TooltipProvider>
+            )}
+          </div>
+        )}
       </CardContent>
-    </Card>;
+    </Card>
+  );
 }
