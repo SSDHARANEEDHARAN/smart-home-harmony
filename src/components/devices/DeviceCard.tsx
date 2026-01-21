@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, Clock, Calendar } from 'lucide-react';
-import { Device } from '@/types/smarthome';
+import { Edit2, Trash2, Clock, Calendar, X, Pencil } from 'lucide-react';
+import { Device, AutomationRule } from '@/types/smarthome';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceToggle } from './DeviceToggle';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface DeviceCardProps {
   device: Device;
@@ -37,11 +47,21 @@ interface DeviceCardProps {
   compact?: boolean;
 }
 
-function ScheduleDialog({ deviceId, deviceName }: { deviceId: string; deviceName: string }) {
-  const [open, setOpen] = useState(false);
-  const [time, setTime] = useState('');
-  const [action, setAction] = useState<'on' | 'off'>('off');
-  const { createRule } = useAutomationRules();
+function ScheduleDialog({ 
+  deviceId, 
+  deviceName,
+  existingRule,
+  onClose 
+}: { 
+  deviceId: string; 
+  deviceName: string;
+  existingRule?: AutomationRule;
+  onClose?: () => void;
+}) {
+  const [open, setOpen] = useState(!!existingRule);
+  const [time, setTime] = useState(existingRule?.trigger_time?.slice(0, 5) || '');
+  const [action, setAction] = useState<'on' | 'off'>(existingRule?.target_state ? 'on' : 'off');
+  const { createRule, updateRule } = useAutomationRules();
 
   const handleSave = async () => {
     if (!time) {
@@ -50,41 +70,59 @@ function ScheduleDialog({ deviceId, deviceName }: { deviceId: string; deviceName
     }
 
     try {
-      await createRule.mutateAsync({
-        name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
-        device_id: deviceId,
-        trigger_time: time,
-        action: action === 'on' ? 'turn_on' : 'turn_off',
-        target_state: action === 'on',
-        is_enabled: true,
-        days_of_week: [0, 1, 2, 3, 4, 5, 6],
-      });
+      if (existingRule) {
+        await updateRule.mutateAsync({
+          id: existingRule.id,
+          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
+          trigger_time: time,
+          action: action === 'on' ? 'turn_on' : 'turn_off',
+          target_state: action === 'on',
+        });
+      } else {
+        await createRule.mutateAsync({
+          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
+          device_id: deviceId,
+          trigger_time: time,
+          action: action === 'on' ? 'turn_on' : 'turn_off',
+          target_state: action === 'on',
+          is_enabled: true,
+          days_of_week: [0, 1, 2, 3, 4, 5, 6],
+        });
+      }
       setOpen(false);
       setTime('');
+      onClose?.();
     } catch (error) {
       // Error handled in hook
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) onClose?.();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                <Clock className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Schedule</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!existingRule && (
+        <DialogTrigger asChild>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                  <Clock className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Schedule</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </DialogTrigger>
+      )}
       <DialogContent className="rounded-xl">
         <DialogHeader>
-          <DialogTitle>Set Schedule</DialogTitle>
+          <DialogTitle>{existingRule ? 'Edit Schedule' : 'Set Schedule'}</DialogTitle>
           <DialogDescription>
             Automatically turn {deviceName} on or off at a specific time.
           </DialogDescription>
@@ -125,12 +163,89 @@ function ScheduleDialog({ deviceId, deviceName }: { deviceId: string; deviceName
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave} disabled={createRule.isPending} className="rounded-lg">
-            {createRule.isPending ? 'Saving...' : 'Save Schedule'}
+          <Button onClick={handleSave} disabled={createRule.isPending || updateRule.isPending} className="rounded-lg">
+            {(createRule.isPending || updateRule.isPending) ? 'Saving...' : existingRule ? 'Update Schedule' : 'Save Schedule'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ScheduleItem({ 
+  rule, 
+  deviceName,
+  onDelete 
+}: { 
+  rule: AutomationRule; 
+  deviceName: string;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const formatTime = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    const date = new Date();
+    date.setHours(h, m);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (editing) {
+    return (
+      <ScheduleDialog 
+        deviceId={rule.device_id} 
+        deviceName={deviceName}
+        existingRule={rule}
+        onClose={() => setEditing(false)}
+      />
+    );
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded-lg text-xs">
+        <div className="flex items-center gap-2">
+          <Clock className="w-3 h-3 text-muted-foreground" />
+          <span>{rule.target_state ? 'On' : 'Off'} at {formatTime(rule.trigger_time)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 text-muted-foreground hover:text-foreground"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 text-muted-foreground hover:text-destructive"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Schedule</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this schedule? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete} className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -145,11 +260,13 @@ export function DeviceCard({
 }: DeviceCardProps) {
   const { theme } = useTheme();
   const [isDark, setIsDark] = useState(false);
-  const { rules } = useAutomationRules();
+  const { rules, deleteRule } = useAutomationRules();
+
+  // Get device rules
+  const deviceRules = rules.filter(r => r.device_id === device.id && r.is_enabled);
 
   // Calculate next scheduled run
   const nextSchedule = (() => {
-    const deviceRules = rules.filter(r => r.device_id === device.id && r.is_enabled);
     if (!deviceRules.length) return null;
 
     const now = new Date();
@@ -222,54 +339,69 @@ export function DeviceCard({
       className={cn(
         "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
         device.is_on && "glow-active internal-border-glow border-foreground/20",
-        "p-2"
+        compact ? "min-h-[140px]" : "min-h-[120px]",
+        "p-3"
       )}
       style={cardStyle}
     >
-      <CardContent className="relative z-10 p-2">
-        <div className="flex items-center justify-between gap-2">
-          {/* Device Info */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div
-              className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
-                device.is_on ? "bg-foreground/10" : "bg-muted"
-              )}
-              style={{
-                color: device.is_on ? device.glow_color : undefined,
-              }}
-            >
-              <DeviceIcon type={device.device_type} className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold truncate">{device.name}</h3>
-              {device.room && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {device.room.name}
-                </p>
-              )}
-              {nextSchedule && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Calendar className="w-3 h-3" />
-                  {nextSchedule.action ? 'On' : 'Off'} {formatNextRun(nextSchedule.date)}
-                </p>
-              )}
-            </div>
-          </div>
+      <CardContent className="relative z-10 p-0 h-full flex flex-col">
+        {/* Room Name Header */}
+        {device.room && (
+          <p className="text-xs text-muted-foreground text-center mb-2 truncate">
+            {device.room.name}
+          </p>
+        )}
 
-          {/* Toggle Control */}
-          <div className="flex items-center gap-1 shrink-0">
-            <DeviceToggle
-              isOn={device.is_on}
-              style={device.toggle_style}
-              glowColor={device.glow_color}
-              onToggle={onToggle}
-              value={device.brightness}
-              onValueChange={onValueChange}
-              step={device.slider_step || 10}
-            />
+        {/* Device Icon and Name - Centered */}
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          <div
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300",
+              device.is_on ? "bg-foreground/10" : "bg-muted"
+            )}
+            style={{
+              color: device.is_on ? device.glow_color : undefined,
+            }}
+          >
+            <DeviceIcon type={device.device_type} className="w-5 h-5" />
           </div>
+          
+          {/* Next schedule indicator */}
+          {nextSchedule && compact && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {nextSchedule.action ? 'On' : 'Off'} {formatNextRun(nextSchedule.date)}
+            </p>
+          )}
         </div>
+
+        {/* Toggle Control - Centered at Bottom */}
+        <div className="flex justify-center mt-2">
+          <DeviceToggle
+            isOn={device.is_on}
+            style={device.toggle_style}
+            glowColor={device.glow_color}
+            onToggle={onToggle}
+            value={device.brightness}
+            onValueChange={onValueChange}
+            step={device.slider_step || 10}
+          />
+        </div>
+
+        {/* Schedules List (only on full cards) */}
+        {showControls && !compact && deviceRules.length > 0 && (
+          <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
+            <p className="text-xs text-muted-foreground mb-1">Schedules</p>
+            {deviceRules.map(rule => (
+              <ScheduleItem 
+                key={rule.id} 
+                rule={rule} 
+                deviceName={device.name}
+                onDelete={() => deleteRule.mutate(rule.id)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Additional Controls (only on full cards, not compact Dashboard cards) */}
         {showControls && !compact && (

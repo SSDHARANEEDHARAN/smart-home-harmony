@@ -69,6 +69,7 @@ export type Database = {
           api_endpoint: string | null
           brightness: number | null
           created_at: string
+          description: string | null
           device_type: Database["public"]["Enums"]["device_type"]
           glow_color: string | null
           icon: string | null
@@ -89,6 +90,7 @@ export type Database = {
           api_endpoint?: string | null
           brightness?: number | null
           created_at?: string
+          description?: string | null
           device_type?: Database["public"]["Enums"]["device_type"]
           glow_color?: string | null
           icon?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           api_endpoint?: string | null
           brightness?: number | null
           created_at?: string
+          description?: string | null
           device_type?: Database["public"]["Enums"]["device_type"]
           glow_color?: string | null
           icon?: string | null
