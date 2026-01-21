@@ -23,6 +23,16 @@ interface DeviceCardProps {
   showControls?: boolean;
   compact?: boolean;
 }
+const DAYS = [
+  { value: 0, label: 'Sun', short: 'S' },
+  { value: 1, label: 'Mon', short: 'M' },
+  { value: 2, label: 'Tue', short: 'T' },
+  { value: 3, label: 'Wed', short: 'W' },
+  { value: 4, label: 'Thu', short: 'T' },
+  { value: 5, label: 'Fri', short: 'F' },
+  { value: 6, label: 'Sat', short: 'S' },
+];
+
 function ScheduleDialog({
   deviceId,
   deviceName,
@@ -37,13 +47,27 @@ function ScheduleDialog({
   const [open, setOpen] = useState(!!existingRule);
   const [time, setTime] = useState(existingRule?.trigger_time?.slice(0, 5) || '');
   const [action, setAction] = useState<'on' | 'off'>(existingRule?.target_state ? 'on' : 'off');
+  const [selectedDays, setSelectedDays] = useState<number[]>(existingRule?.days_of_week || [0, 1, 2, 3, 4, 5, 6]);
   const {
     createRule,
     updateRule
   } = useAutomationRules();
+
+  const toggleDay = (day: number) => {
+    if (selectedDays.includes(day)) {
+      setSelectedDays(selectedDays.filter(d => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day].sort());
+    }
+  };
+
   const handleSave = async () => {
     if (!time) {
       toast.error('Please select a time');
+      return;
+    }
+    if (selectedDays.length === 0) {
+      toast.error('Please select at least one day');
       return;
     }
     try {
@@ -53,7 +77,8 @@ function ScheduleDialog({
           name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
           trigger_time: time,
           action: action === 'on' ? 'turn_on' : 'turn_off',
-          target_state: action === 'on'
+          target_state: action === 'on',
+          days_of_week: selectedDays
         });
       } else {
         await createRule.mutateAsync({
@@ -63,11 +88,12 @@ function ScheduleDialog({
           action: action === 'on' ? 'turn_on' : 'turn_off',
           target_state: action === 'on',
           is_enabled: true,
-          days_of_week: [0, 1, 2, 3, 4, 5, 6]
+          days_of_week: selectedDays
         });
       }
       setOpen(false);
       setTime('');
+      setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
       onClose?.();
     } catch (error) {
       // Error handled in hook
@@ -115,6 +141,25 @@ function ScheduleDialog({
               <Button variant={action === 'off' ? 'default' : 'outline'} size="sm" onClick={() => setAction('off')} className="rounded-lg">
                 Turn Off
               </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <span className="text-right text-sm">Days</span>
+            <div className="col-span-3 flex gap-1">
+              {DAYS.map((day) => (
+                <button
+                  key={day.value}
+                  onClick={() => toggleDay(day.value)}
+                  className={cn(
+                    "w-8 h-8 rounded-lg text-xs font-medium transition-colors",
+                    selectedDays.includes(day.value)
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {day.short}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -233,6 +278,7 @@ export function DeviceCard({
     });
     return nextRun;
   })();
+
   const formatNextRun = (date: Date) => {
     const now = new Date();
     const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth();
@@ -247,6 +293,23 @@ export function DeviceCard({
       weekday: 'short'
     })} ${timeStr}`;
   };
+
+  // Get switch label based on device type
+  const getSwitchLabel = () => {
+    switch (device.device_type) {
+      case 'light': return 'Light Switch';
+      case 'fan': return 'Fan Switch';
+      case 'ac': return 'AC Switch';
+      case 'heater': return 'Heater Switch';
+      case 'tv': return 'TV Switch';
+      case 'lock': return 'Lock Switch';
+      case 'camera': return 'Camera Switch';
+      case 'sensor': return 'Sensor Switch';
+      case 'appliance': return 'Appliance Switch';
+      default: return 'Switch';
+    }
+  };
+
   useEffect(() => {
     const checkDark = () => {
       if (theme === 'system') {
@@ -263,6 +326,7 @@ export function DeviceCard({
       return () => mediaQuery.removeEventListener('change', handler);
     }
   }, [theme]);
+
   const bgColorStyle = device.is_on && device.glow_color && isDark ? {
     backgroundColor: device.glow_color + '20'
   } : {};
@@ -270,32 +334,46 @@ export function DeviceCard({
     '--glow-color': device.glow_color,
     ...bgColorStyle
   };
-  return <Card className={cn("relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl", device.is_on && "glow-active internal-border-glow border-foreground/20", compact ? "min-h-[140px]" : "min-h-[120px]", "p-3")} style={cardStyle}>
+
+  return <Card className={cn("relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl", device.is_on && "glow-active internal-border-glow border-foreground/20", compact ? "min-h-[160px]" : "min-h-[120px]", "p-3")} style={cardStyle}>
       <CardContent className="relative z-10 p-0 h-full flex flex-col">
-        {/* Room Name Header */}
-        {device.room && <p className="text-xs text-muted-foreground mb-2 truncate text-left">
-            {device.room.name}
-          </p>}
-
-        {/* Device Icon and Name - Centered */}
-        <div className="flex-1 flex-col flex items-end justify-start gap-[5px]">
-          <div className={cn("flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300", device.is_on ? "bg-foreground/10" : "bg-muted")} style={{
-          color: device.is_on ? device.glow_color : undefined
-        }}>
-            <DeviceIcon type={device.device_type} className="w-5 h-5" />
+        {/* Device Icon - Top */}
+        <div className="flex items-center justify-center">
+          <div className={cn("flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300", device.is_on ? "bg-foreground/10" : "bg-muted")} style={{
+            color: device.is_on ? device.glow_color : undefined
+          }}>
+            <DeviceIcon type={device.device_type} className="w-6 h-6" />
           </div>
-          
-          {/* Next schedule indicator */}
-          {nextSchedule && compact && <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {nextSchedule.action ? 'On' : 'Off'} {formatNextRun(nextSchedule.date)}
-            </p>}
         </div>
 
-        {/* Toggle Control - Centered at Bottom */}
-        <div className="flex justify-center mt-2">
-          <DeviceToggle isOn={device.is_on} style={device.toggle_style} glowColor={device.glow_color} onToggle={onToggle} value={device.brightness} onValueChange={onValueChange} step={device.slider_step || 10} />
+        {/* Switch Label and Control - Centered */}
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-2">
+          <span className="text-xs font-medium text-foreground">{getSwitchLabel()}</span>
+          <DeviceToggle 
+            isOn={device.is_on} 
+            style={device.toggle_style} 
+            glowColor={device.glow_color} 
+            onToggle={onToggle} 
+            value={device.brightness} 
+            onValueChange={onValueChange} 
+            step={device.slider_step || 10} 
+          />
         </div>
+
+        {/* Room Name - Bottom */}
+        {device.room && (
+          <p className="text-xs text-muted-foreground text-center mt-2 truncate">
+            {device.room.name}
+          </p>
+        )}
+
+        {/* Next schedule indicator */}
+        {nextSchedule && compact && (
+          <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1">
+            <Calendar className="w-3 h-3" />
+            {nextSchedule.action ? 'On' : 'Off'} {formatNextRun(nextSchedule.date)}
+          </p>
+        )}
 
         {/* Schedules List (only on full cards) */}
         {showControls && !compact && deviceRules.length > 0 && <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">

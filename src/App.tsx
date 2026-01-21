@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import Energy from "./pages/Energy";
 import Automation from "./pages/Automation";
+import Schedules from "./pages/Schedules";
 import Settings from "./pages/Settings";
 import Terminal from "./pages/Terminal";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/devices" element={<Devices />} />
               <Route path="/energy" element={<Energy />} />
               <Route path="/automation" element={<Automation />} />
+              <Route path="/schedules" element={<Schedules />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/terminal" element={<Terminal />} />
               <Route path="*" element={<NotFound />} />
