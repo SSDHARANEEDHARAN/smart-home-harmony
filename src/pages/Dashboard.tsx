@@ -154,13 +154,17 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {devices.map((device) => (
-              <DeviceCard
-                key={device.id}
-                device={device}
-                onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                onValueChange={(value) => handleValueChange(device.id, value)}
-                compact
-              />
+              <div key={device.id} className="flex flex-col gap-2">
+                <DeviceCard
+                  device={device}
+                  onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                  onValueChange={(value) => handleValueChange(device.id, value)}
+                  compact
+                />
+                <p className="text-xs text-muted-foreground text-center truncate">
+                  {device.room?.name || 'Unassigned'}
+                </p>
+              </div>
             ))}
           </div>
         )}

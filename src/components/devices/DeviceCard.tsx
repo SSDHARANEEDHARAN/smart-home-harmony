@@ -342,7 +342,7 @@ export function DeviceCard({
         className={cn(
           "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
           device.is_on && "glow-active internal-border-glow border-foreground/20",
-          "min-h-[60px] p-4"
+          "min-h-[100px] p-4"
         )} 
         style={cardStyle}
       >
