@@ -152,20 +152,59 @@ export default function Dashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {devices.map((device) => (
-              <div key={device.id} className="flex flex-col gap-2">
-                <DeviceCard
-                  device={device}
-                  onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                  onValueChange={(value) => handleValueChange(device.id, value)}
-                  compact
-                />
-                <p className="text-xs text-muted-foreground text-center truncate">
-                  {device.room?.name || 'Unassigned'}
-                </p>
+          <div className="space-y-6">
+            {/* Group devices by room */}
+            {rooms
+              .filter(room => devices.some(d => d.room_id === room.id))
+              .map(room => {
+                const roomDevices = devices.filter(d => d.room_id === room.id);
+                return (
+                  <div key={room.id}>
+                    {/* Room Name Heading */}
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">{room.name}</h3>
+                    {/* Device Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {roomDevices.map((device) => (
+                        <div key={device.id} className="flex flex-col gap-2">
+                          <DeviceCard
+                            device={device}
+                            onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                            onValueChange={(value) => handleValueChange(device.id, value)}
+                            compact
+                          />
+                          <p className="text-xs text-muted-foreground text-center truncate transition-colors hover:text-foreground cursor-default">
+                            {room.name} - {device.name}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            
+            {/* Unassigned devices */}
+            {devices.filter(d => !rooms.some(r => r.id === d.room_id)).length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-foreground">Unassigned</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {devices
+                    .filter(d => !rooms.some(r => r.id === d.room_id))
+                    .map((device) => (
+                      <div key={device.id} className="flex flex-col gap-2">
+                        <DeviceCard
+                          device={device}
+                          onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                          onValueChange={(value) => handleValueChange(device.id, value)}
+                          compact
+                        />
+                        <p className="text-xs text-muted-foreground text-center truncate transition-colors hover:text-foreground cursor-default">
+                          {device.name}
+                        </p>
+                      </div>
+                    ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         )}
 
