@@ -15,6 +15,7 @@ export interface Device {
   user_id: string;
   room_id: string;
   name: string;
+  description: string | null;
   device_type: DeviceType;
   is_on: boolean;
   brightness: number;

@@ -50,6 +50,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
 
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     device_type: 'switch' as DeviceType,
     room_id: defaultRoomId || '',
     glow_color: '#00ffff',
@@ -64,6 +65,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
     
     await createDevice.mutateAsync({
       ...formData,
+      description: formData.description || null,
       is_on: false,
       brightness: 100,
       speed: 0,
@@ -77,6 +79,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
     setOpen(false);
     setFormData({
       name: '',
+      description: '',
       device_type: 'switch',
       room_id: defaultRoomId || '',
       glow_color: '#00ffff',
@@ -109,6 +112,16 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Living Room Light"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Main ceiling light"
             />
           </div>
 
