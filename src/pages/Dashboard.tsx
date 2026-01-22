@@ -176,17 +176,13 @@ export default function Dashboard() {
                     {/* Device Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {roomDevices.map((device) => (
-                        <div key={device.id} className="flex flex-col gap-2">
-                          <DeviceCard
-                            device={device}
-                            onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                            onValueChange={(value) => handleValueChange(device.id, value)}
-                            compact
-                          />
-                          <p className="text-xs text-muted-foreground text-center truncate transition-colors hover:text-foreground cursor-default">
-                            {device.name}
-                          </p>
-                        </div>
+                        <DeviceCard
+                          key={device.id}
+                          device={device}
+                          onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                          onValueChange={(value) => handleValueChange(device.id, value)}
+                          compact
+                        />
                       ))}
                     </div>
                   </div>
@@ -204,17 +200,13 @@ export default function Dashboard() {
                   {devices
                     .filter(d => !rooms.some(r => r.id === d.room_id))
                     .map((device) => (
-                      <div key={device.id} className="flex flex-col gap-2">
-                        <DeviceCard
-                          device={device}
-                          onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                          onValueChange={(value) => handleValueChange(device.id, value)}
-                          compact
-                        />
-                        <p className="text-xs text-muted-foreground text-center truncate transition-colors hover:text-foreground cursor-default">
-                          {device.name}
-                        </p>
-                      </div>
+                      <DeviceCard
+                        key={device.id}
+                        device={device}
+                        onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
+                        onValueChange={(value) => handleValueChange(device.id, value)}
+                        compact
+                      />
                     ))}
                 </div>
               </div>
