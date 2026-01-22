@@ -160,8 +160,19 @@ export default function Dashboard() {
                 const roomDevices = devices.filter(d => d.room_id === room.id);
                 return (
                   <div key={room.id}>
-                    {/* Room Name Heading */}
-                    <h3 className="text-lg font-semibold mb-3 text-foreground">{room.name}</h3>
+                    {/* Room Name Heading with Icon */}
+                    <h3 className="text-lg font-semibold mb-3 text-foreground flex items-center gap-2">
+                      {(() => {
+                        const iconName = room.icon as keyof typeof LucideIcons;
+                        const IconComponent = LucideIcons[iconName] as React.ComponentType<{ className?: string }>;
+                        return IconComponent ? (
+                          <IconComponent className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <Home className="w-5 h-5 text-muted-foreground" />
+                        );
+                      })()}
+                      {room.name}
+                    </h3>
                     {/* Device Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {roomDevices.map((device) => (
@@ -185,7 +196,10 @@ export default function Dashboard() {
             {/* Unassigned devices */}
             {devices.filter(d => !rooms.some(r => r.id === d.room_id)).length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-foreground">Unassigned</h3>
+                <h3 className="text-lg font-semibold mb-3 text-foreground flex items-center gap-2">
+                  <LucideIcons.HelpCircle className="w-5 h-5 text-muted-foreground" />
+                  Unassigned
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {devices
                     .filter(d => !rooms.some(r => r.id === d.room_id))
