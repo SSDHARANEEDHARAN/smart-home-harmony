@@ -1,12 +1,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, Clock, Calendar, X, Pencil } from 'lucide-react';
+import { Edit2, Trash2, Clock, Calendar, X, Pencil, Play, AlertTriangle } from 'lucide-react';
 import { Device, AutomationRule } from '@/types/smarthome';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceToggle } from './DeviceToggle';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
+import { useScenes } from '@/hooks/useScenes';
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -335,6 +336,40 @@ export function DeviceCard({
     ...bgColorStyle
   };
 
+  // Get device type label
+  const getDeviceTypeLabel = () => {
+    switch (device.device_type) {
+      case 'light': return 'Light';
+      case 'fan': return 'Fan';
+      case 'ac': return 'AC';
+      case 'heater': return 'Heater';
+      case 'tv': return 'TV';
+      case 'lock': return 'Lock';
+      case 'camera': return 'Camera';
+      case 'sensor': return 'Sensor';
+      case 'appliance': return 'Appliance';
+      case 'switch': return 'Switch';
+      default: return 'Device';
+    }
+  };
+
+  // Check if device has automation rules
+  const hasAutomation = deviceRules.length > 0;
+  
+  // Check if device is part of any scene
+  const { scenes } = useScenes();
+  const hasScene = scenes.some(scene => {
+    if (!scene.device_states) return false;
+    if (Array.isArray(scene.device_states)) {
+      return scene.device_states.some((state: { device_id?: string }) => state.device_id === device.id);
+    }
+    const deviceStates = scene.device_states as Record<string, unknown>;
+    return Object.keys(deviceStates).includes(device.id);
+  });
+  
+  // Check for high power consumption (emergency/overcurrent indicator)
+  const hasHighConsumption = device.power_consumption && device.power_consumption > 1000;
+
   // Compact mode: minimal horizontal layout (for Dashboard)
   if (compact) {
     return (
@@ -347,7 +382,7 @@ export function DeviceCard({
         style={cardStyle}
       >
         <CardContent className="relative z-10 p-0 h-full flex flex-col">
-          {/* Top Row: Icon + Name on left, Toggle on right */}
+          {/* Top Row: Icon + Device Type on left, Toggle on right */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={cn(
@@ -364,7 +399,7 @@ export function DeviceCard({
                   )} 
                 />
               </div>
-              <span className="text-sm font-medium">{device.name}</span>
+              <span className="text-sm font-medium">{getDeviceTypeLabel()}</span>
             </div>
             
             {/* Right: Power Button/Toggle */}
@@ -379,12 +414,59 @@ export function DeviceCard({
             />
           </div>
           
-          {/* Bottom: Description - centered */}
+          {/* Middle: Description */}
           {device.description && (
-            <p className="text-xs text-muted-foreground text-center mt-auto pt-2 truncate">
+            <p className="text-xs text-muted-foreground text-center mt-2 truncate">
               {device.description}
             </p>
           )}
+          
+          {/* Bottom: Device name in quotes + Status icons */}
+          <div className="flex items-center justify-between mt-auto pt-2">
+            <span className="text-[10px] text-muted-foreground truncate">
+              "{device.name}"
+            </span>
+            
+            {/* Status Icons */}
+            <div className="flex items-center gap-1">
+              {hasAutomation && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Has schedule</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {hasScene && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Play className="w-3 h-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Part of scene</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {hasHighConsumption && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="w-3 h-3 text-destructive" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>High power consumption</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
