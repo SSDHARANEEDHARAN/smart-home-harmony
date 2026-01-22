@@ -184,7 +184,7 @@ export default function Dashboard() {
                             compact
                           />
                           <p className="text-xs text-muted-foreground text-center truncate transition-colors hover:text-foreground cursor-default">
-                            {room.name} - {device.name}
+                            {device.name}
                           </p>
                         </div>
                       ))}

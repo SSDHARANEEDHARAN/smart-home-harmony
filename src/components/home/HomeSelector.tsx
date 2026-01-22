@@ -33,7 +33,11 @@ import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export function HomeSelector() {
+interface HomeSelectorProps {
+  showEditControls?: boolean;
+}
+
+export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
   const [showAddHome, setShowAddHome] = useState(false);
   const [newHomeName, setNewHomeName] = useState('');
@@ -180,33 +184,37 @@ export function HomeSelector() {
                 {home.id === currentHomeId && (
                   <span className="text-xs text-primary">Active</span>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setRenameHomeId(home.id);
-                    setRenameHomeName(home.name);
-                    setRenameHomeFirebaseConfig(home.firebaseConfig ? JSON.stringify(home.firebaseConfig, null, 2) : '');
-                    setShowRenameHome(true);
-                  }}
-                >
-                  <Pencil className="w-3 h-3" />
-                </Button>
+                {showEditControls && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRenameHomeId(home.id);
+                        setRenameHomeName(home.name);
+                        setRenameHomeFirebaseConfig(home.firebaseConfig ? JSON.stringify(home.firebaseConfig, null, 2) : '');
+                        setShowRenameHome(true);
+                      }}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
 
-                {homes.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setHomeToDelete(home.id);
-                    }}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                    {homes.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHomeToDelete(home.id);
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </DropdownMenuItem>

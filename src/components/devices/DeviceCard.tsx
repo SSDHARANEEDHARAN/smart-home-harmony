@@ -342,24 +342,49 @@ export function DeviceCard({
         className={cn(
           "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
           device.is_on && "glow-active internal-border-glow border-foreground/20",
-          "min-h-[100px] p-4"
+          "min-h-[120px] p-4"
         )} 
         style={cardStyle}
       >
-        <CardContent className="relative z-10 p-0 h-full flex items-center justify-between">
-          {/* Left: Switch Name */}
-          <span className="text-sm font-medium pl-2">{getSwitchLabel()}</span>
+        <CardContent className="relative z-10 p-0 h-full flex flex-col">
+          {/* Top Row: Icon + Name on left, Toggle on right */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
+                device.is_on ? "bg-foreground/10" : "bg-muted"
+              )} style={{
+                color: device.is_on ? device.glow_color : undefined
+              }}>
+                <DeviceIcon 
+                  type={device.device_type} 
+                  className={cn(
+                    "w-4 h-4 transition-transform duration-500",
+                    device.device_type === 'fan' && device.is_on && "animate-spin"
+                  )} 
+                />
+              </div>
+              <span className="text-sm font-medium">{device.name}</span>
+            </div>
+            
+            {/* Right: Power Button/Toggle */}
+            <DeviceToggle 
+              isOn={device.is_on} 
+              style={device.toggle_style} 
+              glowColor={device.glow_color} 
+              onToggle={onToggle} 
+              value={device.brightness} 
+              onValueChange={onValueChange} 
+              step={device.slider_step || 10} 
+            />
+          </div>
           
-          {/* Right: Power Button/Toggle */}
-          <DeviceToggle 
-            isOn={device.is_on} 
-            style={device.toggle_style} 
-            glowColor={device.glow_color} 
-            onToggle={onToggle} 
-            value={device.brightness} 
-            onValueChange={onValueChange} 
-            step={device.slider_step || 10} 
-          />
+          {/* Bottom: Description - centered */}
+          {device.description && (
+            <p className="text-xs text-muted-foreground text-center mt-auto pt-2 truncate">
+              {device.description}
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -384,7 +409,13 @@ export function DeviceCard({
           )} style={{
             color: device.is_on ? device.glow_color : undefined
           }}>
-            <DeviceIcon type={device.device_type} className="w-6 h-6" />
+            <DeviceIcon 
+              type={device.device_type} 
+              className={cn(
+                "w-6 h-6 transition-transform duration-500",
+                device.device_type === 'fan' && device.is_on && "animate-spin"
+              )} 
+            />
           </div>
         </div>
 

@@ -125,7 +125,7 @@ export default function Devices() {
             </div>
           </div>
           <div className="flex gap-2">
-            <HomeSelector />
+            <HomeSelector showEditControls />
             <CreateRoomDialog />
             <CreateDeviceDialog rooms={filteredRooms} />
           </div>
