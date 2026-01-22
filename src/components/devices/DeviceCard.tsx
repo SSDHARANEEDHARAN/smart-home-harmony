@@ -377,7 +377,7 @@ export function DeviceCard({
         className={cn(
           "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
           device.is_on && "glow-active internal-border-glow border-foreground/20",
-          "min-h-[120px] p-4"
+          "min-h-[140px] p-4"
         )} 
         style={cardStyle}
       >
@@ -385,18 +385,18 @@ export function DeviceCard({
           {/* Top Row: Icon + Device Type on left, Toggle on right */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
-                device.is_on ? "bg-foreground/10" : "bg-muted"
-              )} style={{
-                color: device.is_on ? device.glow_color : undefined
-              }}>
+              <div 
+                className={cn(
+                  "transition-transform duration-500",
+                  device.device_type === 'fan' && device.is_on && "animate-spin"
+                )}
+                style={{
+                  color: device.is_on ? device.glow_color : undefined
+                }}
+              >
                 <DeviceIcon 
                   type={device.device_type} 
-                  className={cn(
-                    "w-4 h-4 transition-transform duration-500",
-                    device.device_type === 'fan' && device.is_on && "animate-spin"
-                  )} 
+                  className="w-4 h-4" 
                 />
               </div>
               <span className="text-sm font-medium">{getDeviceTypeLabel()}</span>
@@ -422,18 +422,18 @@ export function DeviceCard({
           )}
           
           {/* Bottom: Device name in quotes + Status icons */}
-          <div className="flex items-center justify-between mt-auto pt-2">
-            <span className="text-[10px] text-muted-foreground truncate">
+          <div className="flex items-center justify-between mt-auto pt-3">
+            <span className="text-xs text-muted-foreground truncate max-w-[60%]">
               "{device.name}"
             </span>
             
             {/* Status Icons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {hasAutomation && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Has schedule</p>
@@ -445,7 +445,7 @@ export function DeviceCard({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Play className="w-3 h-3 text-muted-foreground" />
+                      <Play className="w-3.5 h-3.5 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Part of scene</p>
@@ -457,7 +457,7 @@ export function DeviceCard({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <AlertTriangle className="w-3 h-3 text-destructive" />
+                      <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>High power consumption</p>
