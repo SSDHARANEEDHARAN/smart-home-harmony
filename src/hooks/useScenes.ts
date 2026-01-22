@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Json } from '@/integrations/supabase/types';
+import { useSettings } from './useSettings';
+import { playNotificationSound, SoundType } from '@/utils/sound';
 
 export interface DeviceState {
   device_id: string;
@@ -24,6 +26,7 @@ export interface Scene {
 export function useScenes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { settings } = useSettings();
 
   const { data: scenes = [], isLoading } = useQuery({
     queryKey: ['scenes', user?.id],
@@ -112,10 +115,18 @@ export function useScenes() {
     },
     onSuccess: (scene) => {
       queryClient.invalidateQueries({ queryKey: ['devices'] });
-      toast({ 
-        title: `${scene.name} activated`,
-        description: `${scene.device_states.length} devices updated`
-      });
+      
+      // Only show notification if scene activations setting is enabled
+      if (settings.notifications.sceneActivations) {
+        toast({ 
+          title: `🎬 ${scene.name} activated`,
+          description: `${scene.device_states.length} devices updated`
+        });
+        
+        if (settings.notifications.soundEnabled) {
+          playNotificationSound(settings.notifications.soundType as SoundType);
+        }
+      }
     },
     onError: (error) => {
       toast({ title: 'Failed to activate scene', description: error.message, variant: 'destructive' });
