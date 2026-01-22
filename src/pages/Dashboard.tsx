@@ -127,7 +127,7 @@ export default function Dashboard() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Devices & Controls</h2>
           <div className="flex items-center gap-2">
-            {!settings.notifications.sceneActivations && <CreateSceneDialog devices={devices} />}
+            {settings.notifications.sceneActivations && <CreateSceneDialog devices={devices} />}
             <Link to="/devices">
               <Button variant="outline" size="sm" className="gap-2">
                 <Plus className="w-4 h-4" />

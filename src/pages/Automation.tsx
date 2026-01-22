@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { AutomationRuleCard } from '@/components/automation/AutomationRuleCard';
 import { CreateAutomationDialog } from '@/components/automation/CreateAutomationDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useDevices } from '@/hooks/useDevices';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
-import { Loader2, Settings, Clock } from 'lucide-react';
+import { useSettings } from '@/hooks/useSettings';
+import { Loader2, Settings, Clock, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +26,9 @@ export default function Automation() {
   const { user, loading: authLoading } = useAuth();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { rules, isLoading: rulesLoading, toggleRule, deleteRule } = useAutomationRules();
+  const { settings } = useSettings();
+  
+  const automationEnabled = settings.notifications.automationTriggers;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
@@ -73,8 +79,24 @@ export default function Automation() {
               </p>
             </div>
           </div>
-          <CreateAutomationDialog devices={devices} />
+          {automationEnabled && <CreateAutomationDialog devices={devices} />}
         </div>
+
+        {/* Warning when automation is disabled */}
+        {!automationEnabled && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Automation Disabled</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>Enable "Automation Triggers" in Settings to create and manage automation rules.</span>
+              <Link to="/settings">
+                <Button variant="outline" size="sm">
+                  Go to Settings
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Rules List */}
         {rules.length === 0 ? (
@@ -82,9 +104,11 @@ export default function Automation() {
             <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No automation rules yet</h3>
             <p className="text-muted-foreground mb-4">
-              Create rules to automate your devices on a schedule
+              {automationEnabled 
+                ? 'Create rules to automate your devices on a schedule'
+                : 'Enable automation triggers in Settings to create rules'}
             </p>
-            <CreateAutomationDialog devices={devices} />
+            {automationEnabled && <CreateAutomationDialog devices={devices} />}
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
