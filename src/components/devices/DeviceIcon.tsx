@@ -29,9 +29,10 @@ const iconMap: Record<DeviceType, LucideIcon> = {
 interface DeviceIconProps {
   type: DeviceType;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function DeviceIcon({ type, className = "w-6 h-6" }: DeviceIconProps) {
+export function DeviceIcon({ type, className = "w-6 h-6", style }: DeviceIconProps) {
   const Icon = iconMap[type] || Power;
-  return <Icon className={className} />;
+  return <Icon className={className} style={style} />;
 }

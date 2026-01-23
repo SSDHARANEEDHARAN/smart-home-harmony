@@ -49,17 +49,12 @@ export function RoomCard({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div 
-              className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
-                activeDevices > 0 ? "bg-foreground/10" : "bg-muted"
-              )}
+            <IconComponent 
+              className="w-5 h-5 transition-all"
               style={{
                 color: activeDevices > 0 ? roomGlowColor : undefined,
               }}
-            >
-              <IconComponent className="w-5 h-5" />
-            </div>
+            />
             <div>
               <CardTitle className="text-lg">{room.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
@@ -128,17 +123,13 @@ export function RoomCard({
                 } as React.CSSProperties}
               >
                 <div className="flex items-center gap-3">
-                  <div 
-                    className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                      device.is_on ? "bg-foreground/10" : "bg-muted"
-                    )}
+                  <DeviceIcon 
+                    type={device.device_type} 
+                    className="w-4 h-4 transition-all"
                     style={{
                       color: device.is_on ? device.glow_color : undefined,
                     }}
-                  >
-                    <DeviceIcon type={device.device_type} className="w-4 h-4" />
-                  </div>
+                  />
                   <span className="text-sm font-medium">{device.name}</span>
                 </div>
                 <DeviceToggle
@@ -151,25 +142,7 @@ export function RoomCard({
               </div>
             ))}
           </div>
-        ) : (
-          // Compact view - show device names as chips
-          <div className="flex flex-wrap gap-2">
-            {devices.map((device) => (
-              <div
-                key={device.id}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
-                  device.is_on
-                    ? "bg-foreground/10 text-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-                onClick={() => onToggleDevice(device.id, !device.is_on)}
-              >
-                {device.name}
-              </div>
-            ))}
-          </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

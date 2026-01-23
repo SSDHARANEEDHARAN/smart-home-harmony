@@ -114,9 +114,7 @@ export default function Devices() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 header-responsive">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-foreground/10 flex items-center justify-center">
-              <Cpu className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-            </div>
+            <Cpu className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
             <div>
               <h1 className="font-bold">Devices</h1>
               <p className="text-muted-foreground text-sm">
@@ -155,9 +153,7 @@ export default function Devices() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-muted flex items-center justify-center">
-                            <IconComponent className="w-5 h-5 text-muted-foreground" />
-                          </div>
+                          <IconComponent className="w-5 h-5 text-muted-foreground" />
                           <div>
                             <CardTitle className="text-base">{room.name}</CardTitle>
                             <p className="text-xs text-muted-foreground">
@@ -192,32 +188,6 @@ export default function Devices() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-2">
-                      {roomDevices.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {roomDevices.slice(0, 4).map((device) => (
-                            <span
-                              key={device.id}
-                              className={cn(
-                                "px-2 py-1 text-xs",
-                                device.is_on
-                                  ? "bg-foreground/10 text-foreground"
-                                  : "bg-muted text-muted-foreground"
-                              )}
-                            >
-                              {device.name}
-                            </span>
-                          ))}
-                          {roomDevices.length > 4 && (
-                            <span className="px-2 py-1 text-xs bg-muted text-muted-foreground">
-                              +{roomDevices.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">No devices</p>
-                      )}
-                    </CardContent>
                   </Card>
                 );
               })}
