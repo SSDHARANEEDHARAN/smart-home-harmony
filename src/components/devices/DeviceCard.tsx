@@ -522,14 +522,14 @@ export function DeviceCard({
           </p>
         )}
         
-        {/* Bottom: Device name in quotes + Status icons */}
+        {/* Bottom: Device name in quotes + Status icons + Edit controls */}
         <div className="flex items-center justify-between mt-auto pt-3">
-          <span className="text-xs text-muted-foreground truncate max-w-[60%]">
+          <span className="text-xs text-muted-foreground truncate max-w-[40%]">
             "{device.name}"
           </span>
           
-          {/* Status Icons */}
-          <div className="flex items-center gap-1.5">
+          {/* Status Icons + Edit Controls */}
+          <div className="flex items-center gap-1">
             {hasAutomation && (
               <TooltipProvider>
                 <Tooltip>
@@ -566,10 +566,47 @@ export function DeviceCard({
                 </Tooltip>
               </TooltipProvider>
             )}
+            
+            {/* Edit Controls - inline with status icons */}
+            {showControls && (
+              <>
+                <ScheduleDialog deviceId={device.id} deviceName={device.name} />
+                
+                {onEdit && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={onEdit} className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {onDelete && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={onDelete} className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </>
+            )}
           </div>
         </div>
 
-        {/* Schedules List - Only on Devices page */}
+        {/* Schedules List - Only on Devices page, shown below main content */}
         {showControls && deviceRules.length > 0 && (
           <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
             <p className="text-xs text-muted-foreground mb-1">Schedules</p>
@@ -581,43 +618,6 @@ export function DeviceCard({
                 onDelete={() => deleteRule.mutate(rule.id)} 
               />
             ))}
-          </div>
-        )}
-
-        {/* Edit Controls - Only on Devices page */}
-        {showControls && (
-          <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
-            <ScheduleDialog deviceId={device.id} deviceName={device.name} />
-            
-            {onEdit && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={onEdit} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            
-            {onDelete && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={onDelete} className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
         )}
       </CardContent>
