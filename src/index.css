@@ -145,6 +145,19 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  /* Global responsive typography */
+  h1 {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  h2 {
+    @apply text-lg sm:text-xl;
+  }
+
+  h3 {
+    @apply text-base sm:text-lg;
+  }
 }
 
 @layer utilities {
@@ -184,6 +197,37 @@
   .neon-text {
     text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
   }
+
+  /* Responsive container */
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl;
+  }
+
+  /* Responsive card grid */
+  .card-grid {
+    @apply grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4;
+  }
+
+  /* Responsive flex header */
+  .header-responsive {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4;
+  }
+
+  /* Touch-friendly buttons on mobile */
+  @media (max-width: 640px) {
+    .btn-touch {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 /* Custom scrollbar */
@@ -203,4 +247,12 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 480px) {
+  .dialog-content {
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 4rem) !important;
+  }
 }

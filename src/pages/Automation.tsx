@@ -65,16 +65,16 @@ export default function Automation() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-responsive py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-6 sm:mb-8 header-responsive">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Settings className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Automation</h1>
-              <p className="text-muted-foreground">
+              <h1 className="font-bold">Automation</h1>
+              <p className="text-muted-foreground text-sm">
                 {activeRules} active rule{activeRules !== 1 ? 's' : ''}
               </p>
             </div>
@@ -84,11 +84,11 @@ export default function Automation() {
 
         {/* Warning when automation is disabled */}
         {!automationEnabled && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-4 sm:mb-6">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Automation Disabled</AlertTitle>
-            <AlertDescription className="flex items-center justify-between">
-              <span>Enable "Automation Triggers" in Settings to create and manage automation rules.</span>
+            <AlertTitle className="text-sm sm:text-base">Automation Disabled</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-xs sm:text-sm">Enable "Automation Triggers" in Settings to create rules.</span>
               <Link to="/settings">
                 <Button variant="outline" size="sm">
                   Go to Settings
@@ -100,10 +100,10 @@ export default function Automation() {
 
         {/* Rules List */}
         {rules.length === 0 ? (
-          <div className="text-center py-12 glass rounded-xl border border-border/50">
-            <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No automation rules yet</h3>
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-8 sm:py-12 glass rounded-xl border border-border/50">
+            <Clock className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="font-semibold mb-2">No automation rules yet</h3>
+            <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">
               {automationEnabled 
                 ? 'Create rules to automate your devices on a schedule'
                 : 'Enable automation triggers in Settings to create rules'}
@@ -111,7 +111,7 @@ export default function Automation() {
             {automationEnabled && <CreateAutomationDialog devices={devices} />}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             {rules.map((rule) => (
               <AutomationRuleCard
                 key={rule.id}

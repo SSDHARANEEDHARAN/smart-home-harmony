@@ -66,41 +66,44 @@ export default function Settings() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-responsive py-6 sm:py-8 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="header-responsive mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-foreground/10 flex items-center justify-center">
-              <SettingsIcon className="w-6 h-6 text-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-foreground/10 flex items-center justify-center">
+              <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Settings</h1>
-              <p className="text-muted-foreground">Manage your preferences</p>
+              <h1 className="font-bold">Settings</h1>
+              <p className="text-muted-foreground text-sm">Manage your preferences</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleReset} className="gap-2">
+          <Button variant="outline" onClick={handleReset} className="gap-2" size="sm">
             <RotateCcw className="w-4 h-4" />
-            Reset All
+            <span className="hidden sm:inline">Reset All</span>
+            <span className="sm:hidden">Reset</span>
           </Button>
         </div>
 
         <Tabs defaultValue="notifications" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="w-4 h-4" />
-              Notifications
+          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto">
+            <TabsTrigger value="notifications" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Notifications</span>
+              <span className="xs:hidden">Notify</span>
             </TabsTrigger>
-            <TabsTrigger value="voice" className="gap-2">
-              <Mic className="w-4 h-4" />
-              Voice
+            <TabsTrigger value="voice" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Mic className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Voice</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="gap-2">
-              <Palette className="w-4 h-4" />
-              Appearance
+            <TabsTrigger value="appearance" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Appearance</span>
+              <span className="xs:hidden">Theme</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="gap-2">
-              <User className="w-4 h-4" />
-              Account
+            <TabsTrigger value="account" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Account</span>
             </TabsTrigger>
           </TabsList>
 
