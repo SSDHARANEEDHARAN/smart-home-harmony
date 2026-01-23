@@ -472,38 +472,38 @@ export function DeviceCard({
     );
   }
 
-  // Full mode: detailed card with controls (for Devices page)
+  // Full mode: same card style as compact, with edit controls (for Devices page)
   return (
     <Card 
       className={cn(
         "relative overflow-hidden transition-all duration-500 border-border/50 internal-glow rounded-xl",
         device.is_on && "glow-active internal-border-glow border-foreground/20",
-        "min-h-[120px] p-3"
+        "min-h-[140px] p-4"
       )} 
       style={cardStyle}
     >
       <CardContent className="relative z-10 p-0 h-full flex flex-col">
-        {/* Device Icon - Top */}
-        <div className="flex items-center justify-center">
-          <div className={cn(
-            "flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300",
-            device.is_on ? "bg-foreground/10" : "bg-muted"
-          )} style={{
-            color: device.is_on ? device.glow_color : undefined
-          }}>
-            <DeviceIcon 
-              type={device.device_type} 
+        {/* Top Row: Icon + Device Type on left, Toggle on right */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div 
               className={cn(
-                "w-6 h-6 transition-transform duration-500",
+                "transition-transform duration-500",
                 device.device_type === 'fan' && device.is_on && "animate-spin"
-              )} 
-            />
+              )}
+              style={{
+                color: device.is_on ? device.glow_color : undefined
+              }}
+            >
+              <DeviceIcon 
+                type={device.device_type} 
+                className="w-4 h-4" 
+              />
+            </div>
+            <span className="text-sm font-medium">{getDeviceTypeLabel()}</span>
           </div>
-        </div>
-
-        {/* Switch Label and Control - Centered */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-2">
-          <span className="text-xs font-medium text-foreground">{getSwitchLabel()}</span>
+          
+          {/* Right: Power Button/Toggle */}
           <DeviceToggle 
             isOn={device.is_on} 
             style={device.toggle_style} 
@@ -514,15 +514,62 @@ export function DeviceCard({
             step={device.slider_step || 10} 
           />
         </div>
-
-        {/* Room Name - Bottom */}
-        {device.room && (
+        
+        {/* Middle: Description */}
+        {device.description && (
           <p className="text-xs text-muted-foreground text-center mt-2 truncate">
-            {device.room.name}
+            {device.description}
           </p>
         )}
+        
+        {/* Bottom: Device name in quotes + Status icons */}
+        <div className="flex items-center justify-between mt-auto pt-3">
+          <span className="text-xs text-muted-foreground truncate max-w-[60%]">
+            "{device.name}"
+          </span>
+          
+          {/* Status Icons */}
+          <div className="flex items-center gap-1.5">
+            {hasAutomation && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Has schedule</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {hasScene && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Play className="w-3.5 h-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Part of scene</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {hasHighConsumption && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>High power consumption</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
 
-        {/* Schedules List */}
+        {/* Schedules List - Only on Devices page */}
         {showControls && deviceRules.length > 0 && (
           <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
             <p className="text-xs text-muted-foreground mb-1">Schedules</p>
@@ -537,7 +584,7 @@ export function DeviceCard({
           </div>
         )}
 
-        {/* Additional Controls */}
+        {/* Edit Controls - Only on Devices page */}
         {showControls && (
           <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
             <ScheduleDialog deviceId={device.id} deviceName={device.name} />
