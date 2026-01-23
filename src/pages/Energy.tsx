@@ -36,33 +36,33 @@ export default function Energy() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-responsive py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Energy</h1>
-              <p className="text-muted-foreground">Monitor your power consumption</p>
+              <h1 className="font-bold">Energy</h1>
+              <p className="text-muted-foreground text-sm">Monitor your power consumption</p>
             </div>
           </div>
         </div>
 
         {/* Stats Overview */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <EnergyStats devices={devices} />
         </div>
 
         {/* Charts and Lists */}
-        <div className="grid gap-6 lg:grid-cols-2 mb-8">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 mb-6 sm:mb-8">
           <RoomConsumptionChart devices={devices} rooms={rooms} />
           <DeviceConsumptionList devices={devices} />
         </div>
 
         {/* Usage History */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <DeviceUsageHistory logs={logs} devices={devices} />
         </div>
       </div>

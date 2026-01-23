@@ -110,21 +110,21 @@ export default function Devices() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-responsive py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-6 sm:mb-8 header-responsive">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-foreground/10 flex items-center justify-center">
-              <Cpu className="w-6 h-6 text-foreground" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-foreground/10 flex items-center justify-center">
+              <Cpu className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Devices</h1>
-              <p className="text-muted-foreground">
+              <h1 className="font-bold">Devices</h1>
+              <p className="text-muted-foreground text-sm">
                 {devices.length} device{devices.length !== 1 ? 's' : ''} total
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <HomeSelector showEditControls />
             <CreateRoomDialog />
             <CreateDeviceDialog rooms={filteredRooms} />
@@ -132,19 +132,19 @@ export default function Devices() {
         </div>
 
         {/* Rooms Section */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Home className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-xl font-semibold">Rooms</h2>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <Home className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            <h2 className="font-semibold">Rooms</h2>
           </div>
           {filteredRooms.length === 0 ? (
-            <div className="text-center py-8 glass border border-border/50">
-              <Home className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground mb-4">No rooms in this workspace. Create your first room.</p>
+            <div className="text-center py-6 sm:py-8 glass border border-border/50">
+              <Home className="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base">No rooms in this workspace. Create your first room.</p>
               <CreateRoomDialog />
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredRooms.map((room) => {
                 const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
                 const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
@@ -227,15 +227,15 @@ export default function Devices() {
 
         {/* Devices Section */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold">Devices</h2>
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <h2 className="font-semibold">Devices</h2>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -247,7 +247,7 @@ export default function Devices() {
             </div>
             <div className="flex gap-2">
               <Select value={roomFilter} onValueChange={setRoomFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Room" />
                 </SelectTrigger>
@@ -261,7 +261,7 @@ export default function Devices() {
                 </SelectContent>
               </Select>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -278,12 +278,12 @@ export default function Devices() {
 
           {/* Devices Grid - Grouped by Room */}
           {filteredDevices.length === 0 ? (
-            <div className="text-center py-12 glass border border-border/50">
-              <Cpu className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="text-center py-8 sm:py-12 glass border border-border/50">
+              <Cpu className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+              <h3 className="font-semibold mb-2">
                 {devices.length === 0 ? 'No devices yet' : 'No matching devices'}
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                 {devices.length === 0
                   ? 'Add your first device to get started'
                   : 'Try adjusting your filters'}
@@ -291,7 +291,7 @@ export default function Devices() {
               {devices.length === 0 && <CreateDeviceDialog rooms={filteredRooms} />}
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {filteredRooms.map((room) => {
                 if (roomFilter !== 'all' && room.id !== roomFilter) return null;
                 
@@ -299,14 +299,14 @@ export default function Devices() {
                 if (roomDevices.length === 0) return null;
 
                 return (
-                  <div key={room.id} className="space-y-4">
+                  <div key={room.id} className="space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">{room.name}</h3>
-                      <span className="text-sm text-muted-foreground">
+                      <h3 className="font-semibold">{room.name}</h3>
+                      <span className="text-xs sm:text-sm text-muted-foreground">
                         {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}
                       </span>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="card-grid">
                       {roomDevices.map((device) => (
                         <DeviceCard
                           key={device.id}
@@ -331,14 +331,14 @@ export default function Devices() {
 
               {/* Unassigned Devices */}
               {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Unassigned Devices</h3>
-                    <span className="text-sm text-muted-foreground">
+                    <h3 className="font-semibold">Unassigned Devices</h3>
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length} devices
                     </span>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="card-grid">
                     {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).map((device) => (
                       <DeviceCard
                         key={device.id}
