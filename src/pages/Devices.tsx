@@ -171,6 +171,7 @@ export default function Devices() {
                     } as React.CSSProperties}
                   >
                     <CardHeader className="pb-3">
+                      {/* Top row: Icon + Name + Power toggle */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <IconComponent 
@@ -181,36 +182,41 @@ export default function Devices() {
                           />
                           <CardTitle className="text-base">{room.name}</CardTitle>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {/* Active count badge */}
-                          {roomDevices.length > 0 && (
-                            <span className={cn(
-                              "px-2 py-1 rounded text-xs font-medium",
-                              activeCount > 0 
-                                ? "bg-primary/20 text-primary" 
-                                : "bg-muted text-muted-foreground"
-                            )}>
-                              {activeCount}/{roomDevices.length}
-                            </span>
-                          )}
-                          {/* Power toggle for room */}
-                          {roomDevices.length > 0 && (
-                            <Button
-                              variant={allOn ? 'default' : 'outline'}
-                              size="icon"
-                              onClick={handleToggleAllInRoom}
-                              className={cn(
-                                "w-8 h-8 rounded-full transition-all duration-300",
-                                allOn && "shadow-lg"
-                              )}
-                              style={{
-                                backgroundColor: allOn ? activeGlowColor : undefined,
-                                boxShadow: allOn ? `0 0 10px ${activeGlowColor}40` : undefined,
-                              }}
-                            >
-                              <Power className={cn("w-3.5 h-3.5", allOn ? "text-background" : "text-foreground")} />
-                            </Button>
-                          )}
+                        {/* Power toggle for room */}
+                        {roomDevices.length > 0 && (
+                          <Button
+                            variant={allOn ? 'default' : 'outline'}
+                            size="icon"
+                            onClick={handleToggleAllInRoom}
+                            className={cn(
+                              "w-8 h-8 rounded-full transition-all duration-300",
+                              allOn && "shadow-lg"
+                            )}
+                            style={{
+                              backgroundColor: allOn ? activeGlowColor : undefined,
+                              boxShadow: allOn ? `0 0 10px ${activeGlowColor}40` : undefined,
+                            }}
+                          >
+                            <Power className={cn("w-3.5 h-3.5", allOn ? "text-background" : "text-foreground")} />
+                          </Button>
+                        )}
+                      </div>
+                      {/* Bottom row: Badge + Edit/Delete buttons */}
+                      <div className="flex items-center justify-between mt-3">
+                        {/* Active count badge */}
+                        {roomDevices.length > 0 ? (
+                          <span className={cn(
+                            "px-2 py-1 rounded text-xs font-medium",
+                            activeCount > 0 
+                              ? "bg-primary/20 text-primary" 
+                              : "bg-muted text-muted-foreground"
+                          )}>
+                            {activeCount}/{roomDevices.length}
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
