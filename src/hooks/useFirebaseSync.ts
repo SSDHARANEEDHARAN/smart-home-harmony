@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useHome } from '@/contexts/HomeContext';
 import { useDevices } from '@/hooks/useDevices';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   subscribeToRelayChanges, 
   subscribeToConnectionState,
@@ -12,8 +13,12 @@ import { supabase } from '@/integrations/supabase/client';
 export function useFirebaseSync() {
   const { currentHomeId, currentHome } = useHome();
   const { devices } = useDevices();
+  const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Track last known states to detect hardware changes
+  const lastKnownStates = useRef<Map<number, boolean>>(new Map());
 
   // Check connection status
   useEffect(() => {
@@ -31,6 +36,15 @@ export function useFirebaseSync() {
 
     return unsubscribe;
   }, [currentHomeId]);
+
+  // Initialize last known states from devices
+  useEffect(() => {
+    devices.forEach(device => {
+      if (device.relay_pin && !lastKnownStates.current.has(device.relay_pin)) {
+        lastKnownStates.current.set(device.relay_pin, device.is_on);
+      }
+    });
+  }, [devices]);
 
   // Subscribe to relay changes from Firebase and sync to Supabase
   useEffect(() => {
@@ -54,14 +68,37 @@ export function useFirebaseSync() {
         const device = devicesWithRelays.find(d => d.relay_pin === relayPin);
         
         if (device && device.is_on !== state) {
-          console.log(`Firebase sync: relay${relayPin} changed to ${state}, updating device ${device.name}`);
+          const previousState = lastKnownStates.current.get(relayPin) ?? device.is_on;
           
-          // Update device in Supabase (this will trigger React Query invalidation)
+          console.log(`Firebase sync: relay${relayPin} changed to ${state} (hardware), updating device ${device.name}`);
+          
+          // Update device in Supabase
           try {
             await supabase
               .from('devices')
               .update({ is_on: state })
               .eq('id', device.id);
+            
+            // Log as hardware change
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase.from('relay_history').insert([{
+                user_id: user.id,
+                device_id: device.id,
+                relay_pin: relayPin,
+                device_name: device.name,
+                previous_state: previousState,
+                new_state: state,
+                source: 'hardware',
+              }]);
+            }
+
+            // Update last known state
+            lastKnownStates.current.set(relayPin, state);
+            
+            // Invalidate queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ['devices'] });
+            queryClient.invalidateQueries({ queryKey: ['relay-history'] });
           } catch (error) {
             console.error('Failed to sync device state from Firebase:', error);
           }
@@ -70,7 +107,7 @@ export function useFirebaseSync() {
     );
 
     return unsubscribe;
-  }, [currentHomeId, currentHome, devices, isConnected]);
+  }, [currentHomeId, currentHome, devices, isConnected, queryClient]);
 
   return {
     isConnected,

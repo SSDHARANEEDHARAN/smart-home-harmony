@@ -5,10 +5,13 @@ import { EnergyStats } from '@/components/energy/EnergyStats';
 import { DeviceConsumptionList } from '@/components/energy/DeviceConsumptionList';
 import { RoomConsumptionChart } from '@/components/energy/RoomConsumptionChart';
 import { DeviceUsageHistory } from '@/components/energy/DeviceUsageHistory';
+import { RelayStatusPanel } from '@/components/relay/RelayStatusPanel';
+import { RelayHistoryLog } from '@/components/energy/RelayHistoryLog';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useEnergyStats } from '@/hooks/useEnergyStats';
+import { useFirebaseSync } from '@/hooks/useFirebaseSync';
 import { Loader2, Zap } from 'lucide-react';
 
 export default function Energy() {
@@ -17,6 +20,9 @@ export default function Energy() {
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { data: logs = [], isLoading: logsLoading } = useEnergyStats();
+
+  // Enable Firebase bi-directional sync
+  useFirebaseSync();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,6 +56,11 @@ export default function Energy() {
           </div>
         </div>
 
+        {/* Relay Status Panel */}
+        <div className="mb-6 sm:mb-8">
+          <RelayStatusPanel />
+        </div>
+
         {/* Stats Overview */}
         <div className="mb-6 sm:mb-8">
           <EnergyStats devices={devices} />
@@ -59,6 +70,11 @@ export default function Energy() {
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 mb-6 sm:mb-8">
           <RoomConsumptionChart devices={devices} rooms={rooms} />
           <DeviceConsumptionList devices={devices} />
+        </div>
+
+        {/* Relay Activity Log */}
+        <div className="mb-6 sm:mb-8">
+          <RelayHistoryLog />
         </div>
 
         {/* Usage History */}
