@@ -95,6 +95,10 @@ export function useDevices() {
 
   const toggleDevice = useMutation({
     mutationFn: async ({ id, is_on, relay_pin }: { id: string; is_on: boolean; relay_pin?: number | null }) => {
+      // Get the device for previous state
+      const device = devices.find(d => d.id === id);
+      const previousState = device?.is_on ?? null;
+
       // Update the device state in database
       const { data, error } = await supabase
         .from('devices')
@@ -104,6 +108,26 @@ export function useDevices() {
         .single();
       
       if (error) throw error;
+
+      // Log relay history for web UI changes
+      if (relay_pin) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('relay_history').insert([{
+              user_id: user.id,
+              device_id: id,
+              relay_pin,
+              device_name: data.name,
+              previous_state: previousState,
+              new_state: is_on,
+              source: 'web',
+            }]);
+          }
+        } catch (historyError) {
+          console.error('Failed to log relay history:', historyError);
+        }
+      }
 
       // Sync with Firebase RTDB if relay_pin is configured and home has Firebase config
       if (relay_pin && currentHome?.firebaseConfig?.apiKey) {
@@ -134,6 +158,7 @@ export function useDevices() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['devices'] });
+      queryClient.invalidateQueries({ queryKey: ['relay-history'] });
       toast.success(`${data.name} turned ${data.is_on ? 'on' : 'off'}`);
     },
     onError: (error) => {

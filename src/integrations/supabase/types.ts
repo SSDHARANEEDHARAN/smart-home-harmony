@@ -230,6 +230,50 @@ export type Database = {
         }
         Relationships: []
       }
+      relay_history: {
+        Row: {
+          device_id: string | null
+          device_name: string | null
+          id: string
+          new_state: boolean
+          previous_state: boolean | null
+          relay_pin: number | null
+          source: string
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          device_id?: string | null
+          device_name?: string | null
+          id?: string
+          new_state: boolean
+          previous_state?: boolean | null
+          relay_pin?: number | null
+          source?: string
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string | null
+          device_name?: string | null
+          id?: string
+          new_state?: boolean
+          previous_state?: boolean | null
+          relay_pin?: number | null
+          source?: string
+          triggered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relay_history_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           created_at: string

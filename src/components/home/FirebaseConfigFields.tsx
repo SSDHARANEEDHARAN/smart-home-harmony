@@ -26,43 +26,78 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
       try {
         parsed = JSON.parse(input);
       } catch {
-        // Try to extract config object from JS code
-        let cleanInput = input.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-        
-        const markerRegex = /(apiKey|projectId|authDomain)\s*:/;
-        const match = cleanInput.match(markerRegex);
-        
-        let startIndex = -1;
-        if (match && match.index !== undefined) {
-          startIndex = cleanInput.lastIndexOf('{', match.index);
-        } else {
-          startIndex = cleanInput.indexOf('{');
+        // Remove all comments (single-line and multi-line)
+        let cleanInput = input
+          .replace(/\/\/.*$/gm, '')           // Remove single-line comments
+          .replace(/\/\*[\s\S]*?\*\//g, '')   // Remove multi-line comments
+          .replace(/import\s+.*?from\s+['"][^'"]+['"];?/g, '') // Remove import statements
+          .replace(/const\s+\w+\s*=\s*initializeApp\([^)]*\);?/g, '') // Remove initializeApp
+          .replace(/const\s+\w+\s*=\s*getAnalytics\([^)]*\);?/g, '') // Remove getAnalytics
+          .replace(/const\s+\w+\s*=\s*getDatabase\([^)]*\);?/g, '') // Remove getDatabase
+          .replace(/const\s+\w+\s*=\s*getAuth\([^)]*\);?/g, '') // Remove getAuth
+          .replace(/export\s+/g, '')          // Remove export keywords
+          .trim();
+
+        // Find the config object - look for firebaseConfig or any object with apiKey
+        const configPatterns = [
+          /const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\});?/,
+          /const\s+config\s*=\s*(\{[\s\S]*?\});?/,
+          /firebaseConfig\s*=\s*(\{[\s\S]*?\});?/,
+        ];
+
+        let configMatch: RegExpMatchArray | null = null;
+        for (const pattern of configPatterns) {
+          configMatch = cleanInput.match(pattern);
+          if (configMatch) break;
         }
+
+        let jsonString = '';
         
-        if (startIndex === -1) throw new Error('No configuration object found');
-        
-        let balance = 0;
-        let endIndex = -1;
-        for (let i = startIndex; i < cleanInput.length; i++) {
-          if (cleanInput[i] === '{') balance++;
-          else if (cleanInput[i] === '}') {
-            balance--;
-            if (balance === 0) {
-              endIndex = i + 1;
-              break;
+        if (configMatch) {
+          jsonString = configMatch[1];
+        } else {
+          // Try to find any object containing apiKey
+          const markerRegex = /(apiKey|databaseURL)\s*:/;
+          const match = cleanInput.match(markerRegex);
+          
+          if (!match || match.index === undefined) {
+            throw new Error('No configuration object found');
+          }
+          
+          // Find the opening brace before the marker
+          let startIndex = cleanInput.lastIndexOf('{', match.index);
+          if (startIndex === -1) throw new Error('No configuration object found');
+          
+          // Find the matching closing brace
+          let balance = 0;
+          let endIndex = -1;
+          for (let i = startIndex; i < cleanInput.length; i++) {
+            if (cleanInput[i] === '{') balance++;
+            else if (cleanInput[i] === '}') {
+              balance--;
+              if (balance === 0) {
+                endIndex = i + 1;
+                break;
+              }
             }
           }
+          
+          if (endIndex === -1) throw new Error('Unbalanced braces');
+          
+          jsonString = cleanInput.substring(startIndex, endIndex);
         }
-        
-        if (endIndex === -1) throw new Error('Unbalanced braces');
-        
-        let cleanJson = cleanInput.substring(startIndex, endIndex);
-        cleanJson = cleanJson.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":');
-        cleanJson = cleanJson.replace(/:\s*'([^']*)'/g, ': "$1"');
-        cleanJson = cleanJson.replace(/,\s*}/g, '}');
-        cleanJson = cleanJson.replace(/,\s*]/g, ']');
 
-        parsed = JSON.parse(cleanJson);
+        // Clean up the JSON string
+        jsonString = jsonString
+          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')  // Quote keys
+          .replace(/:\s*'([^']*)'/g, ': "$1"')                     // Single to double quotes
+          .replace(/,\s*}/g, '}')                                   // Remove trailing commas
+          .replace(/,\s*]/g, ']')                                   // Remove trailing commas in arrays
+          .replace(/\n/g, ' ')                                      // Remove newlines
+          .replace(/\s+/g, ' ')                                     // Normalize spaces
+          .trim();
+
+        parsed = JSON.parse(jsonString);
       }
 
       // Auto-fill the fields
@@ -82,6 +117,7 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
       setPasteValue('');
       toast.success('Firebase config auto-filled!');
     } catch (e: any) {
+      console.error('Config parse error:', e);
       toast.error('Failed to parse config: ' + e.message);
     }
   };
