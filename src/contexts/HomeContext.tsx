@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { initializeFirebaseForHome, cleanupFirebaseInstance } from '@/services/firebaseService';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface FirebaseConfig {
   apiKey?: string;
@@ -11,7 +13,6 @@ export interface FirebaseConfig {
   appId?: string;
   measurementId?: string;
   databaseURL?: string;
-  // Auth credentials for Firebase
   authEmail?: string;
   authPassword?: string;
 }
@@ -20,6 +21,7 @@ export interface Home {
   id: string;
   name: string;
   firebaseConfig?: FirebaseConfig;
+  position?: number;
 }
 
 interface HomeContextType {
@@ -32,40 +34,79 @@ interface HomeContextType {
   deleteHome: (id: string) => void;
   updateHome: (id: string, name: string, firebaseConfig?: FirebaseConfig) => void;
   reorderHomes: (newOrder: Home[]) => void;
+  isLoading: boolean;
 }
 
-const STORAGE_KEY = 'smarthome-homes';
-
 const DEFAULT_HOMES: Home[] = [
-  { id: 'home', name: 'Home' },
+  { id: 'home', name: 'Home', position: 0 },
 ];
 
 const HomeContext = createContext<HomeContextType | undefined>(undefined);
 
 export function HomeProvider({ children }: { children: ReactNode }) {
-  const [homes, setHomes] = useState<Home[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return DEFAULT_HOMES;
-      }
-    }
-    return DEFAULT_HOMES;
-  });
+  const { user, loading: authLoading } = useAuth();
+  const [homes, setHomes] = useState<Home[]>(DEFAULT_HOMES);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [currentHomeId, setCurrentHomeId] = useState(() => {
     const stored = localStorage.getItem('smarthome-current-home');
     return stored || 'home';
   });
 
-  const currentHome = homes.find(h => h.id === currentHomeId);
+  const currentHome = homes.find(h => h.id === currentHomeId) || homes[0];
 
-  // Persist homes to localStorage
+  // Fetch homes from database when user is authenticated
+  const fetchHomes = useCallback(async () => {
+    if (!user) {
+      setHomes(DEFAULT_HOMES);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('home_configs')
+        .select('*')
+        .order('position', { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const loadedHomes: Home[] = data.map((config: any) => ({
+          id: config.home_id,
+          name: config.name,
+          firebaseConfig: config.firebase_config || undefined,
+          position: config.position,
+        }));
+        setHomes(loadedHomes);
+        
+        // Set current home to first if current doesn't exist
+        if (!loadedHomes.find(h => h.id === currentHomeId)) {
+          setCurrentHomeId(loadedHomes[0].id);
+        }
+      } else {
+        // Create default home for new user
+        await supabase.from('home_configs').insert([{
+          user_id: user.id,
+          home_id: 'home',
+          name: 'Home',
+          position: 0,
+        }]);
+        setHomes(DEFAULT_HOMES);
+      }
+    } catch (error) {
+      console.error('Failed to fetch homes:', error);
+      setHomes(DEFAULT_HOMES);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, currentHomeId]);
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(homes));
-  }, [homes]);
+    if (!authLoading) {
+      fetchHomes();
+    }
+  }, [authLoading, fetchHomes]);
 
   // Persist current home selection
   useEffect(() => {
@@ -86,23 +127,49 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     });
   }, [homes]);
 
-  // For now, all rooms belong to 'home' - this can be extended with database
   const getHomeForRoom = (roomId: string) => {
-    return 'home';
+    return currentHomeId;
   };
 
-  const addHome = (name: string, firebaseConfig?: FirebaseConfig) => {
+  const addHome = async (name: string, firebaseConfig?: FirebaseConfig) => {
     const id = `home-${Date.now()}`;
-    setHomes(prev => [...prev, { id, name, firebaseConfig }]);
+    const position = homes.length;
+
+    if (user) {
+      try {
+        await supabase.from('home_configs').insert([{
+          user_id: user.id,
+          home_id: id,
+          name,
+          firebase_config: firebaseConfig as any || null,
+          position,
+        }]);
+      } catch (error) {
+        console.error('Failed to save home:', error);
+      }
+    }
+
+    setHomes(prev => [...prev, { id, name, firebaseConfig, position }]);
     toast.success(`Created "${name}" workspace`);
   };
 
-  const deleteHome = (id: string) => {
+  const deleteHome = async (id: string) => {
     const home = homes.find(h => h.id === id);
     cleanupFirebaseInstance(id);
+
+    if (user) {
+      try {
+        await supabase
+          .from('home_configs')
+          .delete()
+          .eq('home_id', id);
+      } catch (error) {
+        console.error('Failed to delete home:', error);
+      }
+    }
+
     setHomes(prev => prev.filter(h => h.id !== id));
     
-    // Switch to first available home if current was deleted
     if (currentHomeId === id) {
       const remaining = homes.filter(h => h.id !== id);
       if (remaining.length > 0) {
@@ -115,7 +182,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateHome = (id: string, name: string, firebaseConfig?: FirebaseConfig) => {
+  const updateHome = async (id: string, name: string, firebaseConfig?: FirebaseConfig) => {
     // Reinitialize Firebase if config changed
     if (firebaseConfig?.apiKey && firebaseConfig?.databaseURL) {
       initializeFirebaseForHome(
@@ -127,15 +194,47 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     } else {
       cleanupFirebaseInstance(id);
     }
-    
+
+    const home = homes.find(h => h.id === id);
+
+    if (user) {
+      try {
+        await supabase
+          .from('home_configs')
+          .upsert([{
+            user_id: user.id,
+            home_id: id,
+            name,
+            firebase_config: firebaseConfig as any || null,
+            position: home?.position || 0,
+          }], { onConflict: 'user_id,home_id' });
+      } catch (error) {
+        console.error('Failed to update home:', error);
+      }
+    }
+
     setHomes(prev => prev.map(h => 
       h.id === id ? { ...h, name, firebaseConfig } : h
     ));
-    toast.success(`Updated "${name}" workspace`);
+    toast.success(`Saved "${name}" settings`);
   };
 
-  const reorderHomes = (newOrder: Home[]) => {
+  const reorderHomes = async (newOrder: Home[]) => {
     setHomes(newOrder);
+
+    if (user) {
+      try {
+        const updates = newOrder.map((home, index) => 
+          supabase
+            .from('home_configs')
+            .update({ position: index })
+            .eq('home_id', home.id)
+        );
+        await Promise.all(updates);
+      } catch (error) {
+        console.error('Failed to update positions:', error);
+      }
+    }
   };
 
   return (
@@ -149,6 +248,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       deleteHome,
       updateHome,
       reorderHomes,
+      isLoading,
     }}>
       {children}
     </HomeContext.Provider>
