@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { DeviceCard } from '@/components/devices/DeviceCard';
+import { RoomGroupCard } from '@/components/rooms/RoomGroupCard';
 import { SceneCard } from '@/components/scenes/SceneCard';
 import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
 import { VoiceControl } from '@/components/voice/VoiceControl';
@@ -17,7 +18,6 @@ import { useHome } from '@/contexts/HomeContext';
 import { useFirebaseSync } from '@/hooks/useFirebaseSync';
 import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { Loader2, Home, Zap, Plus, Power, Check } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
@@ -186,29 +186,14 @@ export default function Dashboard() {
                 const roomDevices = devices.filter((d) => d.room_id === room.id);
                 if (roomDevices.length === 0) return null;
 
-                const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
-
                 return (
-                  <div key={room.id}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <IconComponent className="w-4 h-4 text-muted-foreground" />
-                      <h3 className="font-medium text-muted-foreground">{room.name}</h3>
-                      <span className="text-xs text-muted-foreground">
-                        ({roomDevices.filter((d) => d.is_on).length}/{roomDevices.length} on)
-                      </span>
-                    </div>
-                    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {roomDevices.map((device) => (
-                        <DeviceCard
-                          key={device.id}
-                          device={device}
-                          onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
-                          onValueChange={(value) => handleValueChange(device.id, value)}
-                          compact
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <RoomGroupCard
+                    key={room.id}
+                    room={room}
+                    devices={roomDevices}
+                    onToggleDevice={handleToggleDevice}
+                    onValueChange={handleValueChange}
+                  />
                 );
               })}
 
