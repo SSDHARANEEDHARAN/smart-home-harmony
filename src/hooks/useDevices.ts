@@ -3,9 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Device, DeviceType, ToggleStyle } from '@/types/smarthome';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { updateFirebaseRelay } from '@/services/firebaseService';
+import { useHome } from '@/contexts/HomeContext';
 
 export function useDevices() {
   const queryClient = useQueryClient();
+  const { currentHomeId, currentHome } = useHome();
 
   const { data: devices = [], isLoading } = useQuery({
     queryKey: ['devices'],
@@ -102,7 +105,20 @@ export function useDevices() {
       
       if (error) throw error;
 
-      // Trigger relay if pin is configured
+      // Sync with Firebase RTDB if relay_pin is configured and home has Firebase config
+      if (relay_pin && currentHome?.firebaseConfig?.apiKey) {
+        try {
+          const success = await updateFirebaseRelay(currentHomeId, relay_pin, is_on);
+          if (success) {
+            console.log(`Firebase RTDB synced: relay${relay_pin} = ${is_on}`);
+          }
+        } catch (firebaseError) {
+          console.error('Firebase sync failed:', firebaseError);
+          // Don't throw - device state is already updated in Supabase
+        }
+      }
+
+      // Also trigger Supabase edge function relay if configured
       if (relay_pin) {
         try {
           await supabase.functions.invoke('trigger-relay', {
