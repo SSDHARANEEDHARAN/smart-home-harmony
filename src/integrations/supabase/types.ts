@@ -173,6 +173,39 @@ export type Database = {
           },
         ]
       }
+      home_configs: {
+        Row: {
+          created_at: string
+          firebase_config: Json | null
+          home_id: string
+          id: string
+          name: string
+          position: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          firebase_config?: Json | null
+          home_id: string
+          id?: string
+          name: string
+          position?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          firebase_config?: Json | null
+          home_id?: string
+          id?: string
+          name?: string
+          position?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
