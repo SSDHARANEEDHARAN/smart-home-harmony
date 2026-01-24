@@ -4,10 +4,12 @@ import { Edit2, Trash2, Clock, Calendar, X, Pencil, Play, AlertTriangle } from '
 import { Device, AutomationRule } from '@/types/smarthome';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceToggle } from './DeviceToggle';
+import { SourceIndicator } from './SourceIndicator';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
 import { useScenes } from '@/hooks/useScenes';
+import { useDeviceLastSource } from '@/hooks/useDeviceLastSource';
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -370,6 +372,10 @@ export function DeviceCard({
   // Check for high power consumption (emergency/overcurrent indicator)
   const hasHighConsumption = device.power_consumption && device.power_consumption > 1000;
 
+  // Get last source for this device
+  const { getLastSource } = useDeviceLastSource();
+  const lastSource = getLastSource(device.id);
+
   // Compact mode: minimal horizontal layout (for Dashboard)
   if (compact) {
     return (
@@ -429,6 +435,14 @@ export function DeviceCard({
             
             {/* Status Icons */}
             <div className="flex items-center gap-1.5">
+              {/* Source indicator */}
+              {lastSource && (
+                <SourceIndicator 
+                  source={lastSource.source} 
+                  triggeredAt={lastSource.triggered_at}
+                  compact
+                />
+              )}
               {hasAutomation && (
                 <TooltipProvider>
                   <Tooltip>
@@ -530,6 +544,14 @@ export function DeviceCard({
           
           {/* Status Icons + Edit Controls */}
           <div className="flex items-center gap-1">
+            {/* Source indicator */}
+            {lastSource && (
+              <SourceIndicator 
+                source={lastSource.source} 
+                triggeredAt={lastSource.triggered_at}
+                compact
+              />
+            )}
             {hasAutomation && (
               <TooltipProvider>
                 <Tooltip>
