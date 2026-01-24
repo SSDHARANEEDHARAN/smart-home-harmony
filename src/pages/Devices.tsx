@@ -7,10 +7,12 @@ import { EditDeviceDialog } from '@/components/devices/EditDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
 import { HomeSelector } from '@/components/home/HomeSelector';
+import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useHome } from '@/contexts/HomeContext';
+import { useFirebaseSync } from '@/hooks/useFirebaseSync';
 import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil, Power } from 'lucide-react';
 import { Room, Device } from '@/types/smarthome';
 import { Input } from '@/components/ui/input';
@@ -42,6 +44,9 @@ export default function Devices() {
   const { rooms, isLoading: roomsLoading, deleteRoom } = useRooms();
   const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice, updateDevice } = useDevices();
   const { getHomeForRoom, currentHomeId } = useHome();
+
+  // Enable Firebase bi-directional sync
+  useFirebaseSync();
 
   const [search, setSearch] = useState('');
   const [roomFilter, setRoomFilter] = useState('all');
@@ -116,7 +121,10 @@ export default function Devices() {
           <div className="flex items-center gap-3">
             <Cpu className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
             <div>
-              <h1 className="font-bold">Devices</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold">Devices</h1>
+                <FirebaseStatusBadge variant="compact" />
+              </div>
               <p className="text-muted-foreground text-sm">
                 {devices.length} device{devices.length !== 1 ? 's' : ''} total
               </p>

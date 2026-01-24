@@ -9,11 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette, Moon, Sun, Laptop, Terminal, Volume2, Play } from 'lucide-react';
+import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette, Moon, Sun, Laptop, Terminal, Volume2, Play, Home } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useState } from 'react';
 import { SOUND_TYPES, playNotificationSound, SoundType } from '@/utils/sound';
+import { WorkspaceSettings } from '@/components/settings/WorkspaceSettings';
 import {
   Dialog,
   DialogContent,
@@ -85,11 +86,16 @@ export default function Settings() {
           </Button>
         </div>
 
-        <Tabs defaultValue="notifications" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto">
+        <Tabs defaultValue="workspaces" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-4 sm:mb-6 h-auto">
+            <TabsTrigger value="workspaces" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Home className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Workspaces</span>
+              <span className="xs:hidden">Home</span>
+            </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
               <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Notifications</span>
+              <span className="hidden xs:inline">Notify</span>
               <span className="xs:hidden">Notify</span>
             </TabsTrigger>
             <TabsTrigger value="voice" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
@@ -98,7 +104,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger value="appearance" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
               <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Appearance</span>
+              <span className="hidden xs:inline">Theme</span>
               <span className="xs:hidden">Theme</span>
             </TabsTrigger>
             <TabsTrigger value="account" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
@@ -106,6 +112,11 @@ export default function Settings() {
               <span>Account</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Workspaces Tab */}
+          <TabsContent value="workspaces">
+            <WorkspaceSettings />
+          </TabsContent>
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
