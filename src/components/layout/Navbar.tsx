@@ -2,6 +2,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Cpu, Zap, Workflow, Settings, LogOut, LogIn, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useHome } from '@/contexts/HomeContext';
+import { FirebaseActiveBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -16,6 +18,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { currentHome } = useHome();
 
   const handleLogout = async () => {
     await signOut();
@@ -26,14 +29,24 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50 safe-area-top">
       <div className="container-responsive">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo */}
+          {/* Logo + Active Workspace */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-foreground/10 flex items-center justify-center">
               <Home className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
             </div>
-            <span className="text-lg sm:text-xl font-bold text-foreground hidden xs:block">
-              SmartHome
-            </span>
+            <div className="hidden xs:flex flex-col">
+              <span className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                SmartHome
+              </span>
+              {user && currentHome && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {currentHome.name}
+                  </span>
+                  <FirebaseActiveBadge />
+                </div>
+              )}
+            </div>
           </Link>
 
           {/* Navigation Links - Desktop */}
