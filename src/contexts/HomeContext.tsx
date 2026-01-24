@@ -26,6 +26,7 @@ interface HomeContextType {
   addHome: (name: string, firebaseConfig?: FirebaseConfig) => void;
   deleteHome: (id: string) => void;
   updateHome: (id: string, name: string, firebaseConfig?: FirebaseConfig) => void;
+  reorderHomes: (newOrder: Home[]) => void;
 }
 
 const STORAGE_KEY = 'smarthome-homes';
@@ -99,6 +100,10 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     toast.success(`Updated "${name}" workspace`);
   };
 
+  const reorderHomes = (newOrder: Home[]) => {
+    setHomes(newOrder);
+  };
+
   return (
     <HomeContext.Provider value={{ 
       homes, 
@@ -108,6 +113,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       addHome,
       deleteHome,
       updateHome,
+      reorderHomes,
     }}>
       {children}
     </HomeContext.Provider>
