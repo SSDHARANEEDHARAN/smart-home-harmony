@@ -14,8 +14,7 @@ import { useVoiceControl } from '@/hooks/useVoiceControl';
 import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
 import { useSettings } from '@/hooks/useSettings';
 import { useHome } from '@/contexts/HomeContext';
-import { HomeSelector } from '@/components/home/HomeSelector';
-import { Loader2, Home, Zap, Plus, Power } from 'lucide-react';
+import { Loader2, Home, Zap, Plus, Power, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +25,7 @@ export default function Dashboard() {
   const { devices, isLoading: devicesLoading, toggleDevice, updateDevice } = useDevices();
   const { scenes, activateScene, deleteScene } = useScenes();
   const { settings } = useSettings();
-  const { getHomeForRoom, currentHomeId } = useHome();
+  const { homes, currentHomeId, setCurrentHomeId } = useHome();
 
   // Enable device notifications
   useDeviceNotifications(devices);
@@ -86,7 +85,33 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <HomeSelector />
+            {/* Home Cards - Simple display without dropdown */}
+            {homes.length > 1 ? (
+              <div className="flex items-center gap-2">
+                {homes.map((home) => (
+                  <button
+                    key={home.id}
+                    onClick={() => setCurrentHomeId(home.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                      home.id === currentHomeId
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                    )}
+                  >
+                    <Home className="w-4 h-4" />
+                    {home.name}
+                    {home.id === currentHomeId && <Check className="w-3 h-3" />}
+                  </button>
+                ))}
+              </div>
+            ) : homes.length === 1 ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground">
+                <Home className="w-4 h-4" />
+                {homes[0].name}
+              </div>
+            ) : null}
+            
             {/* Voice Control */}
             <VoiceControl
               isListening={voiceControl.isListening}
