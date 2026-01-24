@@ -2,12 +2,11 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Home as HomeIcon, Trash2, Pencil } from 'lucide-react';
+import { Plus, Home as HomeIcon, Trash2, Pencil, GripVertical } from 'lucide-react';
 import { useHome } from '@/contexts/HomeContext';
 import {
   Dialog,
@@ -32,13 +31,133 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { cn } from '@/lib/utils';
 
 interface HomeSelectorProps {
   showEditControls?: boolean;
 }
 
+interface Home {
+  id: string;
+  name: string;
+  firebaseConfig?: any;
+}
+
+interface SortableHomeItemProps {
+  home: Home;
+  isActive: boolean;
+  showEditControls: boolean;
+  onSelect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}
+
+function SortableHomeItem({ 
+  home, 
+  isActive, 
+  showEditControls, 
+  onSelect, 
+  onEdit, 
+  onDelete,
+  canDelete 
+}: SortableHomeItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: home.id, disabled: !showEditControls });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center justify-between gap-2 px-2 py-1.5 rounded-sm cursor-pointer hover:bg-accent group",
+        isDragging && "opacity-50 bg-accent"
+      )}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2">
+        {showEditControls && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-3 h-3 text-muted-foreground" />
+          </button>
+        )}
+        <HomeIcon className="w-4 h-4" />
+        <span className="text-sm">{home.name}</span>
+      </div>
+      
+      <div className="flex items-center gap-1">
+        {isActive && (
+          <span className="text-xs text-primary">Active</span>
+        )}
+        {showEditControls && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            >
+              <Pencil className="w-3 h-3" />
+            </Button>
+
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
-  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
+  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome, reorderHomes } = useHome();
   const [showAddHome, setShowAddHome] = useState(false);
   const [newHomeName, setNewHomeName] = useState('');
   const [newHomeFirebaseConfig, setNewHomeFirebaseConfig] = useState('');
@@ -52,19 +171,26 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
 
   const currentHome = homes.find((h) => h.id === currentHomeId) || homes[0];
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const parseFirebaseConfig = (input: string) => {
     if (!input.trim()) return undefined;
     
     try {
-      // First try standard JSON parse
       return JSON.parse(input);
     } catch (e) {
-      // If that fails, try to parse JS object snippet
       try {
-        // Remove comments first
         let cleanInput = input.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
         
-        // Find the start of the object
         const markerRegex = /(apiKey|projectId|authDomain)\s*:/;
         const match = cleanInput.match(markerRegex);
         
@@ -77,7 +203,6 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
         
         if (startIndex === -1) throw new Error('No configuration object found');
         
-        // Find the matching closing brace by counting
         let balance = 0;
         let endIndex = -1;
         for (let i = startIndex; i < cleanInput.length; i++) {
@@ -94,14 +219,8 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
         if (endIndex === -1) throw new Error('Unbalanced braces');
         
         let cleanJson = cleanInput.substring(startIndex, endIndex);
-        
-        // Quote keys that aren't quoted
         cleanJson = cleanJson.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":');
-        
-        // Fix single quotes to double quotes for values
         cleanJson = cleanJson.replace(/:\s*'([^']*)'/g, ': "$1"');
-        
-        // Remove trailing commas
         cleanJson = cleanJson.replace(/,\s*}/g, '}');
         cleanJson = cleanJson.replace(/,\s*]/g, ']');
 
@@ -157,6 +276,17 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = homes.findIndex((h) => h.id === active.id);
+      const newIndex = homes.findIndex((h) => h.id === over.id);
+      const newOrder = arrayMove(homes, oldIndex, newIndex);
+      reorderHomes(newOrder);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -169,63 +299,44 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
         <DropdownMenuContent align="end" className="w-64 bg-popover border-border">
           <DropdownMenuLabel>My Homes</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {homes.map((home) => (
-            <DropdownMenuItem
-              key={home.id}
-              onClick={() => setCurrentHomeId(home.id)}
-              className="gap-2 justify-between group"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={homes.map(h => h.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-center gap-2">
-                <HomeIcon className="w-4 h-4" />
-                {home.name}
-              </div>
-              
-              <div className="flex items-center gap-1">
-                {home.id === currentHomeId && (
-                  <span className="text-xs text-primary">Active</span>
-                )}
-                {showEditControls && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRenameHomeId(home.id);
-                        setRenameHomeName(home.name);
-                        setRenameHomeFirebaseConfig(home.firebaseConfig ? JSON.stringify(home.firebaseConfig, null, 2) : '');
-                        setShowRenameHome(true);
-                      }}
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-
-                    {homes.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setHomeToDelete(home.id);
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            </DropdownMenuItem>
-          ))}
+              {homes.map((home) => (
+                <SortableHomeItem
+                  key={home.id}
+                  home={home}
+                  isActive={home.id === currentHomeId}
+                  showEditControls={showEditControls}
+                  onSelect={() => setCurrentHomeId(home.id)}
+                  onEdit={() => {
+                    setRenameHomeId(home.id);
+                    setRenameHomeName(home.name);
+                    setRenameHomeFirebaseConfig(home.firebaseConfig ? JSON.stringify(home.firebaseConfig, null, 2) : '');
+                    setShowRenameHome(true);
+                  }}
+                  onDelete={() => setHomeToDelete(home.id)}
+                  canDelete={homes.length > 1}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           {showEditControls && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowAddHome(true)} className="gap-2">
+              <div
+                className="flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-pointer hover:bg-accent text-sm"
+                onClick={() => setShowAddHome(true)}
+              >
                 <Plus className="w-4 h-4" />
                 Add New Home
-              </DropdownMenuItem>
+              </div>
             </>
           )}
         </DropdownMenuContent>

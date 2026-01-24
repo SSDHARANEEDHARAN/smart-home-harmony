@@ -179,12 +179,7 @@ export default function Devices() {
                               color: activeCount > 0 ? activeGlowColor : undefined,
                             }}
                           />
-                          <div>
-                            <CardTitle className="text-base">{room.name}</CardTitle>
-                            <p className="text-xs text-muted-foreground">
-                              {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''} • {activeCount} active
-                            </p>
-                          </div>
+                          <CardTitle className="text-base">{room.name}</CardTitle>
                         </div>
                         <div className="flex items-center gap-2">
                           {/* Active count badge */}
