@@ -9,6 +9,7 @@ import {
   getFirebaseInstance 
 } from '@/services/firebaseService';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotify } from '@/hooks/useNotify';
 
 export function useFirebaseSync() {
   const { currentHomeId, currentHome } = useHome();
@@ -16,6 +17,7 @@ export function useFirebaseSync() {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { notifyHardwareTrigger } = useNotify();
   
   // Track last known states to detect hardware changes
   const lastKnownStates = useRef<Map<number, boolean>>(new Map());
@@ -71,6 +73,9 @@ export function useFirebaseSync() {
           const previousState = lastKnownStates.current.get(relayPin) ?? device.is_on;
           
           console.log(`Firebase sync: relay${relayPin} changed to ${state} (hardware), updating device ${device.name}`);
+
+          // Notify user about hardware trigger (physical switch)
+          notifyHardwareTrigger(device.name, state);
           
           // Update device in Supabase
           try {
