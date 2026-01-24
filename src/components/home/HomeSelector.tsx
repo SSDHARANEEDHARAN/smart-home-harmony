@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus, Home as HomeIcon, Trash2, Pencil, GripVertical } from 'lucide-react';
-import { useHome } from '@/contexts/HomeContext';
+import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import {
   Dialog,
   DialogContent,
@@ -27,10 +27,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { FirebaseConfigFields } from './FirebaseConfigFields';
 import {
   DndContext,
   closestCenter,
@@ -52,12 +51,6 @@ import { cn } from '@/lib/utils';
 
 interface HomeSelectorProps {
   showEditControls?: boolean;
-}
-
-interface Home {
-  id: string;
-  name: string;
-  firebaseConfig?: any;
 }
 
 interface SortableHomeItemProps {
@@ -116,6 +109,11 @@ function SortableHomeItem({
         )}
         <HomeIcon className="w-4 h-4" />
         <span className="text-sm">{home.name}</span>
+        {home.firebaseConfig?.apiKey && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/20 text-orange-500 rounded">
+            Firebase
+          </span>
+        )}
       </div>
       
       <div className="flex items-center gap-1">
@@ -160,14 +158,14 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome, reorderHomes } = useHome();
   const [showAddHome, setShowAddHome] = useState(false);
   const [newHomeName, setNewHomeName] = useState('');
-  const [newHomeFirebaseConfig, setNewHomeFirebaseConfig] = useState('');
+  const [newHomeFirebaseConfig, setNewHomeFirebaseConfig] = useState<FirebaseConfig>({});
   
   const [homeToDelete, setHomeToDelete] = useState<string | null>(null);
   
   const [showRenameHome, setShowRenameHome] = useState(false);
   const [renameHomeId, setRenameHomeId] = useState<string | null>(null);
   const [renameHomeName, setRenameHomeName] = useState('');
-  const [renameHomeFirebaseConfig, setRenameHomeFirebaseConfig] = useState('');
+  const [renameHomeFirebaseConfig, setRenameHomeFirebaseConfig] = useState<FirebaseConfig>({});
 
   const currentHome = homes.find((h) => h.id === currentHomeId) || homes[0];
 
@@ -182,71 +180,12 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
     })
   );
 
-  const parseFirebaseConfig = (input: string) => {
-    if (!input.trim()) return undefined;
-    
-    try {
-      return JSON.parse(input);
-    } catch (e) {
-      try {
-        let cleanInput = input.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-        
-        const markerRegex = /(apiKey|projectId|authDomain)\s*:/;
-        const match = cleanInput.match(markerRegex);
-        
-        let startIndex = -1;
-        if (match && match.index !== undefined) {
-          startIndex = cleanInput.lastIndexOf('{', match.index);
-        } else {
-          startIndex = cleanInput.indexOf('{');
-        }
-        
-        if (startIndex === -1) throw new Error('No configuration object found');
-        
-        let balance = 0;
-        let endIndex = -1;
-        for (let i = startIndex; i < cleanInput.length; i++) {
-          if (cleanInput[i] === '{') balance++;
-          else if (cleanInput[i] === '}') {
-            balance--;
-            if (balance === 0) {
-              endIndex = i + 1;
-              break;
-            }
-          }
-        }
-        
-        if (endIndex === -1) throw new Error('Unbalanced braces');
-        
-        let cleanJson = cleanInput.substring(startIndex, endIndex);
-        cleanJson = cleanJson.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":');
-        cleanJson = cleanJson.replace(/:\s*'([^']*)'/g, ': "$1"');
-        cleanJson = cleanJson.replace(/,\s*}/g, '}');
-        cleanJson = cleanJson.replace(/,\s*]/g, ']');
-
-        return JSON.parse(cleanJson);
-      } catch (parseError) {
-        console.error('Failed to parse config', parseError);
-        throw new Error('Invalid Configuration Format. Please ensure it is a valid JSON object or the standard Firebase config snippet.');
-      }
-    }
-  };
-
   const handleAddHome = () => {
     if (newHomeName.trim()) {
-      let config = undefined;
-      if (newHomeFirebaseConfig.trim()) {
-        try {
-          config = parseFirebaseConfig(newHomeFirebaseConfig);
-        } catch (e: any) {
-          toast.error(e.message);
-          return;
-        }
-      }
-
-      addHome(newHomeName.trim(), config);
+      const hasConfig = newHomeFirebaseConfig.apiKey && newHomeFirebaseConfig.databaseURL;
+      addHome(newHomeName.trim(), hasConfig ? newHomeFirebaseConfig : undefined);
       setNewHomeName('');
-      setNewHomeFirebaseConfig('');
+      setNewHomeFirebaseConfig({});
       setShowAddHome(false);
     }
   };
@@ -258,21 +197,12 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
 
   const handleRenameHome = () => {
     if (renameHomeId && renameHomeName.trim()) {
-      let config = undefined;
-      if (renameHomeFirebaseConfig.trim()) {
-        try {
-          config = parseFirebaseConfig(renameHomeFirebaseConfig);
-        } catch (e: any) {
-          toast.error(e.message);
-          return;
-        }
-      }
-
-      updateHome(renameHomeId, renameHomeName.trim(), config);
+      const hasConfig = renameHomeFirebaseConfig.apiKey && renameHomeFirebaseConfig.databaseURL;
+      updateHome(renameHomeId, renameHomeName.trim(), hasConfig ? renameHomeFirebaseConfig : undefined);
       setShowRenameHome(false);
       setRenameHomeId(null);
       setRenameHomeName('');
-      setRenameHomeFirebaseConfig('');
+      setRenameHomeFirebaseConfig({});
     }
   };
 
@@ -318,7 +248,7 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
                   onEdit={() => {
                     setRenameHomeId(home.id);
                     setRenameHomeName(home.name);
-                    setRenameHomeFirebaseConfig(home.firebaseConfig ? JSON.stringify(home.firebaseConfig, null, 2) : '');
+                    setRenameHomeFirebaseConfig(home.firebaseConfig || {});
                     setShowRenameHome(true);
                   }}
                   onDelete={() => setHomeToDelete(home.id)}
@@ -343,38 +273,28 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
       </DropdownMenu>
 
       <Dialog open={showAddHome} onOpenChange={setShowAddHome}>
-        <DialogContent>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Home</DialogTitle>
             <DialogDescription>
               Create a new workspace for your devices and rooms.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="home-name" className="text-right">
-                Name
-              </Label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="home-name">Name</Label>
               <Input
                 id="home-name"
                 value={newHomeName}
                 onChange={(e) => setNewHomeName(e.target.value)}
                 placeholder="e.g. Vacation Home"
-                className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="firebase-config" className="text-right pt-2">
-                Firebase Config (JSON)
-              </Label>
-              <Textarea
-                id="firebase-config"
-                value={newHomeFirebaseConfig}
-                onChange={(e) => setNewHomeFirebaseConfig(e.target.value)}
-                placeholder='Paste Firebase Config (JSON or JS snippet)'
-                className="col-span-3 h-32 font-mono text-xs"
-              />
-            </div>
+            
+            <FirebaseConfigFields 
+              config={newHomeFirebaseConfig}
+              onChange={setNewHomeFirebaseConfig}
+            />
           </div>
           <DialogFooter>
             <Button onClick={handleAddHome}>Create Home</Button>
@@ -383,38 +303,28 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
       </Dialog>
 
       <Dialog open={showRenameHome} onOpenChange={setShowRenameHome}>
-        <DialogContent>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Rename Home</DialogTitle>
+            <DialogTitle>Edit Home</DialogTitle>
             <DialogDescription>
-              Enter a new name for this workspace.
+              Update home settings and Firebase configuration.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rename-name" className="text-right">
-                Name
-              </Label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rename-name">Name</Label>
               <Input
                 id="rename-name"
                 value={renameHomeName}
                 onChange={(e) => setRenameHomeName(e.target.value)}
                 placeholder="e.g. My Home"
-                className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="rename-firebase-config" className="text-right pt-2">
-                Firebase Config (JSON)
-              </Label>
-              <Textarea
-                id="rename-firebase-config"
-                value={renameHomeFirebaseConfig}
-                onChange={(e) => setRenameHomeFirebaseConfig(e.target.value)}
-                placeholder='Paste Firebase Config (JSON or JS snippet)'
-                className="col-span-3 h-32 font-mono text-xs"
-              />
-            </div>
+            
+            <FirebaseConfigFields 
+              config={renameHomeFirebaseConfig}
+              onChange={setRenameHomeFirebaseConfig}
+            />
           </div>
           <DialogFooter>
             <Button onClick={handleRenameHome}>Save Changes</Button>

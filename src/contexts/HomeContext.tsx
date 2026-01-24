@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from 'sonner';
+import { initializeFirebaseForHome, cleanupFirebaseInstance } from '@/services/firebaseService';
 
-interface FirebaseConfig {
+export interface FirebaseConfig {
   apiKey?: string;
   authDomain?: string;
   projectId?: string;
@@ -10,9 +11,12 @@ interface FirebaseConfig {
   appId?: string;
   measurementId?: string;
   databaseURL?: string;
+  // Auth credentials for Firebase
+  authEmail?: string;
+  authPassword?: string;
 }
 
-interface Home {
+export interface Home {
   id: string;
   name: string;
   firebaseConfig?: FirebaseConfig;
@@ -21,6 +25,7 @@ interface Home {
 interface HomeContextType {
   homes: Home[];
   currentHomeId: string;
+  currentHome: Home | undefined;
   setCurrentHomeId: (id: string) => void;
   getHomeForRoom: (roomId: string) => string;
   addHome: (name: string, firebaseConfig?: FirebaseConfig) => void;
@@ -55,6 +60,8 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     return stored || 'home';
   });
 
+  const currentHome = homes.find(h => h.id === currentHomeId);
+
   // Persist homes to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(homes));
@@ -64,6 +71,20 @@ export function HomeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('smarthome-current-home', currentHomeId);
   }, [currentHomeId]);
+
+  // Initialize Firebase for homes with config
+  useEffect(() => {
+    homes.forEach(home => {
+      if (home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL) {
+        initializeFirebaseForHome(
+          home.id,
+          home.firebaseConfig,
+          home.firebaseConfig.authEmail,
+          home.firebaseConfig.authPassword
+        );
+      }
+    });
+  }, [homes]);
 
   // For now, all rooms belong to 'home' - this can be extended with database
   const getHomeForRoom = (roomId: string) => {
@@ -78,6 +99,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
 
   const deleteHome = (id: string) => {
     const home = homes.find(h => h.id === id);
+    cleanupFirebaseInstance(id);
     setHomes(prev => prev.filter(h => h.id !== id));
     
     // Switch to first available home if current was deleted
@@ -94,6 +116,18 @@ export function HomeProvider({ children }: { children: ReactNode }) {
   };
 
   const updateHome = (id: string, name: string, firebaseConfig?: FirebaseConfig) => {
+    // Reinitialize Firebase if config changed
+    if (firebaseConfig?.apiKey && firebaseConfig?.databaseURL) {
+      initializeFirebaseForHome(
+        id,
+        firebaseConfig,
+        firebaseConfig.authEmail,
+        firebaseConfig.authPassword
+      );
+    } else {
+      cleanupFirebaseInstance(id);
+    }
+    
     setHomes(prev => prev.map(h => 
       h.id === id ? { ...h, name, firebaseConfig } : h
     ));
@@ -107,7 +141,8 @@ export function HomeProvider({ children }: { children: ReactNode }) {
   return (
     <HomeContext.Provider value={{ 
       homes, 
-      currentHomeId, 
+      currentHomeId,
+      currentHome,
       setCurrentHomeId, 
       getHomeForRoom, 
       addHome,
