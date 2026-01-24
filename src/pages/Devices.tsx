@@ -6,7 +6,6 @@ import { CreateDeviceDialog } from '@/components/devices/CreateDeviceDialog';
 import { EditDeviceDialog } from '@/components/devices/EditDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
-import { HomeSelector } from '@/components/home/HomeSelector';
 import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
@@ -131,7 +130,6 @@ export default function Devices() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <HomeSelector showEditControls />
             <CreateRoomDialog />
             <CreateDeviceDialog rooms={filteredRooms} />
           </div>
