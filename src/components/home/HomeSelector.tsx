@@ -219,11 +219,15 @@ export function HomeSelector({ showEditControls = false }: HomeSelectorProps) {
               </div>
             </DropdownMenuItem>
           ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShowAddHome(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add New Home
-          </DropdownMenuItem>
+          {showEditControls && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowAddHome(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add New Home
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
