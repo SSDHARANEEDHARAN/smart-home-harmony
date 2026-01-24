@@ -181,22 +181,23 @@ export default function Devices() {
                           />
                           <div>
                             <CardTitle className="text-base">{room.name}</CardTitle>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}</span>
-                              {roomDevices.length > 0 && (
-                                <span className={cn(
-                                  "px-1.5 py-0.5 rounded text-[10px] font-medium",
-                                  activeCount > 0 
-                                    ? "bg-primary/20 text-primary" 
-                                    : "bg-muted text-muted-foreground"
-                                )}>
-                                  {activeCount}/{roomDevices.length} ON
-                                </span>
-                              )}
-                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''} • {activeCount} active
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          {/* Active count badge */}
+                          {roomDevices.length > 0 && (
+                            <span className={cn(
+                              "px-2 py-1 rounded text-xs font-medium",
+                              activeCount > 0 
+                                ? "bg-primary/20 text-primary" 
+                                : "bg-muted text-muted-foreground"
+                            )}>
+                              {activeCount}/{roomDevices.length}
+                            </span>
+                          )}
                           {/* Power toggle for room */}
                           {roomDevices.length > 0 && (
                             <Button
@@ -322,12 +323,7 @@ export default function Devices() {
 
                 return (
                   <div key={room.id} className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">{room.name}</h3>
-                      <span className="text-xs sm:text-sm text-muted-foreground">
-                        {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
+                    <h3 className="font-semibold">{room.name}</h3>
                     <div className="card-grid">
                       {roomDevices.map((device) => (
                         <DeviceCard
@@ -354,12 +350,7 @@ export default function Devices() {
               {/* Unassigned Devices */}
               {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length > 0 && (
                 <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Unassigned Devices</h3>
-                    <span className="text-xs sm:text-sm text-muted-foreground">
-                      {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).length} devices
-                    </span>
-                  </div>
+                  <h3 className="font-semibold">Unassigned Devices</h3>
                   <div className="card-grid">
                     {filteredDevices.filter(d => !filteredRooms.some(r => r.id === d.room_id)).map((device) => (
                       <DeviceCard
