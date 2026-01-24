@@ -75,9 +75,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 header-responsive">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-foreground/10 flex items-center justify-center">
-              <Home className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-            </div>
+            <Home className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
             <div>
               <h1 className="font-bold">Dashboard</h1>
               <div className="flex items-center gap-2 text-muted-foreground text-sm">

@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useHome } from '@/contexts/HomeContext';
-import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil } from 'lucide-react';
+import { Loader2, Cpu, Search, Filter, Trash2, Home, Pencil, Power } from 'lucide-react';
 import { Room, Device } from '@/types/smarthome';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -147,26 +147,78 @@ export default function Devices() {
                 const IconComponent = (LucideIcons as any)[room.icon] || LucideIcons.Home;
                 const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
                 const activeCount = roomDevices.filter((d) => d.is_on).length;
+                const allOn = roomDevices.length > 0 && activeCount === roomDevices.length;
+                const activeGlowColor = roomDevices.find(d => d.is_on)?.glow_color || '#ffffff';
+
+                const handleToggleAllInRoom = () => {
+                  const targetState = !allOn;
+                  roomDevices.forEach((device) => {
+                    if (device.is_on !== targetState) {
+                      toggleDevice.mutate({ id: device.id, is_on: targetState, relay_pin: device.relay_pin });
+                    }
+                  });
+                };
 
                 return (
-                  <Card key={room.id} className="glass border-border/50 overflow-hidden group">
-                    <CardHeader className="pb-2">
+                  <Card 
+                    key={room.id} 
+                    className={cn(
+                      "glass border-border/50 overflow-hidden group internal-glow",
+                      activeCount > 0 && "glow-active internal-border-glow border-foreground/20"
+                    )}
+                    style={{
+                      '--glow-color': activeGlowColor,
+                    } as React.CSSProperties}
+                  >
+                    <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <IconComponent className="w-5 h-5 text-muted-foreground" />
+                          <IconComponent 
+                            className="w-5 h-5 transition-colors"
+                            style={{
+                              color: activeCount > 0 ? activeGlowColor : undefined,
+                            }}
+                          />
                           <div>
                             <CardTitle className="text-base">{room.name}</CardTitle>
-                            <p className="text-xs text-muted-foreground">
-                              {roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}
-                              {roomDevices.length > 0 && ` • ${activeCount} active`}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{roomDevices.length} device{roomDevices.length !== 1 ? 's' : ''}</span>
+                              {roomDevices.length > 0 && (
+                                <span className={cn(
+                                  "px-1.5 py-0.5 rounded text-[10px] font-medium",
+                                  activeCount > 0 
+                                    ? "bg-primary/20 text-primary" 
+                                    : "bg-muted text-muted-foreground"
+                                )}>
+                                  {activeCount}/{roomDevices.length} ON
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
+                          {/* Power toggle for room */}
+                          {roomDevices.length > 0 && (
+                            <Button
+                              variant={allOn ? 'default' : 'outline'}
+                              size="icon"
+                              onClick={handleToggleAllInRoom}
+                              className={cn(
+                                "w-8 h-8 rounded-full transition-all duration-300",
+                                allOn && "shadow-lg"
+                              )}
+                              style={{
+                                backgroundColor: allOn ? activeGlowColor : undefined,
+                                boxShadow: allOn ? `0 0 10px ${activeGlowColor}40` : undefined,
+                              }}
+                            >
+                              <Power className={cn("w-3.5 h-3.5", allOn ? "text-background" : "text-foreground")} />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                             onClick={() => {
                               setRoomToEdit(room);
                               setEditRoomDialogOpen(true);
@@ -177,7 +229,7 @@ export default function Devices() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               setRoomToDelete(room.id);
                               setRoomDeleteDialogOpen(true);
