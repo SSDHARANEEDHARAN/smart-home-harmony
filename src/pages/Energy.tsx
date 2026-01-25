@@ -7,6 +7,7 @@ import { RoomConsumptionChart } from '@/components/energy/RoomConsumptionChart';
 import { DeviceUsageHistory } from '@/components/energy/DeviceUsageHistory';
 import { RelayStatusPanel } from '@/components/relay/RelayStatusPanel';
 import { RelayHistoryLog } from '@/components/energy/RelayHistoryLog';
+import { HardwareActivityDashboard } from '@/components/energy/HardwareActivityDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
@@ -59,6 +60,11 @@ export default function Energy() {
         {/* Relay Status Panel */}
         <div className="mb-6 sm:mb-8">
           <RelayStatusPanel />
+        </div>
+
+        {/* Hardware Activity Dashboard - Timeline + Stats */}
+        <div className="mb-6 sm:mb-8">
+          <HardwareActivityDashboard />
         </div>
 
         {/* Stats Overview */}

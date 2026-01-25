@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { FirebaseConfigFields } from '@/components/home/FirebaseConfigFields';
-import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
+import { OfflineModePanel } from '@/components/settings/OfflineModePanel';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
-import { Home as HomeIcon, Plus, Trash2, Pencil, Save, X, Flame, Wifi, WifiOff } from 'lucide-react';
+import { Home as HomeIcon, Plus, Trash2, Pencil, Flame, Wifi, WifiOff, Settings2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import { cn } from '@/lib/utils';
 function WorkspaceItem({ 
   home, 
   isActive, 
+  isSelected,
   onSelect, 
   onEdit, 
   onDelete, 
@@ -39,6 +41,7 @@ function WorkspaceItem({
 }: { 
   home: Home; 
   isActive: boolean;
+  isSelected: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -51,16 +54,18 @@ function WorkspaceItem({
     <div
       className={cn(
         "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-        isActive 
-          ? "border-primary bg-primary/5" 
-          : "border-border hover:bg-muted/50"
+        isSelected
+          ? "border-primary bg-primary/10"
+          : isActive 
+            ? "border-primary/50 bg-primary/5" 
+            : "border-border hover:bg-muted/50"
       )}
       onClick={onSelect}
     >
       <div className="flex items-center gap-3">
         <div className={cn(
           "w-9 h-9 rounded-lg flex items-center justify-center",
-          isActive ? "bg-primary/20" : "bg-muted"
+          isSelected || isActive ? "bg-primary/20" : "bg-muted"
         )}>
           <HomeIcon className="w-4 h-4" />
         </div>
@@ -131,6 +136,9 @@ function WorkspaceItem({
 export function WorkspaceSettings() {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
   
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(currentHomeId);
+  const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
+  
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newName, setNewName] = useState('');
   const [newFirebaseConfig, setNewFirebaseConfig] = useState<FirebaseConfig>({});
@@ -164,6 +172,9 @@ export function WorkspaceSettings() {
   const handleDelete = () => {
     if (homeToDelete) {
       deleteHome(homeToDelete.id);
+      if (selectedWorkspaceId === homeToDelete.id) {
+        setSelectedWorkspaceId(homes.find(h => h.id !== homeToDelete.id)?.id || null);
+      }
       setHomeToDelete(null);
     }
   };
@@ -175,38 +186,115 @@ export function WorkspaceSettings() {
     setShowEditDialog(true);
   };
 
+  const handleSelectWorkspace = (id: string) => {
+    setSelectedWorkspaceId(id);
+    setCurrentHomeId(id);
+  };
+
   return (
     <>
-      <Card className="border-border/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <HomeIcon className="w-5 h-5" />
-                Workspaces
+      {/* Split Panel Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        {/* Left Panel - Configuration */}
+        <div className="order-2 lg:order-1">
+          <Card className="border-border/50 h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Settings2 className="w-5 h-5" />
+                Workspace Configuration
               </CardTitle>
-              <CardDescription>Manage your home workspaces and Firebase connections</CardDescription>
-            </div>
-            <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
-              <Plus className="w-4 h-4" />
-              Add Workspace
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {homes.map((home) => (
-            <WorkspaceItem
-              key={home.id}
-              home={home}
-              isActive={home.id === currentHomeId}
-              onSelect={() => setCurrentHomeId(home.id)}
-              onEdit={() => openEditDialog(home)}
-              onDelete={() => setHomeToDelete(home)}
-              canDelete={homes.length > 1}
-            />
-          ))}
-        </CardContent>
-      </Card>
+              <CardDescription>
+                {selectedWorkspace 
+                  ? `Configure "${selectedWorkspace.name}" settings`
+                  : 'Select a workspace to configure'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {selectedWorkspace ? (
+                <div className="space-y-6">
+                  {/* Firebase Status */}
+                  <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="text-sm font-medium">Firebase Configuration</span>
+                    </div>
+                    {selectedWorkspace.firebaseConfig?.apiKey ? (
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>API Key: {selectedWorkspace.firebaseConfig.apiKey.slice(0, 20)}...</p>
+                        <p>Database: {selectedWorkspace.firebaseConfig.databaseURL || 'Not set'}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        No Firebase configured. Edit workspace to add configuration.
+                      </p>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3"
+                      onClick={() => openEditDialog(selectedWorkspace)}
+                    >
+                      <Pencil className="w-3 h-3 mr-1.5" />
+                      Edit Configuration
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  {/* Offline Mode Configuration */}
+                  <OfflineModePanel />
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Settings2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    Select a workspace from the right panel to configure
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Panel - Workspace List */}
+        <div className="order-1 lg:order-2">
+          <Card className="border-border/50 h-full">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <HomeIcon className="w-5 h-5" />
+                    Workspaces
+                  </CardTitle>
+                  <CardDescription>Manage your home workspaces</CardDescription>
+                </div>
+                <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add</span>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px] lg:h-[400px] pr-2">
+                <div className="space-y-2">
+                  {homes.map((home) => (
+                    <WorkspaceItem
+                      key={home.id}
+                      home={home}
+                      isActive={home.id === currentHomeId}
+                      isSelected={home.id === selectedWorkspaceId}
+                      onSelect={() => handleSelectWorkspace(home.id)}
+                      onEdit={() => openEditDialog(home)}
+                      onDelete={() => setHomeToDelete(home)}
+                      canDelete={homes.length > 1}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
