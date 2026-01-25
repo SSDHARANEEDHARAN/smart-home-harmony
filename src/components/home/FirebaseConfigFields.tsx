@@ -2,8 +2,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FirebaseConfig } from '@/contexts/HomeContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { CheckCircle, Flame } from 'lucide-react';
 
 interface FirebaseConfigFieldsProps {
   config: FirebaseConfig;
@@ -12,10 +14,24 @@ interface FirebaseConfigFieldsProps {
 
 export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsProps) {
   const [pasteValue, setPasteValue] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [animateFields, setAnimateFields] = useState(false);
 
   const updateField = (field: keyof FirebaseConfig, value: string) => {
     onChange({ ...config, [field]: value || undefined });
   };
+
+  // Trigger animation when config is auto-filled
+  useEffect(() => {
+    if (showSuccess) {
+      setAnimateFields(true);
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        setAnimateFields(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
 
   const parseAndFillConfig = (input: string) => {
     if (!input.trim()) return;
@@ -115,6 +131,7 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
 
       onChange(newConfig);
       setPasteValue('');
+      setShowSuccess(true);
       toast.success('Firebase config auto-filled!');
     } catch (e: any) {
       console.error('Config parse error:', e);
@@ -124,9 +141,20 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
 
   return (
     <div className="space-y-3">
+      {/* Success Animation Overlay */}
+      {showSuccess && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30 animate-fade-in">
+          <CheckCircle className="w-5 h-5 text-green-500 animate-scale-in" />
+          <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+            Firebase configuration auto-filled successfully!
+          </span>
+        </div>
+      )}
+
       {/* Paste box for auto-fill */}
       <div className="space-y-1">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <Flame className="w-3.5 h-3.5 text-orange-500" />
           Paste Firebase Config (auto-fills fields below)
         </Label>
         <Textarea
@@ -142,107 +170,162 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
             setTimeout(() => parseAndFillConfig(pasted), 50);
           }}
           placeholder="Paste your Firebase config here (JSON or JS snippet)..."
-          className="h-20 text-xs font-mono resize-none"
+          className={cn(
+            "h-20 text-xs font-mono resize-none transition-all duration-300",
+            showSuccess && "border-green-500/50 ring-2 ring-green-500/20"
+          )}
         />
       </div>
 
-      <div className="border-t pt-3">
-        <div className="text-xs font-medium text-muted-foreground mb-2">
+      <div className={cn(
+        "border-t pt-3 transition-all duration-500",
+        animateFields && "animate-fade-in"
+      )}>
+        <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+          <Flame className="w-3.5 h-3.5 text-orange-500" />
           Firebase Configuration (* required for hardware control)
         </div>
         
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300",
+            animateFields && config.apiKey && "animate-scale-in"
+          )}>
             <Label htmlFor="apiKey" className="text-xs">API Key *</Label>
             <Input
               id="apiKey"
               value={config.apiKey || ''}
               onChange={(e) => updateField('apiKey', e.target.value)}
               placeholder="AIzaSy..."
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.apiKey && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
           
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300",
+            animateFields && config.databaseURL && "animate-scale-in"
+          )}>
             <Label htmlFor="databaseURL" className="text-xs">Database URL *</Label>
             <Input
               id="databaseURL"
               value={config.databaseURL || ''}
               onChange={(e) => updateField('databaseURL', e.target.value)}
               placeholder="https://xxx.firebaseio.com"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.databaseURL && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-75",
+            animateFields && config.authDomain && "animate-scale-in"
+          )}>
             <Label htmlFor="authDomain" className="text-xs">Auth Domain</Label>
             <Input
               id="authDomain"
               value={config.authDomain || ''}
               onChange={(e) => updateField('authDomain', e.target.value)}
               placeholder="xxx.firebaseapp.com"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.authDomain && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
           
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-75",
+            animateFields && config.projectId && "animate-scale-in"
+          )}>
             <Label htmlFor="projectId" className="text-xs">Project ID</Label>
             <Input
               id="projectId"
               value={config.projectId || ''}
               onChange={(e) => updateField('projectId', e.target.value)}
               placeholder="my-project-id"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.projectId && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-100",
+            animateFields && config.storageBucket && "animate-scale-in"
+          )}>
             <Label htmlFor="storageBucket" className="text-xs">Storage Bucket</Label>
             <Input
               id="storageBucket"
               value={config.storageBucket || ''}
               onChange={(e) => updateField('storageBucket', e.target.value)}
               placeholder="xxx.appspot.com"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.storageBucket && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
           
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-100",
+            animateFields && config.messagingSenderId && "animate-scale-in"
+          )}>
             <Label htmlFor="messagingSenderId" className="text-xs">Messaging Sender ID</Label>
             <Input
               id="messagingSenderId"
               value={config.messagingSenderId || ''}
               onChange={(e) => updateField('messagingSenderId', e.target.value)}
               placeholder="123456789"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.messagingSenderId && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-150",
+            animateFields && config.appId && "animate-scale-in"
+          )}>
             <Label htmlFor="appId" className="text-xs">App ID</Label>
             <Input
               id="appId"
               value={config.appId || ''}
               onChange={(e) => updateField('appId', e.target.value)}
               placeholder="1:xxx:web:xxx"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.appId && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
           
-          <div className="space-y-1">
+          <div className={cn(
+            "space-y-1 transition-all duration-300 delay-150",
+            animateFields && config.measurementId && "animate-scale-in"
+          )}>
             <Label htmlFor="measurementId" className="text-xs">Measurement ID</Label>
             <Input
               id="measurementId"
               value={config.measurementId || ''}
               onChange={(e) => updateField('measurementId', e.target.value)}
               placeholder="G-XXXXXXXXXX"
-              className="h-8 text-xs font-mono"
+              className={cn(
+                "h-8 text-xs font-mono transition-all duration-300",
+                animateFields && config.measurementId && "border-green-500/50 bg-green-500/5"
+              )}
             />
           </div>
         </div>
