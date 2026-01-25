@@ -9,28 +9,42 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { ROOM_ICONS } from '@/types/smarthome';
 import { useRooms } from '@/hooks/useRooms';
+import { useHome } from '@/contexts/HomeContext';
 import { cn } from '@/lib/utils';
 
 export function CreateRoomDialog() {
   const [open, setOpen] = useState(false);
   const { createRoom } = useRooms();
+  const { homes, currentHomeId } = useHome();
 
   const [formData, setFormData] = useState({
     name: '',
     icon: 'Home',
+    home_id: currentHomeId,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    await createRoom.mutateAsync(formData);
+    await createRoom.mutateAsync({
+      name: formData.name,
+      icon: formData.icon,
+      home_id: formData.home_id,
+    });
 
     setOpen(false);
-    setFormData({ name: '', icon: 'Home' });
+    setFormData({ name: '', icon: 'Home', home_id: currentHomeId });
   };
 
   return (
@@ -56,6 +70,25 @@ export function CreateRoomDialog() {
               placeholder="Living Room"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Workspace</Label>
+            <Select
+              value={formData.home_id}
+              onValueChange={(v) => setFormData({ ...formData, home_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select workspace" />
+              </SelectTrigger>
+              <SelectContent>
+                {homes.map((home) => (
+                  <SelectItem key={home.id} value={home.id}>
+                    {home.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -20,13 +20,18 @@ export function useRooms() {
   });
 
   const createRoom = useMutation({
-    mutationFn: async (room: { name: string; icon: string }) => {
+    mutationFn: async (room: { name: string; icon: string; home_id?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('rooms')
-        .insert({ ...room, user_id: user.id })
+        .insert({ 
+          name: room.name, 
+          icon: room.icon, 
+          user_id: user.id,
+          home_id: room.home_id || 'home',
+        } as any)
         .select()
         .single();
       
