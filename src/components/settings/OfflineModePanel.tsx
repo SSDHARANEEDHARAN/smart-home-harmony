@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useOfflineMode } from '@/hooks/useOfflineMode';
 import { useFirebaseSync } from '@/hooks/useFirebaseSync';
 import { 
@@ -17,11 +19,75 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  Signal
+  Signal,
+  SignalHigh,
+  SignalMedium,
+  SignalLow,
+  Search,
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+// WiFi Signal Strength Indicator Component
+function WifiSignalStrength({ strength, className }: { strength: number; className?: string }) {
+  const getSignalIcon = () => {
+    if (strength >= 80) return SignalHigh;
+    if (strength >= 50) return SignalMedium;
+    if (strength >= 20) return SignalLow;
+    return Signal;
+  };
+  
+  const getSignalColor = () => {
+    if (strength >= 80) return 'text-green-500';
+    if (strength >= 50) return 'text-yellow-500';
+    if (strength >= 20) return 'text-orange-500';
+    return 'text-destructive';
+  };
+  
+  const getSignalLabel = () => {
+    if (strength >= 80) return 'Excellent';
+    if (strength >= 50) return 'Good';
+    if (strength >= 20) return 'Fair';
+    if (strength > 0) return 'Weak';
+    return 'No Signal';
+  };
+  
+  const Icon = getSignalIcon();
+  
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <div className="relative">
+        {/* Signal bars visualization */}
+        <div className="flex items-end gap-0.5 h-4">
+          {[1, 2, 3, 4].map((bar) => {
+            const barThreshold = bar * 25;
+            const isActive = strength >= barThreshold - 20;
+            return (
+              <div
+                key={bar}
+                className={cn(
+                  "w-1 rounded-sm transition-all",
+                  isActive ? getSignalColor().replace('text-', 'bg-') : 'bg-muted'
+                )}
+                style={{ height: `${bar * 4}px` }}
+              />
+            );
+          })}
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <span className={cn("text-xs font-medium", getSignalColor())}>
+          {getSignalLabel()}
+        </span>
+        <span className="text-[10px] text-muted-foreground">
+          {strength}%
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function OfflineModePanel() {
   const { 
@@ -30,6 +96,10 @@ export function OfflineModePanel() {
     disableOfflineMode, 
     setDeviceIp, 
     pingDevice,
+    scanNetwork,
+    discoveredDevices,
+    isScanning,
+    scanProgress,
     DEFAULT_DEVICE_IP 
   } = useOfflineMode();
   const { isConnected: firebaseConnected, hasFirebaseConfig } = useFirebaseSync();
@@ -61,6 +131,19 @@ export function OfflineModePanel() {
     if (config.enabled) {
       setDeviceIp(ip);
     }
+  };
+
+  const handleScan = async () => {
+    await scanNetwork();
+  };
+
+  const handleSelectDevice = (ip: string) => {
+    setCustomIp(ip);
+    setDeviceIp(ip);
+    if (!config.enabled) {
+      enableOfflineMode(ip);
+    }
+    toast.success(`Selected device at ${ip}`);
   };
 
   // Determine overall connection status
@@ -136,6 +219,81 @@ export function OfflineModePanel() {
 
         <Separator />
 
+        {/* Device Discovery Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="font-medium flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Device Discovery
+            </Label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleScan}
+              disabled={isScanning}
+              className="gap-1.5"
+            >
+              {isScanning ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Radio className="w-3.5 h-3.5" />
+              )}
+              {isScanning ? 'Scanning...' : 'Scan Network'}
+            </Button>
+          </div>
+          
+          {/* Scan Progress */}
+          {isScanning && (
+            <div className="space-y-2">
+              <Progress value={scanProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                Scanning local network... {scanProgress}%
+              </p>
+            </div>
+          )}
+          
+          {/* Discovered Devices List */}
+          {discoveredDevices.length > 0 && (
+            <ScrollArea className="h-[120px] rounded-lg border border-border/50">
+              <div className="p-2 space-y-2">
+                {discoveredDevices.map((device) => (
+                  <div
+                    key={device.ip}
+                    className={cn(
+                      "flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors",
+                      device.ip === config.deviceIp
+                        ? "bg-primary/10 border border-primary/30"
+                        : "bg-muted/30 hover:bg-muted/50 border border-transparent"
+                    )}
+                    onClick={() => handleSelectDevice(device.ip)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Router className="w-4 h-4 text-orange-500" />
+                      <div>
+                        <p className="text-sm font-medium">{device.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {device.ip}
+                        </p>
+                      </div>
+                    </div>
+                    {device.ip === config.deviceIp && (
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+          
+          {!isScanning && discoveredDevices.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              Click "Scan Network" to discover ESP32 devices
+            </p>
+          )}
+        </div>
+
+        <Separator />
+
         {/* Device IP Configuration */}
         <div className="space-y-4">
           <Label className="font-medium">Device IP Address</Label>
@@ -161,7 +319,7 @@ export function OfflineModePanel() {
           </p>
         </div>
 
-        {/* Connection Status Details */}
+        {/* Connection Status Details with Signal Strength */}
         {config.enabled && (
           <>
             <Separator />
@@ -194,6 +352,35 @@ export function OfflineModePanel() {
                   </p>
                 </div>
               </div>
+              
+              {/* WiFi Signal Strength Indicator */}
+              {config.isConnected && (
+                <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wifi className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-medium">Signal Strength</span>
+                    </div>
+                    <WifiSignalStrength strength={config.signalStrength} />
+                  </div>
+                  
+                  {/* Visual Signal Bar */}
+                  <div className="mt-3">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full transition-all duration-300 rounded-full",
+                          config.signalStrength >= 80 ? "bg-green-500" :
+                          config.signalStrength >= 50 ? "bg-yellow-500" :
+                          config.signalStrength >= 20 ? "bg-orange-500" :
+                          "bg-destructive"
+                        )}
+                        style={{ width: `${config.signalStrength}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -206,10 +393,10 @@ export function OfflineModePanel() {
           </h4>
           <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
             <li>Connect your phone/computer to ESP32's Wi-Fi network</li>
-            <li>The default IP is usually <code className="text-foreground bg-muted px-1 rounded">{DEFAULT_DEVICE_IP}</code></li>
+            <li>Click "Scan Network" to discover available devices</li>
+            <li>Select your ESP32 device or enter IP manually</li>
             <li>Enable offline mode above</li>
             <li>All device controls will work over local network</li>
-            <li>Actions are logged locally and synced when online</li>
           </ol>
         </div>
       </CardContent>

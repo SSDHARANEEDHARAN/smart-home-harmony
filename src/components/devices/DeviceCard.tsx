@@ -5,7 +5,6 @@ import { Device, AutomationRule } from '@/types/smarthome';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceToggle } from './DeviceToggle';
 import { SourceIndicator } from './SourceIndicator';
-import { QuickScheduleButton } from './QuickScheduleButton';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
@@ -481,12 +480,6 @@ export function DeviceCard({
                 </TooltipProvider>
               )}
               
-              {/* Quick Schedule Button - visible in compact mode */}
-              <QuickScheduleButton 
-                deviceId={device.id} 
-                deviceName={device.name}
-                compact
-              />
             </div>
           </div>
         </CardContent>
@@ -600,8 +593,6 @@ export function DeviceCard({
             {/* Edit Controls - inline with status icons */}
             {showControls && (
               <>
-                <ScheduleDialog deviceId={device.id} deviceName={device.name} />
-                
                 {onEdit && (
                   <TooltipProvider>
                     <Tooltip>
