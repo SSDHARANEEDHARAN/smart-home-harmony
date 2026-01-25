@@ -36,6 +36,19 @@ const DAYS = [
   { value: 6, label: 'Sat', short: 'S' },
 ];
 
+function formatCountdown(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  if (minutes > 0) return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  return `${seconds}s`;
+}
+
 function ScheduleDialog({
   deviceId,
   deviceName,
@@ -109,40 +122,33 @@ function ScheduleDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {!existingRule && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    className="w-4 h-4"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                    <circle cx="12" cy="15" r="2"/>
-                    <path d="M12 13v-1"/>
-                  </svg>
-                </Button>
-              </DialogTrigger>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Set Schedule</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Set schedule"
+            title="Set schedule"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <circle cx="12" cy="15" r="2" />
+              <path d="M12 13v-1" />
+            </svg>
+          </Button>
+        </DialogTrigger>
       )}
       <DialogContent className="rounded-xl">
         <DialogHeader>
@@ -273,6 +279,8 @@ export function DeviceCard({
     deleteRule
   } = useAutomationRules();
 
+  const [countdownNow, setCountdownNow] = useState(() => Date.now());
+
   // Get device rules
   const deviceRules = rules.filter(r => r.device_id === device.id && r.is_enabled);
 
@@ -304,6 +312,22 @@ export function DeviceCard({
       }
     });
     return nextRun;
+  })();
+
+  const nextScheduleTs = nextSchedule?.date.getTime() ?? null;
+  useEffect(() => {
+    if (!nextScheduleTs) return;
+    const id = window.setInterval(() => {
+      setCountdownNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [nextScheduleTs]);
+
+  const countdownLabel = (() => {
+    if (!nextScheduleTs) return null;
+    const remaining = nextScheduleTs - countdownNow;
+    if (remaining <= 0) return null;
+    return formatCountdown(remaining);
   })();
 
   const formatNextRun = (date: Date) => {
@@ -453,9 +477,14 @@ export function DeviceCard({
           
           {/* Bottom: Device name in quotes + Status icons */}
           <div className="flex items-center justify-between mt-auto pt-3">
-            <span className="text-xs text-muted-foreground truncate max-w-[60%]">
-              "{device.name}"
-            </span>
+            <div className="min-w-0 max-w-[60%]">
+              <div className="text-xs text-muted-foreground truncate">"{device.name}"</div>
+              {countdownLabel && nextSchedule && (
+                <div className="text-[10px] text-muted-foreground truncate">
+                  {nextSchedule.action ? 'ON' : 'OFF'} in {countdownLabel}
+                </div>
+              )}
+            </div>
             
             {/* Status Icons + Schedule Button */}
             <div className="flex items-center gap-1.5">
@@ -566,9 +595,14 @@ export function DeviceCard({
         
         {/* Bottom: Device name in quotes + Status icons + Edit controls */}
         <div className="flex items-center justify-between mt-auto pt-3">
-          <span className="text-xs text-muted-foreground truncate max-w-[40%]">
-            "{device.name}"
-          </span>
+          <div className="min-w-0 max-w-[40%]">
+            <div className="text-xs text-muted-foreground truncate">"{device.name}"</div>
+            {countdownLabel && nextSchedule && (
+              <div className="text-[10px] text-muted-foreground truncate">
+                {nextSchedule.action ? 'ON' : 'OFF'} in {countdownLabel}
+              </div>
+            )}
+          </div>
           
           {/* Status Icons + Edit Controls */}
           <div className="flex items-center gap-1">
