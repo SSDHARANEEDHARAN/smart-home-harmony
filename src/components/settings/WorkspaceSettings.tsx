@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
-import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink } from 'lucide-react';
+import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink, Download, Upload } from 'lucide-react';
 import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
 import { getDatabase, ref, get } from 'firebase/database';
 import {
@@ -132,6 +132,9 @@ export function WorkspaceSettings() {
   // Test connection state
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  
+  // Import file input ref
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
     if (newName.trim()) {
@@ -231,6 +234,82 @@ export function WorkspaceSettings() {
   const copyRulesToClipboard = () => {
     navigator.clipboard.writeText(FIREBASE_RULES);
     toast.success('Rules copied to clipboard!');
+  };
+
+  // Export all workspaces to JSON
+  const handleExportWorkspaces = () => {
+    const exportData = homes.map(home => ({
+      id: home.id,
+      name: home.name,
+      position: home.position,
+      firebaseConfig: home.firebaseConfig ? {
+        apiKey: home.firebaseConfig.apiKey,
+        authDomain: home.firebaseConfig.authDomain,
+        databaseURL: home.firebaseConfig.databaseURL,
+        projectId: home.firebaseConfig.projectId,
+        storageBucket: home.firebaseConfig.storageBucket,
+        messagingSenderId: home.firebaseConfig.messagingSenderId,
+        appId: home.firebaseConfig.appId,
+        measurementId: home.firebaseConfig.measurementId,
+        // Note: Auth credentials are intentionally excluded for security
+      } : null,
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workspaces-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Workspaces exported successfully!');
+  };
+
+  // Import workspaces from JSON
+  const handleImportWorkspaces = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedData = JSON.parse(content);
+
+        if (!Array.isArray(importedData)) {
+          throw new Error('Invalid format: expected an array');
+        }
+
+        let imported = 0;
+        importedData.forEach((workspace: any) => {
+          if (!workspace.name) return;
+          
+          // Check if workspace already exists by name
+          const exists = homes.some(h => h.name === workspace.name);
+          if (!exists) {
+            addHome(workspace.name, workspace.firebaseConfig || undefined);
+            imported++;
+          }
+        });
+
+        if (imported > 0) {
+          toast.success(`Imported ${imported} workspace(s)`);
+        } else {
+          toast.info('No new workspaces to import');
+        }
+      } catch (error: any) {
+        console.error('Import error:', error);
+        toast.error('Failed to import: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (importInputRef.current) {
+      importInputRef.current.value = '';
+    }
   };
 
   const parseAndFillConfig = (input: string) => {
@@ -346,10 +425,37 @@ export function WorkspaceSettings() {
                 <p className="text-sm text-muted-foreground">Manage your home workspaces</p>
               </div>
             </div>
-            <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportWorkspaces}
+                className="hidden"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1.5"
+                onClick={() => importInputRef.current?.click()}
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1.5"
+                onClick={handleExportWorkspaces}
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+              <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            </div>
           </div>
 
           {/* Workspace List */}

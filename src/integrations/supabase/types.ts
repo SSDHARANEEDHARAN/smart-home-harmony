@@ -72,6 +72,7 @@ export type Database = {
           description: string | null
           device_type: Database["public"]["Enums"]["device_type"]
           glow_color: string | null
+          home_id: string | null
           icon: string | null
           id: string
           is_on: boolean
@@ -93,6 +94,7 @@ export type Database = {
           description?: string | null
           device_type?: Database["public"]["Enums"]["device_type"]
           glow_color?: string | null
+          home_id?: string | null
           icon?: string | null
           id?: string
           is_on?: boolean
@@ -114,6 +116,7 @@ export type Database = {
           description?: string | null
           device_type?: Database["public"]["Enums"]["device_type"]
           glow_color?: string | null
+          home_id?: string | null
           icon?: string | null
           id?: string
           is_on?: boolean
@@ -277,6 +280,7 @@ export type Database = {
       rooms: {
         Row: {
           created_at: string
+          home_id: string | null
           icon: string | null
           id: string
           name: string
@@ -285,6 +289,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          home_id?: string | null
           icon?: string | null
           id?: string
           name: string
@@ -293,6 +298,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          home_id?: string | null
           icon?: string | null
           id?: string
           name?: string
