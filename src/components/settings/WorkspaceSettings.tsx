@@ -183,6 +183,8 @@ export function WorkspaceSettings() {
   };
 
   const openEditDialog = (home: Home) => {
+    // Ensure the UI reflects which workspace is being edited
+    setSelectedWorkspaceId(home.id);
     setEditHome(home);
     setEditName(home.name);
     setEditFirebaseConfig(home.firebaseConfig || {});
