@@ -106,12 +106,19 @@ function ScheduleDialog({
     setOpen(isOpen);
     if (!isOpen) onClose?.();
   };
-  return <Dialog open={open} onOpenChange={handleOpenChange}>
-      {!existingRule && <DialogTrigger asChild>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!existingRule && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <svg 
                     viewBox="0 0 24 24" 
                     fill="none" 
@@ -129,13 +136,14 @@ function ScheduleDialog({
                     <path d="M12 13v-1"/>
                   </svg>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Quick Schedule</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </DialogTrigger>}
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Set Schedule</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
       <DialogContent className="rounded-xl">
         <DialogHeader>
           <DialogTitle>{existingRule ? 'Edit Schedule' : 'Set Schedule'}</DialogTitle>
@@ -187,7 +195,8 @@ function ScheduleDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }
 function ScheduleItem({
   rule,
