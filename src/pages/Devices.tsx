@@ -75,14 +75,21 @@ export default function Devices() {
     );
   }
 
-  const filteredRooms = rooms.filter(room => getHomeForRoom(room.id) === currentHomeId);
+  // Filter rooms by current workspace using home_id
+  const filteredRooms = rooms.filter((room: any) => 
+    room.home_id === currentHomeId || (!room.home_id && currentHomeId === 'home')
+  );
   
-  const filteredDevices = devices.filter((device) => {
+  // Filter devices by current workspace using home_id
+  const workspaceDevices = devices.filter((device: any) => 
+    device.home_id === currentHomeId || (!device.home_id && currentHomeId === 'home')
+  );
+  
+  const filteredDevices = workspaceDevices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(search.toLowerCase());
     const matchesRoom = roomFilter === 'all' || device.room_id === roomFilter;
     const matchesType = typeFilter === 'all' || device.device_type === typeFilter;
-    const deviceInHome = filteredRooms.some(r => r.id === device.room_id);
-    return matchesSearch && matchesRoom && matchesType && deviceInHome;
+    return matchesSearch && matchesRoom && matchesType;
   });
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
