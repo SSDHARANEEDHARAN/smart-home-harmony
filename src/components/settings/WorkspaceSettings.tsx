@@ -267,7 +267,7 @@ export function WorkspaceSettings() {
             ))}
           </div>
 
-          {/* Edit Panel - Shows when workspace is selected */}
+          {/* Edit Panel - Shows BELOW workspace list when selected */}
           {selectedWorkspace && (
             <Card className="border-border/50 bg-muted/30">
               <CardContent className="p-6">
