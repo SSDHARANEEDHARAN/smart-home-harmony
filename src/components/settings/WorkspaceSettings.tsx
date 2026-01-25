@@ -5,9 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
-import { Home as HomeIcon, Plus, Pencil, X, Flame } from 'lucide-react';
+import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink } from 'lucide-react';
+import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
+import { getDatabase, ref, get } from 'firebase/database';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +31,20 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+function ConnectionStatusDot({ isConnected, hasFirebase }: { isConnected: boolean; hasFirebase: boolean }) {
+  if (!hasFirebase) return null;
+  
+  return (
+    <span 
+      className={cn(
+        "w-2 h-2 rounded-full inline-block",
+        isConnected ? "bg-green-500" : "bg-orange-500"
+      )}
+      title={isConnected ? "Connected" : "Disconnected"}
+    />
+  );
+}
 
 function WorkspaceRow({ 
   home, 
@@ -55,15 +72,25 @@ function WorkspaceRow({
                 Active
               </Badge>
             )}
+            <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
           </div>
-          <span className="text-xs text-muted-foreground">
-            {hasFirebase 
-              ? isConnected 
-                ? 'Firebase Connected' 
-                : 'Firebase Configured'
-              : 'No Firebase'
-            }
-          </span>
+          <div className="flex items-center gap-1.5">
+            {hasFirebase ? (
+              isConnected ? (
+                <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Wifi className="w-3 h-3" />
+                  Firebase Connected
+                </span>
+              ) : (
+                <span className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                  <WifiOff className="w-3 h-3" />
+                  Firebase Disconnected
+                </span>
+              )
+            ) : (
+              <span className="text-xs text-muted-foreground">No Firebase</span>
+            )}
+          </div>
         </div>
       </div>
       <Button
@@ -78,11 +105,19 @@ function WorkspaceRow({
   );
 }
 
+const FIREBASE_RULES = `{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null"
+  }
+}`;
+
 export function WorkspaceSettings() {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
   
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
+  const isConnected = useFirebaseConnectionStatus(selectedWorkspaceId || '');
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newName, setNewName] = useState('');
@@ -93,6 +128,10 @@ export function WorkspaceSettings() {
   const [pasteValue, setPasteValue] = useState('');
   
   const [homeToDelete, setHomeToDelete] = useState<Home | null>(null);
+  
+  // Test connection state
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
 
   const handleAdd = () => {
     if (newName.trim()) {
@@ -106,7 +145,8 @@ export function WorkspaceSettings() {
     if (selectedWorkspaceId && editName.trim()) {
       const hasConfig = editFirebaseConfig.apiKey && editFirebaseConfig.databaseURL;
       updateHome(selectedWorkspaceId, editName.trim(), hasConfig ? editFirebaseConfig : undefined);
-      toast.success('Workspace updated');
+      toast.success('Workspace saved successfully!');
+      closeEditPanel();
     }
   };
 
@@ -126,6 +166,7 @@ export function WorkspaceSettings() {
     setEditFirebaseConfig(home.firebaseConfig || {});
     setPasteValue('');
     setCurrentHomeId(home.id);
+    setTestResult(null);
   };
 
   const closeEditPanel = () => {
@@ -133,10 +174,63 @@ export function WorkspaceSettings() {
     setEditName('');
     setEditFirebaseConfig({});
     setPasteValue('');
+    setTestResult(null);
   };
 
   const updateField = (field: keyof FirebaseConfig, value: string) => {
     setEditFirebaseConfig(prev => ({ ...prev, [field]: value || undefined }));
+    setTestResult(null);
+  };
+
+  const testFirebaseConnection = async () => {
+    if (!editFirebaseConfig.apiKey || !editFirebaseConfig.databaseURL) {
+      toast.error('API Key and Database URL are required');
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+    let testApp: FirebaseApp | null = null;
+
+    try {
+      // Create a temporary Firebase app for testing
+      testApp = initializeApp({
+        apiKey: editFirebaseConfig.apiKey,
+        authDomain: editFirebaseConfig.authDomain,
+        databaseURL: editFirebaseConfig.databaseURL,
+        projectId: editFirebaseConfig.projectId,
+        storageBucket: editFirebaseConfig.storageBucket,
+        messagingSenderId: editFirebaseConfig.messagingSenderId,
+        appId: editFirebaseConfig.appId,
+        measurementId: editFirebaseConfig.measurementId,
+      }, `test-${Date.now()}`);
+
+      const db = getDatabase(testApp);
+      const testRef = ref(db, '.info/connected');
+      await get(testRef);
+      
+      setTestResult('success');
+      toast.success('Firebase connection successful!');
+    } catch (error: any) {
+      console.error('Firebase test error:', error);
+      setTestResult('error');
+      toast.error(`Connection failed: ${error.message || 'Unknown error'}`);
+    } finally {
+      // Clean up the test app
+      if (testApp) {
+        try {
+          await deleteApp(testApp);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      setIsTesting(false);
+    }
+  };
+
+  const copyRulesToClipboard = () => {
+    navigator.clipboard.writeText(FIREBASE_RULES);
+    toast.success('Rules copied to clipboard!');
   };
 
   const parseAndFillConfig = (input: string) => {
@@ -228,12 +322,15 @@ export function WorkspaceSettings() {
       }));
 
       setPasteValue('');
+      setTestResult(null);
       toast.success('Firebase config auto-filled!');
     } catch (e: any) {
       console.error('Config parse error:', e);
       toast.error('Failed to parse config: ' + e.message);
     }
   };
+
+  const hasFirebaseConfig = !!(editFirebaseConfig.apiKey && editFirebaseConfig.databaseURL);
 
   return (
     <>
@@ -271,10 +368,26 @@ export function WorkspaceSettings() {
           {selectedWorkspace && (
             <Card className="border-border/50 bg-muted/30">
               <CardContent className="p-6">
-                {/* Edit Header */}
+                {/* Edit Header with Connection Status */}
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h3 className="font-semibold text-base">Edit Workspace</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-base">Edit Workspace</h3>
+                      {hasFirebaseConfig && (
+                        <div className="flex items-center gap-1.5">
+                          <ConnectionStatusDot 
+                            isConnected={isConnected} 
+                            hasFirebase={hasFirebaseConfig} 
+                          />
+                          <span className={cn(
+                            "text-xs",
+                            isConnected ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"
+                          )}>
+                            {isConnected ? "Connected" : "Disconnected"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Update workspace settings and Firebase configuration.
                     </p>
@@ -332,6 +445,34 @@ export function WorkspaceSettings() {
                           className="h-24 text-xs font-mono resize-none"
                         />
                       </div>
+                    </div>
+
+                    {/* Test Connection Button */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={testFirebaseConnection}
+                        disabled={!hasFirebaseConfig || isTesting}
+                        className="gap-2"
+                      >
+                        {isTesting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : testResult === 'success' ? (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        ) : testResult === 'error' ? (
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                        ) : (
+                          <Wifi className="w-4 h-4" />
+                        )}
+                        Test Connection
+                      </Button>
+                      {testResult === 'success' && (
+                        <span className="text-xs text-green-600 dark:text-green-400">Connection verified!</span>
+                      )}
+                      {testResult === 'error' && (
+                        <span className="text-xs text-red-600 dark:text-red-400">Connection failed</span>
+                      )}
                     </div>
                   </div>
 
@@ -479,6 +620,45 @@ export function WorkspaceSettings() {
               </CardContent>
             </Card>
           )}
+
+          {/* Firebase Setup Help Notice */}
+          <Alert className="mt-6 border-orange-500/30 bg-orange-500/5">
+            <Info className="h-4 w-4 text-orange-500" />
+            <AlertDescription className="text-sm">
+              <div className="space-y-3">
+                <div>
+                  <span className="font-medium text-foreground">How to set up Firebase Realtime Database:</span>
+                </div>
+                
+                <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground text-xs">
+                  <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-orange-600 dark:text-orange-400 underline inline-flex items-center gap-0.5">Firebase Console <ExternalLink className="w-3 h-3" /></a> and create a new project</li>
+                  <li>Navigate to <strong>Build → Realtime Database</strong> and click "Create Database"</li>
+                  <li>Go to <strong>Rules</strong> tab and paste the following rules:</li>
+                </ol>
+
+                <div className="relative">
+                  <pre className="bg-muted/80 p-3 rounded-md text-xs font-mono overflow-x-auto">
+                    {FIREBASE_RULES}
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-1 right-1 h-7 gap-1.5 text-xs"
+                    onClick={copyRulesToClipboard}
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy
+                  </Button>
+                </div>
+
+                <ol start={4} className="list-decimal list-inside space-y-1.5 text-muted-foreground text-xs">
+                  <li>Go to <strong>Project Settings → General</strong> and add a Web App</li>
+                  <li>Copy the Firebase config and paste it above</li>
+                  <li>Enable <strong>Authentication → Email/Password</strong> if you want secured access</li>
+                </ol>
+              </div>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
