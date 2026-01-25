@@ -35,7 +35,15 @@ export default function Dashboard() {
   // Enable device notifications
   useDeviceNotifications(devices);
 
-  const activeDevicesCount = devices.filter((d) => d.is_on).length;
+  // Filter rooms and devices by current workspace
+  const filteredRooms = rooms.filter((room: any) => 
+    room.home_id === currentHomeId || (!room.home_id && currentHomeId === 'home')
+  );
+  const filteredDevices = devices.filter((device: any) => 
+    device.home_id === currentHomeId || (!device.home_id && currentHomeId === 'home')
+  );
+
+  const activeDevicesCount = filteredDevices.filter((d) => d.is_on).length;
 
   const handleToggleDevice = (deviceId: string, isOn: boolean) => {
     const device = devices.find(d => d.id === deviceId);
@@ -87,7 +95,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Power className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{activeDevicesCount}/{devices.length} devices active</span>
+                <span>{activeDevicesCount}/{filteredDevices.length} devices active</span>
               </div>
             </div>
           </div>
@@ -165,14 +173,16 @@ export default function Dashboard() {
                   <span className="hidden sm:inline">Add Device</span>
                 </Button>
               </Link>
-              <CreateSceneDialog devices={devices} />
+              <CreateSceneDialog devices={filteredDevices} />
             </div>
           </div>
 
-          {devices.length === 0 ? (
+          {filteredDevices.length === 0 ? (
             <div className="text-center py-8 sm:py-12 glass border border-border/50">
               <Power className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4 text-sm sm:text-base">No devices found. Add your first device to get started.</p>
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base">
+                No devices found in "{currentHome?.name || 'this workspace'}". Add your first device to get started.
+              </p>
               <Link to="/devices">
                 <Button className="gap-2">
                   <Plus className="w-4 h-4" />
@@ -182,8 +192,8 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-6">
-              {rooms.map((room) => {
-                const roomDevices = devices.filter((d) => d.room_id === room.id);
+              {filteredRooms.map((room) => {
+                const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
                 if (roomDevices.length === 0) return null;
 
                 return (
@@ -197,16 +207,16 @@ export default function Dashboard() {
                 );
               })}
 
-              {/* Unassigned devices */}
-              {devices.filter((d) => !rooms.find((r) => r.id === d.room_id)).length > 0 && (
+              {/* Unassigned devices in this workspace */}
+              {filteredDevices.filter((d) => !filteredRooms.find((r) => r.id === d.room_id)).length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Power className="w-4 h-4 text-muted-foreground" />
                     <h3 className="font-medium text-muted-foreground">Unassigned</h3>
                   </div>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {devices
-                      .filter((d) => !rooms.find((r) => r.id === d.room_id))
+                    {filteredDevices
+                      .filter((d) => !filteredRooms.find((r) => r.id === d.room_id))
                       .map((device) => (
                         <DeviceCard
                           key={device.id}
