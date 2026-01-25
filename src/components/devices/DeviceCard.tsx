@@ -49,24 +49,59 @@ function formatCountdown(ms: number) {
   return `${seconds}s`;
 }
 
+// Helper to convert 24h to 12h format
+function to12Hour(time24: string): { hour: string; minute: string; period: 'AM' | 'PM' } {
+  const [h, m] = time24.split(':').map(Number);
+  const period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return { hour: hour12.toString().padStart(2, '0'), minute: m.toString().padStart(2, '0'), period };
+}
+
+// Helper to convert 12h to 24h format
+function to24Hour(hour: string, minute: string, period: 'AM' | 'PM'): string {
+  let h = parseInt(hour, 10);
+  if (period === 'AM' && h === 12) h = 0;
+  else if (period === 'PM' && h !== 12) h += 12;
+  return `${h.toString().padStart(2, '0')}:${minute}`;
+}
+
+// Format time for display in 12-hour format
+function formatTime12(time24: string): string {
+  const { hour, minute, period } = to12Hour(time24);
+  return `${hour}:${minute} ${period}`;
+}
+
 function ScheduleDialog({
   deviceId,
   deviceName,
   existingRule,
+  existingRules = [],
   onClose
 }: {
   deviceId: string;
   deviceName: string;
   existingRule?: AutomationRule;
+  existingRules?: AutomationRule[];
   onClose?: () => void;
 }) {
   const [open, setOpen] = useState(!!existingRule);
-  const [time, setTime] = useState(existingRule?.trigger_time?.slice(0, 5) || '');
+  const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list');
+  const [editingRule, setEditingRule] = useState<AutomationRule | null>(existingRule || null);
+  
+  // Time state in 12-hour format
+  const initialTime = existingRule?.trigger_time ? to12Hour(existingRule.trigger_time.slice(0, 5)) : { hour: '08', minute: '00', period: 'AM' as const };
+  const [hour, setHour] = useState(initialTime.hour);
+  const [minute, setMinute] = useState(initialTime.minute);
+  const [period, setPeriod] = useState<'AM' | 'PM'>(initialTime.period);
+  
   const [action, setAction] = useState<'on' | 'off'>(existingRule?.target_state ? 'on' : 'off');
   const [selectedDays, setSelectedDays] = useState<number[]>(existingRule?.days_of_week || [0, 1, 2, 3, 4, 5, 6]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  
   const {
     createRule,
-    updateRule
+    updateRule,
+    deleteRule
   } = useAutomationRules();
 
   const toggleDay = (day: number) => {
@@ -77,48 +112,91 @@ function ScheduleDialog({
     }
   };
 
+  const resetForm = () => {
+    setHour('08');
+    setMinute('00');
+    setPeriod('AM');
+    setAction('on');
+    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+    setEditingRule(null);
+  };
+
+  const startEdit = (rule: AutomationRule) => {
+    const time = to12Hour(rule.trigger_time.slice(0, 5));
+    setHour(time.hour);
+    setMinute(time.minute);
+    setPeriod(time.period);
+    setAction(rule.target_state ? 'on' : 'off');
+    setSelectedDays(rule.days_of_week || [0, 1, 2, 3, 4, 5, 6]);
+    setEditingRule(rule);
+    setMode('edit');
+  };
+
   const handleSave = async () => {
-    if (!time) {
-      toast.error('Please select a time');
-      return;
-    }
     if (selectedDays.length === 0) {
       toast.error('Please select at least one day');
       return;
     }
+    
+    const time24 = to24Hour(hour, minute, period);
+    const time12Display = formatTime12(time24);
+    
     try {
-      if (existingRule) {
+      if (editingRule) {
         await updateRule.mutateAsync({
-          id: existingRule.id,
-          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
-          trigger_time: time,
+          id: editingRule.id,
+          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time12Display}`,
+          trigger_time: time24,
           action: action === 'on' ? 'turn_on' : 'turn_off',
           target_state: action === 'on',
           days_of_week: selectedDays
         });
       } else {
         await createRule.mutateAsync({
-          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time}`,
+          name: `${deviceName} - ${action === 'on' ? 'Turn On' : 'Turn Off'} at ${time12Display}`,
           device_id: deviceId,
-          trigger_time: time,
+          trigger_time: time24,
           action: action === 'on' ? 'turn_on' : 'turn_off',
           target_state: action === 'on',
           is_enabled: true,
           days_of_week: selectedDays
         });
       }
-      setOpen(false);
-      setTime('');
-      setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
-      onClose?.();
+      resetForm();
+      setMode('list');
+      if (existingRules.length === 0 && !editingRule) {
+        setOpen(false);
+        onClose?.();
+      }
     } catch (error) {
       // Error handled in hook
     }
   };
+
+  const handleDelete = async (ruleId: string) => {
+    try {
+      await deleteRule.mutateAsync(ruleId);
+      setDeleteConfirmId(null);
+      if (existingRules.length <= 1) {
+        setOpen(false);
+        onClose?.();
+      }
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (!isOpen) onClose?.();
+    if (!isOpen) {
+      resetForm();
+      setMode('list');
+      onClose?.();
+    }
   };
+
+  const hasSchedules = existingRules.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {!existingRule && (
@@ -126,10 +204,13 @@ function ScheduleDialog({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className={cn(
+              "h-7 w-7 text-muted-foreground hover:text-foreground",
+              hasSchedules && "text-primary"
+            )}
             onClick={(e) => e.stopPropagation()}
             aria-label="Set schedule"
-            title="Set schedule"
+            title={hasSchedules ? "View/Edit schedules" : "Set schedule"}
           >
             <svg
               viewBox="0 0 24 24"
@@ -150,100 +231,184 @@ function ScheduleDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="rounded-xl">
+      <DialogContent className="rounded-xl max-w-sm">
         <DialogHeader>
-          <DialogTitle>{existingRule ? 'Edit Schedule' : 'Set Schedule'}</DialogTitle>
+          <DialogTitle>
+            {mode === 'list' ? (hasSchedules ? 'Schedules' : 'Set Schedule') : 
+             mode === 'edit' ? 'Edit Schedule' : 'New Schedule'}
+          </DialogTitle>
           <DialogDescription>
-            Automatically turn {deviceName} on or off at a specific time.
+            {mode === 'list' && hasSchedules 
+              ? `Manage schedules for "${deviceName}"`
+              : `Set when "${deviceName}" turns on or off`}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="schedule-time" className="text-right">
-              Time
-            </Label>
-            <Input id="schedule-time" type="time" value={time} onChange={e => setTime(e.target.value)} className="col-span-3 rounded-lg" />
+
+        {/* List Mode - Show existing schedules */}
+        {mode === 'list' && hasSchedules && (
+          <div className="space-y-2 py-2">
+            {existingRules.map((rule) => (
+              <div key={rule.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    rule.target_state ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  <div>
+                    <div className="text-sm font-medium">
+                      {rule.target_state ? 'Turn ON' : 'Turn OFF'} at {formatTime12(rule.trigger_time)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {(rule.days_of_week || []).map(d => DAYS[d].short).join(', ')}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={() => startEdit(rule)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => setDeleteConfirmId(rule.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button 
+              variant="outline" 
+              className="w-full mt-2"
+              onClick={() => { resetForm(); setMode('create'); }}
+            >
+              + Add New Schedule
+            </Button>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <span className="text-right text-sm">Action</span>
-            <div className="col-span-3 flex gap-2">
-              <Button variant={action === 'on' ? 'default' : 'outline'} size="sm" onClick={() => setAction('on')} className="rounded-lg">
-                Turn On
-              </Button>
-              <Button variant={action === 'off' ? 'default' : 'outline'} size="sm" onClick={() => setAction('off')} className="rounded-lg">
-                Turn Off
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <span className="text-right text-sm">Days</span>
-            <div className="col-span-3 flex gap-1">
-              {DAYS.map((day) => (
-                <button
-                  key={day.value}
-                  onClick={() => toggleDay(day.value)}
-                  className={cn(
-                    "w-8 h-8 rounded-lg text-xs font-medium transition-colors",
-                    selectedDays.includes(day.value)
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
+        )}
+
+        {/* Create/Edit Mode */}
+        {(mode === 'create' || mode === 'edit' || (mode === 'list' && !hasSchedules)) && (
+          <div className="grid gap-4 py-4">
+            {/* 12-Hour Time Picker */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Time</Label>
+              <div className="col-span-3 flex items-center gap-2">
+                <select
+                  value={hour}
+                  onChange={(e) => setHour(e.target.value)}
+                  className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  {day.short}
-                </button>
-              ))}
+                  {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+                <span className="text-lg font-bold">:</span>
+                <select
+                  value={minute}
+                  onChange={(e) => setMinute(e.target.value)}
+                  className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <div className="flex rounded-lg border border-input overflow-hidden">
+                  <button
+                    onClick={() => setPeriod('AM')}
+                    className={cn(
+                      "px-3 py-2 text-sm font-medium transition-colors",
+                      period === 'AM' ? "bg-foreground text-background" : "bg-background hover:bg-muted"
+                    )}
+                  >
+                    AM
+                  </button>
+                  <button
+                    onClick={() => setPeriod('PM')}
+                    className={cn(
+                      "px-3 py-2 text-sm font-medium transition-colors",
+                      period === 'PM' ? "bg-foreground text-background" : "bg-background hover:bg-muted"
+                    )}
+                  >
+                    PM
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Action */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <span className="text-right text-sm">Action</span>
+              <div className="col-span-3 flex gap-2">
+                <Button 
+                  variant={action === 'on' ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setAction('on')} 
+                  className={cn("rounded-lg flex-1", action === 'on' && "bg-green-600 hover:bg-green-700")}
+                >
+                  Turn ON
+                </Button>
+                <Button 
+                  variant={action === 'off' ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setAction('off')} 
+                  className={cn("rounded-lg flex-1", action === 'off' && "bg-red-600 hover:bg-red-700")}
+                >
+                  Turn OFF
+                </Button>
+              </div>
+            </div>
+
+            {/* Days */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <span className="text-right text-sm">Days</span>
+              <div className="col-span-3 flex gap-1">
+                {DAYS.map((day) => (
+                  <button
+                    key={day.value}
+                    onClick={() => toggleDay(day.value)}
+                    className={cn(
+                      "w-8 h-8 rounded-lg text-xs font-medium transition-colors",
+                      selectedDays.includes(day.value)
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {day.short}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={handleSave} disabled={createRule.isPending || updateRule.isPending} className="rounded-lg">
-            {createRule.isPending || updateRule.isPending ? 'Saving...' : existingRule ? 'Update Schedule' : 'Save Schedule'}
-          </Button>
+        )}
+
+        <DialogFooter className="gap-2">
+          {(mode === 'create' || mode === 'edit') && hasSchedules && (
+            <Button variant="outline" onClick={() => { resetForm(); setMode('list'); }} className="rounded-lg">
+              Back
+            </Button>
+          )}
+          {(mode === 'create' || mode === 'edit' || !hasSchedules) && (
+            <Button 
+              onClick={handleSave} 
+              disabled={createRule.isPending || updateRule.isPending} 
+              className="rounded-lg"
+            >
+              {createRule.isPending || updateRule.isPending ? 'Saving...' : 
+               mode === 'edit' ? 'Update' : 'Save Schedule'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
-}
-function ScheduleItem({
-  rule,
-  deviceName,
-  onDelete
-}: {
-  rule: AutomationRule;
-  deviceName: string;
-  onDelete: () => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const formatTime = (time: string) => {
-    const [h, m] = time.split(':').map(Number);
-    const date = new Date();
-    date.setHours(h, m);
-    return date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  if (editing) {
-    return <ScheduleDialog deviceId={rule.device_id} deviceName={deviceName} existingRule={rule} onClose={() => setEditing(false)} />;
-  }
-  return <>
-      <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded-lg text-xs">
-        <div className="flex items-center gap-2">
-          <Clock className="w-3 h-3 text-muted-foreground" />
-          <span>{rule.target_state ? 'On' : 'Off'} at {formatTime(rule.trigger_time)}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground" onClick={() => setEditing(true)}>
-            <Pencil className="w-3 h-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-destructive" onClick={() => setDeleteOpen(true)}>
-            <X className="w-3 h-3" />
-          </Button>
-        </div>
-      </div>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Schedule</AlertDialogTitle>
@@ -253,14 +418,19 @@ function ScheduleItem({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete} className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction 
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)} 
+              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>;
+    </Dialog>
+  );
 }
+// Removed ScheduleItem - functionality merged into ScheduleDialog
 export function DeviceCard({
   device,
   onToggle,
@@ -489,7 +659,7 @@ export function DeviceCard({
             {/* Status Icons + Schedule Button */}
             <div className="flex items-center gap-1.5">
               {/* Quick Schedule Button */}
-              <ScheduleDialog deviceId={device.id} deviceName={device.name} />
+              <ScheduleDialog deviceId={device.id} deviceName={device.name} existingRules={deviceRules} />
               
               {/* Source indicator */}
               {lastSource && (
@@ -606,6 +776,9 @@ export function DeviceCard({
           
           {/* Status Icons + Edit Controls */}
           <div className="flex items-center gap-1">
+            {/* Quick Schedule Button */}
+            <ScheduleDialog deviceId={device.id} deviceName={device.name} existingRules={deviceRules} />
+            
             {/* Source indicator */}
             {lastSource && (
               <SourceIndicator 
@@ -691,14 +864,17 @@ export function DeviceCard({
         {/* Schedules List - Only on Devices page, shown below main content */}
         {showControls && deviceRules.length > 0 && (
           <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
-            <p className="text-xs text-muted-foreground mb-1">Schedules</p>
+            <p className="text-xs text-muted-foreground mb-1">Schedules ({deviceRules.length})</p>
             {deviceRules.map(rule => (
-              <ScheduleItem 
-                key={rule.id} 
-                rule={rule} 
-                deviceName={device.name} 
-                onDelete={() => deleteRule.mutate(rule.id)} 
-              />
+              <div key={rule.id} className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded-lg text-xs">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    rule.target_state ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  <span>{rule.target_state ? 'ON' : 'OFF'} at {formatTime12(rule.trigger_time)}</span>
+                </div>
+              </div>
             ))}
           </div>
         )}
