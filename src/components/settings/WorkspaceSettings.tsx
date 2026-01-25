@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { FirebaseConfigFields } from '@/components/home/FirebaseConfigFields';
 import { OfflineModePanel } from '@/components/settings/OfflineModePanel';
@@ -139,6 +140,8 @@ export function WorkspaceSettings() {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(currentHomeId);
   const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
   
+  const [activeTab, setActiveTab] = useState('workspaces');
+  
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newName, setNewName] = useState('');
   const [newFirebaseConfig, setNewFirebaseConfig] = useState<FirebaseConfig>({});
@@ -193,72 +196,22 @@ export function WorkspaceSettings() {
 
   return (
     <>
-      {/* Split Panel Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        {/* Left Panel - Configuration */}
-        <div className="order-2 lg:order-1">
-          <Card className="border-border/50 h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Settings2 className="w-5 h-5" />
-                Workspace Configuration
-              </CardTitle>
-              <CardDescription>
-                {selectedWorkspace 
-                  ? `Configure "${selectedWorkspace.name}" settings`
-                  : 'Select a workspace to configure'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedWorkspace ? (
-                <div className="space-y-6">
-                  {/* Firebase Status */}
-                  <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Flame className="w-4 h-4 text-orange-500" />
-                      <span className="text-sm font-medium">Firebase Configuration</span>
-                    </div>
-                    {selectedWorkspace.firebaseConfig?.apiKey ? (
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>API Key: {selectedWorkspace.firebaseConfig.apiKey.slice(0, 20)}...</p>
-                        <p>Database: {selectedWorkspace.firebaseConfig.databaseURL || 'Not set'}</p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        No Firebase configured. Edit workspace to add configuration.
-                      </p>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-3"
-                      onClick={() => openEditDialog(selectedWorkspace)}
-                    >
-                      <Pencil className="w-3 h-3 mr-1.5" />
-                      Edit Configuration
-                    </Button>
-                  </div>
+      {/* Tabbed Layout */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+          <TabsTrigger value="workspaces" className="gap-2">
+            <HomeIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Workspaces</span>
+          </TabsTrigger>
+          <TabsTrigger value="configuration" className="gap-2">
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Workspace Configuration</span>
+          </TabsTrigger>
+        </TabsList>
 
-                  <Separator />
-
-                  {/* Offline Mode Configuration */}
-                  <OfflineModePanel />
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Settings2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    Select a workspace from the right panel to configure
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Panel - Workspace List */}
-        <div className="order-1 lg:order-2">
-          <Card className="border-border/50 h-full">
+        {/* Workspaces Tab - Workspace List */}
+        <TabsContent value="workspaces">
+          <Card className="border-border/50">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -270,12 +223,12 @@ export function WorkspaceSettings() {
                 </div>
                 <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
                   <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Add</span>
+                  <span>Add</span>
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px] lg:h-[400px] pr-2">
+              <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
                 <div className="space-y-2">
                   {homes.map((home) => (
                     <WorkspaceItem
@@ -293,8 +246,27 @@ export function WorkspaceSettings() {
               </ScrollArea>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Configuration Tab - Mode Switch & WiFi Only (No Firebase) */}
+        <TabsContent value="configuration">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Settings2 className="w-5 h-5" />
+                Workspace Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure "{selectedWorkspace?.name || 'Home'}" settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Offline Mode Configuration - Mode Switch & WiFi */}
+              <OfflineModePanel />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
