@@ -268,13 +268,13 @@ export function WorkspaceSettings() {
         </TabsContent>
       </Tabs>
 
-      {/* Add Dialog */}
+      {/* Add Dialog - Simple name only */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Create Workspace</DialogTitle>
             <DialogDescription>
-              Add a new workspace with optional Firebase configuration for hardware sync.
+              Enter a name for your new workspace. You can configure Firebase settings later by editing the workspace.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -285,24 +285,13 @@ export function WorkspaceSettings() {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="e.g. Office, Vacation Home"
+                autoFocus
               />
             </div>
-            
-            <Separator />
-            
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Flame className="w-4 h-4 text-orange-500" />
-              Firebase Configuration (Optional)
-            </div>
-            
-            <FirebaseConfigFields 
-              config={newFirebaseConfig}
-              onChange={setNewFirebaseConfig}
-            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-            <Button onClick={handleAdd} disabled={!newName.trim()}>Create Workspace</Button>
+            <Button onClick={handleAdd} disabled={!newName.trim()}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
