@@ -137,17 +137,15 @@ function WorkspaceItem({
 export function WorkspaceSettings() {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
   
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(currentHomeId);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
   
   const [activeTab, setActiveTab] = useState('workspaces');
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newFirebaseConfig, setNewFirebaseConfig] = useState<FirebaseConfig>({});
   
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editHome, setEditHome] = useState<Home | null>(null);
+  // Edit form state (for inline editing in right panel)
   const [editName, setEditName] = useState('');
   const [editFirebaseConfig, setEditFirebaseConfig] = useState<FirebaseConfig>({});
   
@@ -155,20 +153,16 @@ export function WorkspaceSettings() {
 
   const handleAdd = () => {
     if (newName.trim()) {
-      const hasConfig = newFirebaseConfig.apiKey && newFirebaseConfig.databaseURL;
-      addHome(newName.trim(), hasConfig ? newFirebaseConfig : undefined);
+      addHome(newName.trim());
       setNewName('');
-      setNewFirebaseConfig({});
       setShowAddDialog(false);
     }
   };
 
-  const handleEdit = () => {
-    if (editHome && editName.trim()) {
+  const handleSaveEdit = () => {
+    if (selectedWorkspaceId && editName.trim()) {
       const hasConfig = editFirebaseConfig.apiKey && editFirebaseConfig.databaseURL;
-      updateHome(editHome.id, editName.trim(), hasConfig ? editFirebaseConfig : undefined);
-      setShowEditDialog(false);
-      setEditHome(null);
+      updateHome(selectedWorkspaceId, editName.trim(), hasConfig ? editFirebaseConfig : undefined);
     }
   };
 
@@ -176,24 +170,28 @@ export function WorkspaceSettings() {
     if (homeToDelete) {
       deleteHome(homeToDelete.id);
       if (selectedWorkspaceId === homeToDelete.id) {
-        setSelectedWorkspaceId(homes.find(h => h.id !== homeToDelete.id)?.id || null);
+        setSelectedWorkspaceId(null);
       }
       setHomeToDelete(null);
     }
   };
 
-  const openEditDialog = (home: Home) => {
-    // Ensure the UI reflects which workspace is being edited
+  // When clicking edit, select workspace and populate form
+  const openEditPanel = (home: Home) => {
     setSelectedWorkspaceId(home.id);
-    setEditHome(home);
     setEditName(home.name);
     setEditFirebaseConfig(home.firebaseConfig || {});
-    setShowEditDialog(true);
   };
 
   const handleSelectWorkspace = (id: string) => {
-    setSelectedWorkspaceId(id);
     setCurrentHomeId(id);
+  };
+
+  // Close edit panel
+  const closeEditPanel = () => {
+    setSelectedWorkspaceId(null);
+    setEditName('');
+    setEditFirebaseConfig({});
   };
 
   return (
@@ -211,43 +209,118 @@ export function WorkspaceSettings() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Workspaces Tab - Workspace List */}
+        {/* Workspaces Tab - Dual Panel Layout */}
         <TabsContent value="workspaces">
-          <Card className="border-border/50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <HomeIcon className="w-5 h-5" />
-                    Workspaces
-                  </CardTitle>
-                  <CardDescription>Manage your home workspaces</CardDescription>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left Panel: Workspace List */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <HomeIcon className="w-5 h-5" />
+                      Workspaces
+                    </CardTitle>
+                    <CardDescription>Manage your home workspaces</CardDescription>
+                  </div>
+                  <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    <span>Add</span>
+                  </Button>
                 </div>
-                <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
-                  <Plus className="w-4 h-4" />
-                  <span>Add</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
-                <div className="space-y-2">
-                  {homes.map((home) => (
-                    <WorkspaceItem
-                      key={home.id}
-                      home={home}
-                      isActive={home.id === currentHomeId}
-                      isSelected={home.id === selectedWorkspaceId}
-                      onSelect={() => handleSelectWorkspace(home.id)}
-                      onEdit={() => openEditDialog(home)}
-                      onDelete={() => setHomeToDelete(home)}
-                      canDelete={homes.length > 1}
-                    />
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
+                  <div className="space-y-2">
+                    {homes.map((home) => (
+                      <WorkspaceItem
+                        key={home.id}
+                        home={home}
+                        isActive={home.id === currentHomeId}
+                        isSelected={home.id === selectedWorkspaceId}
+                        onSelect={() => handleSelectWorkspace(home.id)}
+                        onEdit={() => openEditPanel(home)}
+                        onDelete={() => setHomeToDelete(home)}
+                        canDelete={homes.length > 1}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Right Panel: Edit Workspace Details */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Pencil className="w-5 h-5" />
+                  Edit Workspace
+                </CardTitle>
+                <CardDescription>
+                  {selectedWorkspace 
+                    ? `Update settings for "${selectedWorkspace.name}"`
+                    : 'Select a workspace and click the edit icon to configure'
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {selectedWorkspace ? (
+                  <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
+                    <div className="space-y-4">
+                      {/* Workspace Name */}
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-name">Workspace Name</Label>
+                        <Input
+                          id="edit-name"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="e.g. My Home"
+                        />
+                      </div>
+                      
+                      <Separator />
+                      
+                      {/* Firebase Configuration */}
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Flame className="w-4 h-4 text-orange-500" />
+                        Firebase Configuration
+                      </div>
+                      
+                      <FirebaseConfigFields 
+                        config={editFirebaseConfig}
+                        onChange={setEditFirebaseConfig}
+                      />
+                      
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={closeEditPanel}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSaveEdit} 
+                          disabled={!editName.trim()}
+                          className="flex-1"
+                        >
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="h-[350px] lg:h-[400px] flex items-center justify-center text-muted-foreground text-sm text-center px-4">
+                    <div>
+                      <Pencil className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p>Click the <Pencil className="w-3.5 h-3.5 inline mx-1" /> icon on a workspace to edit its details and Firebase configuration.</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Configuration Tab - Mode Switch & WiFi Only (No Firebase) */}
@@ -259,7 +332,7 @@ export function WorkspaceSettings() {
                 Workspace Configuration
               </CardTitle>
               <CardDescription>
-                Configure "{selectedWorkspace?.name || 'Home'}" settings
+                Configure "{homes.find(h => h.id === currentHomeId)?.name || 'Home'}" settings
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -276,7 +349,7 @@ export function WorkspaceSettings() {
           <DialogHeader>
             <DialogTitle>Create Workspace</DialogTitle>
             <DialogDescription>
-              Enter a name for your new workspace. You can configure Firebase settings later by editing the workspace.
+              Enter a name for your new workspace. You can configure Firebase settings by editing the workspace after creation.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -294,45 +367,6 @@ export function WorkspaceSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
             <Button onClick={handleAdd} disabled={!newName.trim()}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Workspace</DialogTitle>
-            <DialogDescription>
-              Update workspace settings and Firebase configuration.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Workspace Name</Label>
-              <Input
-                id="edit-name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="e.g. My Home"
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Flame className="w-4 h-4 text-orange-500" />
-              Firebase Configuration
-            </div>
-            
-            <FirebaseConfigFields 
-              config={editFirebaseConfig}
-              onChange={setEditFirebaseConfig}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={!editName.trim()}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
