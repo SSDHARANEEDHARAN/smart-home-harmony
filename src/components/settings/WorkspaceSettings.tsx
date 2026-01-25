@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
-import { FirebaseConfigFields } from '@/components/home/FirebaseConfigFields';
-import { OfflineModePanel } from '@/components/settings/OfflineModePanel';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
-import { Home as HomeIcon, Plus, Trash2, Pencil, Flame, Wifi, WifiOff, Settings2 } from 'lucide-react';
+import { Home as HomeIcon, Plus, Pencil, X, Flame } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -30,106 +27,53 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
-function WorkspaceItem({ 
+function WorkspaceRow({ 
   home, 
   isActive, 
-  isSelected,
-  onSelect, 
-  onEdit, 
-  onDelete, 
-  canDelete 
+  onEdit
 }: { 
   home: Home; 
   isActive: boolean;
-  isSelected: boolean;
-  onSelect: () => void;
   onEdit: () => void;
-  onDelete: () => void;
-  canDelete: boolean;
 }) {
   const isConnected = useFirebaseConnectionStatus(home.id);
   const hasFirebase = !!(home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL);
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-        isSelected
-          ? "border-primary bg-primary/10"
-          : isActive 
-            ? "border-primary/50 bg-primary/5" 
-            : "border-border hover:bg-muted/50"
-      )}
-      onClick={onSelect}
-    >
+    <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
       <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-9 h-9 rounded-lg flex items-center justify-center",
-          isSelected || isActive ? "bg-primary/20" : "bg-muted"
-        )}>
-          <HomeIcon className="w-4 h-4" />
+        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+          <HomeIcon className="w-5 h-5 text-muted-foreground" />
         </div>
         <div>
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">{home.name}</span>
             {isActive && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
                 Active
-              </span>
+              </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            {hasFirebase ? (
-              <div className={cn(
-                "flex items-center gap-1 text-[10px]",
-                isConnected ? "text-green-500" : "text-muted-foreground"
-              )}>
-                {isConnected ? (
-                  <>
-                    <Wifi className="w-3 h-3" />
-                    <span>Firebase Connected</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-3 h-3" />
-                    <span>Firebase Configured</span>
-                  </>
-                )}
-              </div>
-            ) : (
-              <span className="text-[10px] text-muted-foreground">No Firebase</span>
-            )}
-          </div>
+          <span className="text-xs text-muted-foreground">
+            {hasFirebase 
+              ? isConnected 
+                ? 'Firebase Connected' 
+                : 'Firebase Configured'
+              : 'No Firebase'
+            }
+          </span>
         </div>
       </div>
-
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        )}
-      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={onEdit}
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
     </div>
   );
 }
@@ -140,14 +84,13 @@ export function WorkspaceSettings() {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
   
-  const [activeTab, setActiveTab] = useState('workspaces');
-  
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newName, setNewName] = useState('');
   
-  // Edit form state (for inline editing in right panel)
+  // Edit form state
   const [editName, setEditName] = useState('');
   const [editFirebaseConfig, setEditFirebaseConfig] = useState<FirebaseConfig>({});
+  const [pasteValue, setPasteValue] = useState('');
   
   const [homeToDelete, setHomeToDelete] = useState<Home | null>(null);
 
@@ -163,6 +106,7 @@ export function WorkspaceSettings() {
     if (selectedWorkspaceId && editName.trim()) {
       const hasConfig = editFirebaseConfig.apiKey && editFirebaseConfig.databaseURL;
       updateHome(selectedWorkspaceId, editName.trim(), hasConfig ? editFirebaseConfig : undefined);
+      toast.success('Workspace updated');
     }
   };
 
@@ -176,180 +120,375 @@ export function WorkspaceSettings() {
     }
   };
 
-  // When clicking edit, select workspace and populate form
   const openEditPanel = (home: Home) => {
     setSelectedWorkspaceId(home.id);
     setEditName(home.name);
     setEditFirebaseConfig(home.firebaseConfig || {});
+    setPasteValue('');
+    setCurrentHomeId(home.id);
   };
 
-  const handleSelectWorkspace = (id: string) => {
-    setCurrentHomeId(id);
-  };
-
-  // Close edit panel
   const closeEditPanel = () => {
     setSelectedWorkspaceId(null);
     setEditName('');
     setEditFirebaseConfig({});
+    setPasteValue('');
+  };
+
+  const updateField = (field: keyof FirebaseConfig, value: string) => {
+    setEditFirebaseConfig(prev => ({ ...prev, [field]: value || undefined }));
+  };
+
+  const parseAndFillConfig = (input: string) => {
+    if (!input.trim()) return;
+
+    try {
+      let parsed: any;
+      try {
+        parsed = JSON.parse(input);
+      } catch {
+        let cleanInput = input
+          .replace(/\/\/.*$/gm, '')
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          .replace(/import\s+.*?from\s+['"][^'"]+['"];?/g, '')
+          .replace(/const\s+\w+\s*=\s*initializeApp\([^)]*\);?/g, '')
+          .replace(/const\s+\w+\s*=\s*getAnalytics\([^)]*\);?/g, '')
+          .replace(/const\s+\w+\s*=\s*getDatabase\([^)]*\);?/g, '')
+          .replace(/const\s+\w+\s*=\s*getAuth\([^)]*\);?/g, '')
+          .replace(/export\s+/g, '')
+          .trim();
+
+        const configPatterns = [
+          /const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\});?/,
+          /const\s+config\s*=\s*(\{[\s\S]*?\});?/,
+          /firebaseConfig\s*=\s*(\{[\s\S]*?\});?/,
+        ];
+
+        let configMatch: RegExpMatchArray | null = null;
+        for (const pattern of configPatterns) {
+          configMatch = cleanInput.match(pattern);
+          if (configMatch) break;
+        }
+
+        let jsonString = '';
+        
+        if (configMatch) {
+          jsonString = configMatch[1];
+        } else {
+          const markerRegex = /(apiKey|databaseURL)\s*:/;
+          const match = cleanInput.match(markerRegex);
+          
+          if (!match || match.index === undefined) {
+            throw new Error('No configuration object found');
+          }
+          
+          let startIndex = cleanInput.lastIndexOf('{', match.index);
+          if (startIndex === -1) throw new Error('No configuration object found');
+          
+          let balance = 0;
+          let endIndex = -1;
+          for (let i = startIndex; i < cleanInput.length; i++) {
+            if (cleanInput[i] === '{') balance++;
+            else if (cleanInput[i] === '}') {
+              balance--;
+              if (balance === 0) {
+                endIndex = i + 1;
+                break;
+              }
+            }
+          }
+          
+          if (endIndex === -1) throw new Error('Unbalanced braces');
+          
+          jsonString = cleanInput.substring(startIndex, endIndex);
+        }
+
+        jsonString = jsonString
+          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+          .replace(/:\s*'([^']*)'/g, ': "$1"')
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']')
+          .replace(/\n/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        parsed = JSON.parse(jsonString);
+      }
+
+      setEditFirebaseConfig(prev => ({
+        ...prev,
+        apiKey: parsed.apiKey || prev.apiKey,
+        authDomain: parsed.authDomain || prev.authDomain,
+        databaseURL: parsed.databaseURL || prev.databaseURL,
+        projectId: parsed.projectId || prev.projectId,
+        storageBucket: parsed.storageBucket || prev.storageBucket,
+        messagingSenderId: parsed.messagingSenderId || prev.messagingSenderId,
+        appId: parsed.appId || prev.appId,
+        measurementId: parsed.measurementId || prev.measurementId,
+      }));
+
+      setPasteValue('');
+      toast.success('Firebase config auto-filled!');
+    } catch (e: any) {
+      console.error('Config parse error:', e);
+      toast.error('Failed to parse config: ' + e.message);
+    }
   };
 
   return (
     <>
-      {/* Tabbed Layout */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-          <TabsTrigger value="workspaces" className="gap-2">
-            <HomeIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Workspaces</span>
-          </TabsTrigger>
-          <TabsTrigger value="configuration" className="gap-2">
-            <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Workspace Configuration</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Workspaces Card */}
+      <Card className="border-border/50">
+        <CardContent className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <HomeIcon className="w-5 h-5" />
+              <div>
+                <h2 className="font-semibold text-base">Workspaces</h2>
+                <p className="text-sm text-muted-foreground">Manage your home workspaces</p>
+              </div>
+            </div>
+            <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
 
-        {/* Workspaces Tab - Dual Panel Layout */}
-        <TabsContent value="workspaces">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Left Panel: Workspace List */}
-            <Card className="border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
+          {/* Workspace List */}
+          <div className="space-y-2 mb-6">
+            {homes.map((home) => (
+              <WorkspaceRow
+                key={home.id}
+                home={home}
+                isActive={home.id === currentHomeId}
+                onEdit={() => openEditPanel(home)}
+              />
+            ))}
+          </div>
+
+          {/* Edit Panel - Shows when workspace is selected */}
+          {selectedWorkspace && (
+            <Card className="border-border/50 bg-muted/30">
+              <CardContent className="p-6">
+                {/* Edit Header */}
+                <div className="flex items-start justify-between mb-6">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <HomeIcon className="w-5 h-5" />
-                      Workspaces
-                    </CardTitle>
-                    <CardDescription>Manage your home workspaces</CardDescription>
+                    <h3 className="font-semibold text-base">Edit Workspace</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Update workspace settings and Firebase configuration.
+                    </p>
                   </div>
-                  <Button onClick={() => setShowAddDialog(true)} size="sm" className="gap-1.5">
-                    <Plus className="w-4 h-4" />
-                    <span>Add</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 -mt-1 -mr-2"
+                    onClick={closeEditPanel}
+                  >
+                    <X className="w-4 h-4" />
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
-                  <div className="space-y-2">
-                    {homes.map((home) => (
-                      <WorkspaceItem
-                        key={home.id}
-                        home={home}
-                        isActive={home.id === currentHomeId}
-                        isSelected={home.id === selectedWorkspaceId}
-                        onSelect={() => handleSelectWorkspace(home.id)}
-                        onEdit={() => openEditPanel(home)}
-                        onDelete={() => setHomeToDelete(home)}
-                        canDelete={homes.length > 1}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
 
-            {/* Right Panel: Edit Workspace Details */}
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Pencil className="w-5 h-5" />
-                  Edit Workspace
-                </CardTitle>
-                <CardDescription>
-                  {selectedWorkspace 
-                    ? `Update settings for "${selectedWorkspace.name}"`
-                    : 'Select a workspace and click the edit icon to configure'
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedWorkspace ? (
-                  <ScrollArea className="h-[350px] lg:h-[400px] pr-2">
-                    <div className="space-y-4">
-                      {/* Workspace Name */}
-                      <div className="space-y-2">
-                        <Label htmlFor="edit-name">Workspace Name</Label>
+                {/* Two Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    {/* Workspace Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name" className="text-sm font-medium">Workspace Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="e.g. My Home"
+                        className="h-9"
+                      />
+                    </div>
+
+                    {/* Firebase Configuration Paste */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center gap-1.5">
+                        <Flame className="w-4 h-4 text-orange-500" />
+                        Firebase Configuration
+                      </Label>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Flame className="w-3 h-3 text-orange-500" />
+                          Paste Firebase Config (auto-fills fields below)
+                        </Label>
+                        <Textarea
+                          value={pasteValue}
+                          onChange={(e) => {
+                            setPasteValue(e.target.value);
+                            if (e.target.value.includes('apiKey')) {
+                              parseAndFillConfig(e.target.value);
+                            }
+                          }}
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData('text');
+                            setTimeout(() => parseAndFillConfig(pasted), 50);
+                          }}
+                          placeholder="Paste your Firebase config here (JSON or JS snippet)..."
+                          className="h-24 text-xs font-mono resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Firebase Fields */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      Firebase Configuration (* required for hardware control)
+                    </Label>
+
+                    {/* Firebase Fields Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="apiKey" className="text-xs">API Key *</Label>
                         <Input
-                          id="edit-name"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          placeholder="e.g. My Home"
+                          id="apiKey"
+                          value={editFirebaseConfig.apiKey || ''}
+                          onChange={(e) => updateField('apiKey', e.target.value)}
+                          placeholder="AIzaSy..."
+                          className="h-8 text-xs font-mono"
                         />
                       </div>
                       
-                      <Separator />
-                      
-                      {/* Firebase Configuration */}
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        Firebase Configuration
+                      <div className="space-y-1">
+                        <Label htmlFor="databaseURL" className="text-xs">Database URL *</Label>
+                        <Input
+                          id="databaseURL"
+                          value={editFirebaseConfig.databaseURL || ''}
+                          onChange={(e) => updateField('databaseURL', e.target.value)}
+                          placeholder="https://xxx.firebaseio.co"
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor="authDomain" className="text-xs">Auth Domain</Label>
+                        <Input
+                          id="authDomain"
+                          value={editFirebaseConfig.authDomain || ''}
+                          onChange={(e) => updateField('authDomain', e.target.value)}
+                          placeholder="xxx.firebaseapp.com"
+                          className="h-8 text-xs font-mono"
+                        />
                       </div>
                       
-                      <FirebaseConfigFields 
-                        config={editFirebaseConfig}
-                        onChange={setEditFirebaseConfig}
-                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="projectId" className="text-xs">Project ID</Label>
+                        <Input
+                          id="projectId"
+                          value={editFirebaseConfig.projectId || ''}
+                          onChange={(e) => updateField('projectId', e.target.value)}
+                          placeholder="my-project-id"
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor="storageBucket" className="text-xs">Storage Bucket</Label>
+                        <Input
+                          id="storageBucket"
+                          value={editFirebaseConfig.storageBucket || ''}
+                          onChange={(e) => updateField('storageBucket', e.target.value)}
+                          placeholder="xxx.appspot.com"
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
                       
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-4">
-                        <Button 
-                          variant="outline" 
-                          onClick={closeEditPanel}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleSaveEdit} 
-                          disabled={!editName.trim()}
-                          className="flex-1"
-                        >
-                          Save Changes
-                        </Button>
+                      <div className="space-y-1">
+                        <Label htmlFor="messagingSenderId" className="text-xs">Messaging Sender ID</Label>
+                        <Input
+                          id="messagingSenderId"
+                          value={editFirebaseConfig.messagingSenderId || ''}
+                          onChange={(e) => updateField('messagingSenderId', e.target.value)}
+                          placeholder="123456789"
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor="appId" className="text-xs">App ID</Label>
+                        <Input
+                          id="appId"
+                          value={editFirebaseConfig.appId || ''}
+                          onChange={(e) => updateField('appId', e.target.value)}
+                          placeholder="1:xxx:web:xxx"
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label htmlFor="measurementId" className="text-xs">Measurement ID</Label>
+                        <Input
+                          id="measurementId"
+                          value={editFirebaseConfig.measurementId || ''}
+                          onChange={(e) => updateField('measurementId', e.target.value)}
+                          placeholder="G-XXXXXXXXXX"
+                          className="h-8 text-xs font-mono"
+                        />
                       </div>
                     </div>
-                  </ScrollArea>
-                ) : (
-                  <div className="h-[350px] lg:h-[400px] flex items-center justify-center text-muted-foreground text-sm text-center px-4">
-                    <div>
-                      <Pencil className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p>Click the <Pencil className="w-3.5 h-3.5 inline mx-1" /> icon on a workspace to edit its details and Firebase configuration.</p>
+
+                    {/* Firebase Authentication */}
+                    <div className="pt-2">
+                      <Label className="text-xs text-muted-foreground mb-2 block">
+                        Firebase Authentication (for secured databases)
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="authEmail" className="text-xs">Auth Email</Label>
+                          <Input
+                            id="authEmail"
+                            type="email"
+                            value={editFirebaseConfig.authEmail || ''}
+                            onChange={(e) => updateField('authEmail', e.target.value)}
+                            placeholder="user@example.com"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <Label htmlFor="authPassword" className="text-xs">Auth Password</Label>
+                          <Input
+                            id="authPassword"
+                            type="password"
+                            value={editFirebaseConfig.authPassword || ''}
+                            onChange={(e) => updateField('authPassword', e.target.value)}
+                            placeholder="••••••••"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                  <Button variant="outline" onClick={closeEditPanel}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveEdit} disabled={!editName.trim()}>
+                    Save Changes
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Configuration Tab - Mode Switch & WiFi Only (No Firebase) */}
-        <TabsContent value="configuration">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Settings2 className="w-5 h-5" />
-                Workspace Configuration
-              </CardTitle>
-              <CardDescription>
-                Configure "{homes.find(h => h.id === currentHomeId)?.name || 'Home'}" settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Offline Mode Configuration - Mode Switch & WiFi */}
-              <OfflineModePanel />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Add Dialog - Simple name only */}
+      {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Create Workspace</DialogTitle>
             <DialogDescription>
-              Enter a name for your new workspace. You can configure Firebase settings by editing the workspace after creation.
+              Enter a name for your new workspace.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -378,7 +517,6 @@ export function WorkspaceSettings() {
             <AlertDialogTitle>Delete Workspace?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete "{homeToDelete?.name}" workspace.
-              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
