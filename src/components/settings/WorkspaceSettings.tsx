@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
-import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink, Download, Upload } from 'lucide-react';
+import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink, Download, Upload, Trash2 } from 'lucide-react';
 import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
 import { getDatabase, ref, get } from 'firebase/database';
 import {
@@ -49,11 +49,15 @@ function ConnectionStatusDot({ isConnected, hasFirebase }: { isConnected: boolea
 function WorkspaceRow({ 
   home, 
   isActive, 
-  onEdit
+  isDefault,
+  onEdit,
+  onDelete
 }: { 
   home: Home; 
   isActive: boolean;
+  isDefault: boolean;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const isConnected = useFirebaseConnectionStatus(home.id);
   const hasFirebase = !!(home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL);
@@ -67,6 +71,11 @@ function WorkspaceRow({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">{home.name}</span>
+            {isDefault && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                Default
+              </Badge>
+            )}
             {isActive && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
                 Active
@@ -93,14 +102,26 @@ function WorkspaceRow({
           </div>
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={onEdit}
-      >
-        <Pencil className="w-4 h-4" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onEdit}
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+        {!isDefault && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={onDelete}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -460,12 +481,14 @@ export function WorkspaceSettings() {
 
           {/* Workspace List */}
           <div className="space-y-2 mb-6">
-            {homes.map((home) => (
+            {homes.map((home, index) => (
               <WorkspaceRow
                 key={home.id}
                 home={home}
                 isActive={home.id === currentHomeId}
+                isDefault={index === 0}
                 onEdit={() => openEditPanel(home)}
+                onDelete={() => setHomeToDelete(home)}
               />
             ))}
           </div>
