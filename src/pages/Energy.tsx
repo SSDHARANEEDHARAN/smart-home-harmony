@@ -13,7 +13,8 @@ import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useEnergyStats } from '@/hooks/useEnergyStats';
 import { useFirebaseSync } from '@/hooks/useFirebaseSync';
-import { Loader2, Zap } from 'lucide-react';
+import { useHome } from '@/contexts/HomeContext';
+import { Loader2, Zap, Home } from 'lucide-react';
 
 export default function Energy() {
   const navigate = useNavigate();
@@ -21,9 +22,22 @@ export default function Energy() {
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { data: logs = [], isLoading: logsLoading } = useEnergyStats();
+  const { currentHomeId, currentHome } = useHome();
 
   // Enable Firebase bi-directional sync
   useFirebaseSync();
+
+  // Filter rooms and devices by current workspace
+  const filteredRooms = rooms.filter((room: any) => 
+    room.home_id === currentHomeId || (!room.home_id && currentHomeId === 'home')
+  );
+  const filteredDevices = devices.filter((device: any) => 
+    device.home_id === currentHomeId || (!device.home_id && currentHomeId === 'home')
+  );
+
+  // Filter energy logs to only include devices from the current workspace
+  const filteredDeviceIds = new Set(filteredDevices.map(d => d.id));
+  const filteredLogs = logs.filter(log => filteredDeviceIds.has(log.device_id));
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -52,7 +66,12 @@ export default function Energy() {
             </div>
             <div>
               <h1 className="font-bold">Energy</h1>
-              <p className="text-muted-foreground text-sm">Monitor your power consumption</p>
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <Home className="w-3 h-3" />
+                <span>{currentHome?.name || 'All Workspaces'}</span>
+                <span>•</span>
+                <span>{filteredDevices.length} devices</span>
+              </div>
             </div>
           </div>
         </div>
@@ -69,13 +88,13 @@ export default function Energy() {
 
         {/* Stats Overview */}
         <div className="mb-6 sm:mb-8">
-          <EnergyStats devices={devices} />
+          <EnergyStats devices={filteredDevices} />
         </div>
 
         {/* Charts and Lists */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 mb-6 sm:mb-8">
-          <RoomConsumptionChart devices={devices} rooms={rooms} />
-          <DeviceConsumptionList devices={devices} />
+          <RoomConsumptionChart devices={filteredDevices} rooms={filteredRooms} />
+          <DeviceConsumptionList devices={filteredDevices} />
         </div>
 
         {/* Relay Activity Log */}
@@ -85,7 +104,7 @@ export default function Energy() {
 
         {/* Usage History */}
         <div className="mb-6 sm:mb-8">
-          <DeviceUsageHistory logs={logs} devices={devices} />
+          <DeviceUsageHistory logs={filteredLogs} devices={filteredDevices} />
         </div>
       </div>
     </Layout>
