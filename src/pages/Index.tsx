@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, Cpu, Zap, Settings, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 
 const features = [
   {
@@ -29,7 +30,11 @@ const features = [
 
 export default function Index() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user: supabaseUser, loading: supabaseLoading } = useAuth();
+  const { user: firebaseUser, loading: firebaseLoading } = useFirebaseAuth();
+
+  const loading = supabaseLoading || firebaseLoading;
+  const user = supabaseUser || firebaseUser;
 
   useEffect(() => {
     if (!loading && user) {

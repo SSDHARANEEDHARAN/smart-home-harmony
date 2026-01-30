@@ -153,38 +153,30 @@ export default function Auth() {
                 }}
                 className="grid grid-cols-2 gap-3"
               >
-                <div className="relative">
-                  <RadioGroupItem 
-                    value="firebase" 
-                    id="firebase" 
-                    className="peer sr-only" 
-                  />
-                  <Label
-                    htmlFor="firebase"
-                    className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
-                      peer-data-[state=checked]:border-orange-500 peer-data-[state=checked]:bg-orange-500/10
-                      border-border hover:border-orange-500/50 hover:bg-muted/50"
-                  >
-                    <Flame className="w-5 h-5 text-orange-500" />
-                    <span className="text-xs font-medium">Firebase</span>
-                  </Label>
-                </div>
-                <div className="relative">
-                  <RadioGroupItem 
-                    value="supabase" 
-                    id="supabase" 
-                    className="peer sr-only" 
-                  />
-                  <Label
-                    htmlFor="supabase"
-                    className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
-                      peer-data-[state=checked]:border-emerald-500 peer-data-[state=checked]:bg-emerald-500/10
-                      border-border hover:border-emerald-500/50 hover:bg-muted/50"
-                  >
-                    <Database className="w-5 h-5 text-emerald-500" />
-                    <span className="text-xs font-medium">App Account</span>
-                  </Label>
-                </div>
+                <Label
+                  htmlFor="firebase"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
+                    ${authProvider === 'firebase' 
+                      ? 'border-orange-500 bg-orange-500/10' 
+                      : 'border-border hover:border-orange-500/50 hover:bg-muted/50'}`}
+                  onClick={() => setAuthProvider('firebase')}
+                >
+                  <RadioGroupItem value="firebase" id="firebase" className="sr-only" />
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  <span className="text-xs font-medium">Firebase</span>
+                </Label>
+                <Label
+                  htmlFor="supabase"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
+                    ${authProvider === 'supabase' 
+                      ? 'border-emerald-500 bg-emerald-500/10' 
+                      : 'border-border hover:border-emerald-500/50 hover:bg-muted/50'}`}
+                  onClick={() => setAuthProvider('supabase')}
+                >
+                  <RadioGroupItem value="supabase" id="supabase" className="sr-only" />
+                  <Database className="w-5 h-5 text-emerald-500" />
+                  <span className="text-xs font-medium">App Account</span>
+                </Label>
               </RadioGroup>
             </div>
 
