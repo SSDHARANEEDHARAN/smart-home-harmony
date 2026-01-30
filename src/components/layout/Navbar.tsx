@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Cpu, Zap, Workflow, Settings, LogOut, LogIn, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useHome } from '@/contexts/HomeContext';
 import { FirebaseActiveBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { cn } from '@/lib/utils';
@@ -17,11 +18,17 @@ const navItems = [
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user: supabaseUser, signOut: supabaseSignOut } = useAuth();
+  const { user: firebaseUser, signOut: firebaseSignOut } = useFirebaseAuth();
   const { currentHome } = useHome();
 
+  // User is logged in if either auth method has a user
+  const user = supabaseUser || firebaseUser;
+
   const handleLogout = async () => {
-    await signOut();
+    // Sign out from both to be safe
+    if (supabaseUser) await supabaseSignOut();
+    if (firebaseUser) await firebaseSignOut();
     navigate('/auth');
   };
 
