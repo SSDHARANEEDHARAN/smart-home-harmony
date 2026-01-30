@@ -4,12 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Home, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Home, Mail, Lock, User, AlertCircle, Flame, Database } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+
+type AuthProvider = 'supabase' | 'firebase';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,15 +22,22 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authProvider, setAuthProvider] = useState<AuthProvider>('firebase');
 
   const navigate = useNavigate();
-  const { user, signIn, signUp } = useAuth();
+  
+  // Supabase auth
+  const { user: supabaseUser, signIn: supabaseSignIn, signUp: supabaseSignUp } = useAuth();
+  
+  // Firebase auth
+  const { user: firebaseUser, signIn: firebaseSignIn, signUp: firebaseSignUp } = useFirebaseAuth();
 
   useEffect(() => {
-    if (user) {
+    // Redirect if either auth method has a user
+    if (supabaseUser || firebaseUser) {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [supabaseUser, firebaseUser, navigate]);
 
   const validateForm = () => {
     try {
@@ -50,22 +61,52 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          if (error.message.includes('Invalid login')) {
-            setError('Invalid email or password');
-          } else {
-            setError(error.message);
+      if (authProvider === 'firebase') {
+        // Firebase Authentication
+        if (isLogin) {
+          const { error } = await firebaseSignIn(email, password);
+          if (error) {
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+              setError('Invalid email or password');
+            } else if (error.code === 'auth/user-not-found') {
+              setError('No account found with this email');
+            } else if (error.code === 'auth/too-many-requests') {
+              setError('Too many failed attempts. Please try again later.');
+            } else {
+              setError(error.message || 'Login failed');
+            }
+          }
+        } else {
+          const { error } = await firebaseSignUp(email, password);
+          if (error) {
+            if (error.code === 'auth/email-already-in-use') {
+              setError('This email is already registered. Please login instead.');
+            } else if (error.code === 'auth/weak-password') {
+              setError('Password is too weak. Please use a stronger password.');
+            } else {
+              setError(error.message || 'Sign up failed');
+            }
           }
         }
       } else {
-        const { error } = await signUp(email, password, displayName);
-        if (error) {
-          if (error.message.includes('already registered')) {
-            setError('This email is already registered. Please login instead.');
-          } else {
-            setError(error.message);
+        // Supabase Authentication
+        if (isLogin) {
+          const { error } = await supabaseSignIn(email, password);
+          if (error) {
+            if (error.message.includes('Invalid login')) {
+              setError('Invalid email or password');
+            } else {
+              setError(error.message);
+            }
+          }
+        } else {
+          const { error } = await supabaseSignUp(email, password, displayName);
+          if (error) {
+            if (error.message.includes('already registered')) {
+              setError('This email is already registered. Please login instead.');
+            } else {
+              setError(error.message);
+            }
           }
         }
       }
@@ -101,7 +142,54 @@ export default function Auth() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {/* Auth Provider Selector */}
+            <div className="space-y-3">
+              <Label className="text-sm text-muted-foreground">Sign in with</Label>
+              <RadioGroup 
+                value={authProvider} 
+                onValueChange={(value) => {
+                  setAuthProvider(value as AuthProvider);
+                  setError('');
+                }}
+                className="grid grid-cols-2 gap-3"
+              >
+                <div className="relative">
+                  <RadioGroupItem 
+                    value="firebase" 
+                    id="firebase" 
+                    className="peer sr-only" 
+                  />
+                  <Label
+                    htmlFor="firebase"
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
+                      peer-data-[state=checked]:border-orange-500 peer-data-[state=checked]:bg-orange-500/10
+                      border-border hover:border-orange-500/50 hover:bg-muted/50"
+                  >
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <span className="text-xs font-medium">Firebase</span>
+                  </Label>
+                </div>
+                <div className="relative">
+                  <RadioGroupItem 
+                    value="supabase" 
+                    id="supabase" 
+                    className="peer sr-only" 
+                  />
+                  <Label
+                    htmlFor="supabase"
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all
+                      peer-data-[state=checked]:border-emerald-500 peer-data-[state=checked]:bg-emerald-500/10
+                      border-border hover:border-emerald-500/50 hover:bg-muted/50"
+                  >
+                    <Database className="w-5 h-5 text-emerald-500" />
+                    <span className="text-xs font-medium">App Account</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Display Name (only for Supabase signup) */}
+            {!isLogin && authProvider === 'supabase' && (
               <div className="space-y-2">
                 <Label htmlFor="name">Display Name</Label>
                 <div className="relative">
@@ -164,6 +252,16 @@ export default function Auth() {
             >
               {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
             </Button>
+
+            {/* Trial credentials hint for Firebase */}
+            {authProvider === 'firebase' && isLogin && (
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-orange-500">Trial Account:</span>{' '}
+                  Use the demo credentials for testing the Firebase integration.
+                </p>
+              </div>
+            )}
           </form>
 
           <div className="mt-6 text-center">
