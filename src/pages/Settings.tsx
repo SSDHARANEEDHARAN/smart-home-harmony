@@ -1,5 +1,5 @@
 import { Layout } from '@/components/layout/Layout';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useSettings } from '@/hooks/useSettings';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Settings() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useAppAuth();
   const { settings, updateNotificationSettings, updateVoiceCommandSettings, resetToDefaults } = useSettings();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -52,7 +52,11 @@ export default function Settings() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    const { error } = await signOut();
+    if (error) {
+      toast.error(error.message || 'Failed to sign out');
+      return;
+    }
     toast.success('Signed out successfully');
   };
 

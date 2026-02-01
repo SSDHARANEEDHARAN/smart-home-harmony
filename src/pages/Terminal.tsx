@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useDevices } from '@/hooks/useDevices';
 import { useHome } from '@/contexts/HomeContext';
 import { useFirebaseSync } from '@/hooks/useFirebaseSync';
@@ -13,7 +13,7 @@ interface TerminalLog {
 }
 
 export default function Terminal() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAppAuth();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { currentHome, currentHomeId } = useHome();
   const { isConnected, hasFirebaseConfig } = useFirebaseSync();

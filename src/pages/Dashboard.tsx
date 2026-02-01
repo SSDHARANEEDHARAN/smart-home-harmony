@@ -7,7 +7,7 @@ import { SceneCard } from '@/components/scenes/SceneCard';
 import { CreateSceneDialog } from '@/components/scenes/CreateSceneDialog';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useScenes } from '@/hooks/useScenes';
@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading, toggleDevice, updateDevice } = useDevices();
   const { scenes, activateScene, deleteScene } = useScenes();

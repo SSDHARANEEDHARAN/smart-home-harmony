@@ -4,6 +4,7 @@ import {
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
@@ -80,11 +81,23 @@ export function useFirebaseAuth() {
     }
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    const auth = getFirebaseAuth();
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  }, []);
+
   return {
     user,
     loading,
     signIn,
     signUp,
     signOut,
+    resetPassword,
   };
 }
+
