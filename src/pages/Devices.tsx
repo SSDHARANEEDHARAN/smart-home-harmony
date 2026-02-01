@@ -7,7 +7,7 @@ import { EditDeviceDialog } from '@/components/devices/EditDeviceDialog';
 import { CreateRoomDialog } from '@/components/rooms/CreateRoomDialog';
 import { EditRoomDialog } from '@/components/rooms/EditRoomDialog';
 import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useHome } from '@/contexts/HomeContext';
@@ -39,7 +39,7 @@ import { cn } from '@/lib/utils';
 
 export default function Devices() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
   const { rooms, isLoading: roomsLoading, deleteRoom } = useRooms();
   const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice, updateDevice } = useDevices();
   const { getHomeForRoom, currentHomeId } = useHome();

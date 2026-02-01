@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
 import { useDevices } from '@/hooks/useDevices';
 import { Loader2, Calendar, Clock, Trash2, Pencil, X, Check, Power, PowerOff } from 'lucide-react';
@@ -50,7 +50,7 @@ const DAYS = [
 
 export default function Schedules() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
   const { rules, isLoading, deleteRule, updateRule, toggleRule, createRule } = useAutomationRules();
   const { devices } = useDevices();
   

@@ -56,6 +56,20 @@ export function useAuth() {
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    // This sends a recovery email; the user will come back to /auth to set a new password.
+    const redirectUrl = `${window.location.origin}/auth`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error };
+  };
+
   return {
     user,
     session,
@@ -63,5 +77,7 @@ export function useAuth() {
     signUp,
     signIn,
     signOut,
+    resetPassword,
+    updatePassword,
   };
 }

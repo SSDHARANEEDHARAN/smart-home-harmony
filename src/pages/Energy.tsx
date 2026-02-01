@@ -8,7 +8,7 @@ import { DeviceUsageHistory } from '@/components/energy/DeviceUsageHistory';
 import { RelayStatusPanel } from '@/components/relay/RelayStatusPanel';
 import { RelayHistoryLog } from '@/components/energy/RelayHistoryLog';
 import { HardwareActivityDashboard } from '@/components/energy/HardwareActivityDashboard';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useRooms } from '@/hooks/useRooms';
 import { useDevices } from '@/hooks/useDevices';
 import { useEnergyStats } from '@/hooks/useEnergyStats';
@@ -18,7 +18,7 @@ import { Loader2, Zap, Home } from 'lucide-react';
 
 export default function Energy() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { data: logs = [], isLoading: logsLoading } = useEnergyStats();

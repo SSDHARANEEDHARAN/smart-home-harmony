@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { AutomationRuleCard } from '@/components/automation/AutomationRuleCard';
 import { CreateAutomationDialog } from '@/components/automation/CreateAutomationDialog';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppAuth } from '@/hooks/useAppAuth';
 import { useDevices } from '@/hooks/useDevices';
 import { useAutomationRules } from '@/hooks/useAutomationRules';
 import { useSettings } from '@/hooks/useSettings';
@@ -23,7 +23,7 @@ import {
 
 export default function Automation() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAppAuth();
   const { devices, isLoading: devicesLoading } = useDevices();
   const { rules, isLoading: rulesLoading, toggleRule, deleteRule } = useAutomationRules();
   const { settings } = useSettings();
