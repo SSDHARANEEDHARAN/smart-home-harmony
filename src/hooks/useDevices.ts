@@ -109,12 +109,11 @@ export function useDevices() {
       
       if (error) throw error;
 
-      // Log relay history for web UI changes
+      // Log relay history for web UI changes (fire and forget - don't await)
       if (relay_pin) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
+        supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
-            await supabase.from('relay_history').insert([{
+            supabase.from('relay_history').insert([{
               user_id: user.id,
               device_id: id,
               relay_pin,
@@ -122,47 +121,60 @@ export function useDevices() {
               previous_state: previousState,
               new_state: is_on,
               source: 'web',
-            }]);
+            }]).then(() => {
+              queryClient.invalidateQueries({ queryKey: ['relay-history'] });
+            });
           }
-        } catch (historyError) {
-          console.error('Failed to log relay history:', historyError);
-        }
+        });
       }
 
-      // Sync with Firebase RTDB if relay_pin is configured and home has Firebase config
+      // Sync with Firebase RTDB if relay_pin is configured and home has Firebase config (fire and forget)
       if (relay_pin && currentHome?.firebaseConfig?.apiKey) {
-        try {
-          const success = await updateFirebaseRelay(currentHomeId, relay_pin, is_on);
-          if (success) {
-            console.log(`Firebase RTDB synced: relay${relay_pin} = ${is_on}`);
-          }
-        } catch (firebaseError) {
-          console.error('Firebase sync failed:', firebaseError);
-          // Don't throw - device state is already updated in Supabase
-        }
+        updateFirebaseRelay(currentHomeId, relay_pin, is_on).then(success => {
+          if (success) console.log(`Firebase RTDB synced: relay${relay_pin} = ${is_on}`);
+        }).catch(err => console.error('Firebase sync failed:', err));
       }
 
-      // Also trigger Supabase edge function relay if configured
+      // Trigger Supabase edge function relay if configured (fire and forget)
       if (relay_pin) {
-        try {
-          await supabase.functions.invoke('trigger-relay', {
-            body: { relay_pin, state: is_on },
-          });
-        } catch (relayError) {
-          console.error('Relay trigger failed:', relayError);
-          // Don't throw - device state is already updated
-        }
+        supabase.functions.invoke('trigger-relay', {
+          body: { relay_pin, state: is_on },
+        }).catch(err => console.error('Relay trigger failed:', err));
       }
 
       return data;
     },
+    // Optimistic update - instant UI response
+    onMutate: async ({ id, is_on }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['devices'] });
+
+      // Snapshot previous value
+      const previousDevices = queryClient.getQueryData<Device[]>(['devices']);
+
+      // Optimistically update cache immediately
+      queryClient.setQueryData<Device[]>(['devices'], (old) => 
+        old?.map(device => 
+          device.id === id ? { ...device, is_on } : device
+        ) ?? []
+      );
+
+      // Return context with rollback value
+      return { previousDevices };
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['devices'] });
-      queryClient.invalidateQueries({ queryKey: ['relay-history'] });
       toast.success(`${data.name} turned ${data.is_on ? 'on' : 'off'}`);
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback to previous state on error
+      if (context?.previousDevices) {
+        queryClient.setQueryData(['devices'], context.previousDevices);
+      }
       toast.error('Failed to toggle device: ' + error.message);
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
     },
   });
 
