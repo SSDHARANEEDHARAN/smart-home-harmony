@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Home, Mail, Lock, User, AlertCircle, Flame, Database } from 'lucide-react';
+import { Home, Mail, Lock, User, AlertCircle, Flame, Database, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
@@ -189,6 +189,16 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/')}
+        className="fixed top-4 left-4 z-20 gap-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Button>
+
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
