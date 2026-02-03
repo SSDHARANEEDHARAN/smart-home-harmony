@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, Clock, Calendar, X, Pencil, Play, AlertTriangle } from 'lucide-react';
+import { Edit2, Trash2, Clock, Calendar, X, Pencil, Play, AlertTriangle, Loader2 } from 'lucide-react';
 import { Device, AutomationRule } from '@/types/smarthome';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceToggle } from './DeviceToggle';
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 interface DeviceCardProps {
   device: Device;
   onToggle: (isOn: boolean) => void;
@@ -25,6 +26,7 @@ interface DeviceCardProps {
   onDelete?: () => void;
   showControls?: boolean;
   compact?: boolean;
+  isSyncing?: boolean;
 }
 const DAYS = [
   { value: 0, label: 'Sun', short: 'S' },
@@ -438,7 +440,8 @@ export function DeviceCard({
   onEdit,
   onDelete,
   showControls = false,
-  compact = false
+  compact = false,
+  isSyncing = false
 }: DeviceCardProps) {
   const {
     theme
@@ -658,6 +661,20 @@ export function DeviceCard({
             
             {/* Status Icons + Schedule Button */}
             <div className="flex items-center gap-1.5">
+              {/* Sync indicator */}
+              {isSyncing && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Syncing...</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
               {/* Quick Schedule Button */}
               <ScheduleDialog deviceId={device.id} deviceName={device.name} existingRules={deviceRules} />
               
@@ -776,6 +793,20 @@ export function DeviceCard({
           
           {/* Status Icons + Edit Controls */}
           <div className="flex items-center gap-1">
+            {/* Sync indicator */}
+            {isSyncing && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Syncing...</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
             {/* Quick Schedule Button */}
             <ScheduleDialog deviceId={device.id} deviceName={device.name} existingRules={deviceRules} />
             

@@ -199,5 +199,7 @@ export function useDevices() {
     updateDevice,
     toggleDevice,
     deleteDevice,
+    isToggling: toggleDevice.isPending,
+    togglingDeviceId: toggleDevice.isPending ? toggleDevice.variables?.id : null,
   };
 }

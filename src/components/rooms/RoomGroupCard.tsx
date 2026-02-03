@@ -12,9 +12,10 @@ interface RoomGroupCardProps {
   devices: Device[];
   onToggleDevice: (deviceId: string, isOn: boolean) => void;
   onValueChange?: (deviceId: string, value: number) => void;
+  togglingDeviceId?: string | null;
 }
 
-export function RoomGroupCard({ room, devices, onToggleDevice, onValueChange }: RoomGroupCardProps) {
+export function RoomGroupCard({ room, devices, onToggleDevice, onValueChange, togglingDeviceId }: RoomGroupCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   
   const activeCount = devices.filter(d => d.is_on).length;
@@ -115,6 +116,7 @@ export function RoomGroupCard({ room, devices, onToggleDevice, onValueChange }: 
               onToggle={(isOn) => onToggleDevice(device.id, isOn)}
               onValueChange={onValueChange ? (value) => onValueChange(device.id, value) : undefined}
               compact
+              isSyncing={togglingDeviceId === device.id}
             />
           ))}
         </div>
