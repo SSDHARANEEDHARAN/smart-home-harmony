@@ -41,7 +41,7 @@ export default function Devices() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAppAuth();
   const { rooms, isLoading: roomsLoading, deleteRoom } = useRooms();
-  const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice, updateDevice } = useDevices();
+  const { devices, isLoading: devicesLoading, toggleDevice, deleteDevice, updateDevice, togglingDeviceId } = useDevices();
   const { getHomeForRoom, currentHomeId } = useHome();
 
   // Enable Firebase bi-directional sync
@@ -354,6 +354,7 @@ export default function Devices() {
                             setDeleteDialogOpen(true);
                           }}
                           showControls
+                          isSyncing={togglingDeviceId === device.id}
                         />
                       ))}
                     </div>
@@ -381,6 +382,7 @@ export default function Devices() {
                           setDeleteDialogOpen(true);
                         }}
                         showControls
+                        isSyncing={togglingDeviceId === device.id}
                       />
                     ))}
                   </div>

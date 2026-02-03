@@ -24,7 +24,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAppAuth();
   const { rooms, isLoading: roomsLoading } = useRooms();
-  const { devices, isLoading: devicesLoading, toggleDevice, updateDevice } = useDevices();
+  const { devices, isLoading: devicesLoading, toggleDevice, updateDevice, togglingDeviceId } = useDevices();
   const { scenes, activateScene, deleteScene } = useScenes();
   const { settings } = useSettings();
   const { homes, currentHomeId, setCurrentHomeId, currentHome } = useHome();
@@ -196,15 +196,16 @@ export default function Dashboard() {
                 const roomDevices = filteredDevices.filter((d) => d.room_id === room.id);
                 if (roomDevices.length === 0) return null;
 
-                return (
-                  <RoomGroupCard
-                    key={room.id}
-                    room={room}
-                    devices={roomDevices}
-                    onToggleDevice={handleToggleDevice}
-                    onValueChange={handleValueChange}
-                  />
-                );
+                  return (
+                    <RoomGroupCard
+                      key={room.id}
+                      room={room}
+                      devices={roomDevices}
+                      onToggleDevice={handleToggleDevice}
+                      onValueChange={handleValueChange}
+                      togglingDeviceId={togglingDeviceId}
+                    />
+                  );
               })}
 
               {/* Unassigned devices in this workspace */}
@@ -224,6 +225,7 @@ export default function Dashboard() {
                           onToggle={(isOn) => handleToggleDevice(device.id, isOn)}
                           onValueChange={(value) => handleValueChange(device.id, value)}
                           compact
+                          isSyncing={togglingDeviceId === device.id}
                         />
                       ))}
                   </div>
