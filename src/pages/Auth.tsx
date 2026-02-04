@@ -11,6 +11,7 @@ import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { HexagonBackground } from '@/components/home/HexagonBackground';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -189,6 +190,9 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      {/* Hexagon Background */}
+      <HexagonBackground />
+
       {/* Back Button */}
       <Button
         variant="ghost"
@@ -198,12 +202,6 @@ export default function Auth() {
         <ArrowLeft className="w-4 h-4" />
         Back to Home
       </Button>
-
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
-      </div>
 
       <Card className="w-full max-w-md glass border-border/50 relative z-10">
         <CardHeader className="text-center">
