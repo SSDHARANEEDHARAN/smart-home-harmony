@@ -15,9 +15,16 @@ export interface VoiceCommandSettings {
   setValueKeyword: string;
 }
 
+export interface DeveloperModeSettings {
+  enabled: boolean;
+  paid: boolean;
+  paidAt?: string;
+}
+
 export interface AppSettings {
   notifications: NotificationSettings;
   voiceCommands: VoiceCommandSettings;
+  developerMode: DeveloperModeSettings;
 }
 
 const defaultSettings: AppSettings = {
@@ -34,6 +41,10 @@ const defaultSettings: AppSettings = {
     activateSceneKeyword: 'activate',
     setValueKeyword: 'set',
   },
+  developerMode: {
+    enabled: false,
+    paid: false,
+  },
 };
 
 const SETTINGS_KEY = 'smarthome_settings';
@@ -41,7 +52,15 @@ const SETTINGS_KEY = 'smarthome_settings';
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const stored = localStorage.getItem(SETTINGS_KEY);
-    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        ...defaultSettings,
+        ...parsed,
+        developerMode: { ...defaultSettings.developerMode, ...parsed.developerMode },
+      };
+    }
+    return defaultSettings;
   });
 
   useEffect(() => {
@@ -62,6 +81,24 @@ export function useSettings() {
     }));
   };
 
+  const updateDeveloperModeSettings = (updates: Partial<DeveloperModeSettings>) => {
+    setSettings(prev => ({
+      ...prev,
+      developerMode: { ...prev.developerMode, ...updates },
+    }));
+  };
+
+  const activateDeveloperMode = () => {
+    setSettings(prev => ({
+      ...prev,
+      developerMode: {
+        enabled: true,
+        paid: true,
+        paidAt: new Date().toISOString(),
+      },
+    }));
+  };
+
   const resetToDefaults = () => {
     setSettings(defaultSettings);
   };
@@ -70,6 +107,8 @@ export function useSettings() {
     settings,
     updateNotificationSettings,
     updateVoiceCommandSettings,
+    updateDeveloperModeSettings,
+    activateDeveloperMode,
     resetToDefaults,
   };
 }

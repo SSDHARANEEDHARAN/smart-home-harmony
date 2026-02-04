@@ -9,12 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette, Moon, Sun, Laptop, Terminal, Volume2, Play, Home } from 'lucide-react';
+import { Bell, Mic, RotateCcw, Settings as SettingsIcon, User, Shield, Palette, Moon, Sun, Laptop, Terminal, Volume2, Play, Home, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useState } from 'react';
 import { SOUND_TYPES, playNotificationSound, SoundType } from '@/utils/sound';
 import { WorkspaceSettings } from '@/components/settings/WorkspaceSettings';
+import { DeveloperModeSection } from '@/components/settings/DeveloperModeSection';
 import {
   Dialog,
   DialogContent,
@@ -383,7 +384,10 @@ export default function Settings() {
           </TabsContent>
 
           {/* Account Tab */}
-          <TabsContent value="account">
+          <TabsContent value="account" className="space-y-6">
+            {/* Developer Mode Section */}
+            <DeveloperModeSection />
+
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useHome, Home, FirebaseConfig } from '@/contexts/HomeContext';
 import { useFirebaseConnectionStatus } from '@/hooks/useFirebaseSync';
+import { useSettings } from '@/hooks/useSettings';
 import { Home as HomeIcon, Plus, Pencil, X, Flame, Wifi, WifiOff, Loader2, CheckCircle, AlertCircle, Copy, Info, ExternalLink, Download, Upload, Trash2 } from 'lucide-react';
 import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
 import { getDatabase, ref, get } from 'firebase/database';
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CreateWorkspaceDialog, PlatformConfig } from './CreateWorkspaceDialog';
 
 function ConnectionStatusDot({ isConnected, hasFirebase }: { isConnected: boolean; hasFirebase: boolean }) {
   if (!hasFirebase) return null;
@@ -135,6 +137,8 @@ const FIREBASE_RULES = `{
 
 export function WorkspaceSettings() {
   const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
+  const { settings } = useSettings();
+  const isDeveloperMode = settings.developerMode.enabled && settings.developerMode.paid;
   
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const selectedWorkspace = homes.find(h => h.id === selectedWorkspaceId);
@@ -162,6 +166,28 @@ export function WorkspaceSettings() {
       addHome(newName.trim());
       setNewName('');
       setShowAddDialog(false);
+    }
+  };
+
+  const handleCreateWorkspace = (name: string, platformConfig?: PlatformConfig) => {
+    if (platformConfig?.platform === 'firebase') {
+      // If Firebase platform selected, create with Firebase config
+      const firebaseConfig: FirebaseConfig = {
+        apiKey: platformConfig.firebaseApiKey,
+        databaseURL: platformConfig.firebaseDatabaseURL,
+        authDomain: platformConfig.firebaseAuthDomain,
+        projectId: platformConfig.firebaseProjectId,
+      };
+      addHome(name, firebaseConfig);
+      toast.success(`Workspace "${name}" created with Firebase!`);
+    } else if (platformConfig?.platform) {
+      // For other platforms, just create workspace with name
+      // Platform config would be stored separately in future
+      addHome(name);
+      toast.success(`Workspace "${name}" created with ${platformConfig.platform}!`);
+    } else {
+      addHome(name);
+      toast.success(`Workspace "${name}" created!`);
     }
   };
 
@@ -791,33 +817,41 @@ export function WorkspaceSettings() {
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Create Workspace</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new workspace.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-name">Workspace Name</Label>
-              <Input
-                id="new-name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Office, Vacation Home"
-                autoFocus
-              />
+      {/* Add Dialog - Developer Mode uses enhanced dialog */}
+      {isDeveloperMode ? (
+        <CreateWorkspaceDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onCreateWorkspace={handleCreateWorkspace}
+        />
+      ) : (
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Create Workspace</DialogTitle>
+              <DialogDescription>
+                Enter a name for your new workspace.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-name">Workspace Name</Label>
+                <Input
+                  id="new-name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Office, Vacation Home"
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-            <Button onClick={handleAdd} disabled={!newName.trim()}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
+              <Button onClick={handleAdd} disabled={!newName.trim()}>Create</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Delete Dialog */}
       <AlertDialog open={!!homeToDelete} onOpenChange={(open) => !open && setHomeToDelete(null)}>
