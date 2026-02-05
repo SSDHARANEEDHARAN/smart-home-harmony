@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock } from 'lucide-react';
+import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock, Loader2, ExternalLink } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
+import { useDeveloperMode } from '@/hooks/useDeveloperMode';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -16,14 +18,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 
 export function DeveloperModeSection() {
-  const { settings, updateDeveloperModeSettings, activateDeveloperMode } = useSettings();
+  const { settings, updateDeveloperModeSettings } = useSettings();
+  const { user } = useAuth();
+  const { 
+    isPurchased, 
+    isEnabled,
+    isVerifying, 
+    isProcessingPayment, 
+    initiatePayment,
+    verifyPurchase
+  } = useDeveloperMode();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleToggleDeveloperMode = (checked: boolean) => {
-    if (checked && !settings.developerMode.paid) {
+    if (checked && !isPurchased) {
       setShowPaymentDialog(true);
     } else {
       updateDeveloperModeSettings({ enabled: checked });
@@ -35,90 +46,98 @@ export function DeveloperModeSection() {
     }
   };
 
-  const handlePayment = async () => {
-    setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    activateDeveloperMode();
+  const handlePayment = () => {
     setShowPaymentDialog(false);
-    setIsProcessing(false);
-    toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
+    initiatePayment();
   };
 
-  const isPaid = settings.developerMode.paid;
-  const isEnabled = settings.developerMode.enabled;
+  // Verify purchase on mount if user is logged in
+  useEffect(() => {
+    if (user && !isPurchased) {
+      verifyPurchase();
+    }
+  }, [user, isPurchased, verifyPurchase]);
 
   return (
     <>
       <Card className="border-border/50 overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 p-1">
-          <CardHeader className="bg-card rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                  <Code2 className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                <Code2 className="w-5 h-5 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
                     Developer Mode
-                    {isPaid && (
-                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                        <Crown className="w-3 h-3 mr-1" />
+                    {isPurchased && (
+                      <Badge variant="secondary" className="text-xs">
                         Premium
                       </Badge>
                     )}
                   </CardTitle>
                   <CardDescription>Advanced IoT integration capabilities</CardDescription>
-                </div>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isVerifying && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
               <Switch
                 checked={isEnabled}
                 onCheckedChange={handleToggleDeveloperMode}
-                disabled={!isPaid && isEnabled}
+                disabled={(!isPurchased && isEnabled) || isVerifying}
               />
             </div>
-          </CardHeader>
-        </div>
+          </div>
+        </CardHeader>
 
         <CardContent className="p-6 space-y-6">
+          {/* Platform Icons Grid */}
+          <div className="grid grid-cols-6 gap-3">
+            <PlatformIconCard icon={ESP32Icon} name="ESP32" />
+            <PlatformIconCard icon={RaspberryPiIcon} name="Raspberry Pi" />
+            <PlatformIconCard icon={FirebaseIcon} name="Firebase" />
+            <PlatformIconCard icon={RainMakerIcon} name="RainMaker" />
+            <PlatformIconCard icon={ThingSpeakIcon} name="ThingSpeak" />
+            <PlatformIconCard icon={MQTTIcon} name="MQTT" />
+          </div>
+
           {/* Features List */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FeatureItem 
               icon={<Zap className="w-4 h-4" />}
               title="Platform Selection"
               description="Choose ESP32, Raspberry Pi, Firebase & more"
-              locked={!isPaid}
+              locked={!isPurchased}
             />
             <FeatureItem 
               icon={<Sparkles className="w-4 h-4" />}
               title="No-Code Integration"
               description="Easy setup without programming"
-              locked={!isPaid}
+              locked={!isPurchased}
             />
             <FeatureItem 
               icon={<Code2 className="w-4 h-4" />}
               title="Multi-Protocol Support"
               description="MQTT, ThingSpeak, RainMaker"
-              locked={!isPaid}
+              locked={!isPurchased}
             />
             <FeatureItem 
               icon={<Crown className="w-4 h-4" />}
               title="Lifetime Access"
               description="One-time payment, forever yours"
-              locked={!isPaid}
+              locked={!isPurchased}
             />
           </div>
 
-          {!isPaid && (
+          {!isPurchased && (
             <>
               <Separator />
               
               {/* Premium Offer */}
-              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-fuchsia-500/20 p-6 border border-purple-500/30">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
+              <div className="relative overflow-hidden rounded-xl bg-muted/50 p-6 border border-border">
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-3">
-                    <Crown className="w-5 h-5 text-amber-500" />
+                    <Crown className="w-5 h-5 text-foreground" />
                     <span className="font-semibold text-foreground">Unlock Developer Mode</span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -133,10 +152,10 @@ export function DeveloperModeSection() {
                     </div>
                     <Button 
                       onClick={() => setShowPaymentDialog(true)}
-                      className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                      disabled={!user}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Upgrade Now
+                      {user ? 'Upgrade Now' : 'Login to Upgrade'}
                     </Button>
                   </div>
                 </div>
@@ -144,11 +163,11 @@ export function DeveloperModeSection() {
             </>
           )}
 
-          {isPaid && isEnabled && (
+          {isPurchased && isEnabled && (
             <>
               <Separator />
-              <div className="flex items-center gap-3 p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border">
+                <CheckCircle className="w-5 h-5 text-primary" />
                 <div>
                   <p className="font-medium text-sm text-foreground">Developer Mode Active</p>
                   <p className="text-xs text-muted-foreground">
@@ -165,8 +184,8 @@ export function DeveloperModeSection() {
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-4">
-              <Crown className="w-8 h-8 text-white" />
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <Crown className="w-8 h-8 text-foreground" />
             </div>
             <DialogTitle className="text-center text-xl">Upgrade to Developer Mode</DialogTitle>
             <DialogDescription className="text-center">
@@ -191,18 +210,21 @@ export function DeveloperModeSection() {
             </div>
           </div>
 
-          <DialogFooter className="flex-col gap-2 sm:flex-col">
+          <DialogFooter className="flex-col gap-2">
             <Button 
               onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+              disabled={isProcessingPayment}
+              className="w-full"
             >
-              {isProcessing ? (
-                <>Processing...</>
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opening Stripe...
+                </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Pay ₹4,999 & Activate
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Pay ₹4,999 with Stripe
                 </>
               )}
             </Button>
@@ -213,6 +235,15 @@ export function DeveloperModeSection() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function PlatformIconCard({ icon: Icon, name }: { icon: React.FC<{ className?: string }>; name: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-transparent hover:bg-muted/50 transition-colors">
+      <Icon className="w-8 h-8 text-foreground" />
+      <span className="text-[10px] text-muted-foreground text-center leading-tight">{name}</span>
+    </div>
   );
 }
 
