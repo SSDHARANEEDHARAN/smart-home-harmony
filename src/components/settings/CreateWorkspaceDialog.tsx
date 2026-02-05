@@ -3,10 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/hooks/useSettings';
-import { Cpu, Flame, Cloud, Radio, Wifi, Server, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { 
+  testThingSpeakConnection, 
+  testRainMakerConnection, 
+  testMQTTConnection,
+  testESP32Connection,
+  testRaspberryPiConnection,
+  TestResult 
+} from '@/services/platformTestService';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -58,48 +66,36 @@ const PLATFORMS = [
     name: 'ESP32',
     description: 'Microcontroller with WiFi & Bluetooth',
     icon: ESP32Icon,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
   },
   {
     id: 'raspberry-pi' as PlatformType,
     name: 'Raspberry Pi',
     description: 'Single-board computer for IoT',
     icon: RaspberryPiIcon,
-    color: 'text-pink-500',
-    bgColor: 'bg-pink-500/10',
   },
   {
     id: 'firebase' as PlatformType,
     name: 'Firebase',
     description: 'Google Realtime Database',
     icon: FirebaseIcon,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10',
   },
   {
     id: 'esp-rainmaker' as PlatformType,
     name: 'ESP RainMaker',
     description: 'Espressif IoT Cloud Platform',
     icon: RainMakerIcon,
-    color: 'text-cyan-500',
-    bgColor: 'bg-cyan-500/10',
   },
   {
     id: 'thingspeak' as PlatformType,
     name: 'ThingSpeak',
     description: 'IoT Analytics Platform',
     icon: ThingSpeakIcon,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
   },
   {
     id: 'mqtt' as PlatformType,
     name: 'MQTT',
     description: 'Lightweight Messaging Protocol',
     icon: MQTTIcon,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
   },
 ];
 
@@ -111,12 +107,15 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [name, setName] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>(null);
   const [platformConfig, setPlatformConfig] = useState<PlatformConfig>({ platform: null });
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   const handleClose = () => {
     setStep('name');
     setName('');
     setSelectedPlatform(null);
     setPlatformConfig({ platform: null });
+    setTestResult(null);
     onOpenChange(false);
   };
 
@@ -148,6 +147,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const handleBack = () => {
     if (step === 'config') {
       setStep('platform');
+      setTestResult(null);
     } else if (step === 'platform') {
       setStep('name');
     }
@@ -155,6 +155,88 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
 
   const updateConfig = (key: keyof PlatformConfig, value: string) => {
     setPlatformConfig(prev => ({ ...prev, [key]: value }));
+    setTestResult(null);
+  };
+
+  const handleTestConnection = async () => {
+    if (!selectedPlatform) return;
+    
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      let result: TestResult;
+      
+      switch (selectedPlatform) {
+        case 'thingspeak':
+          if (!platformConfig.thingspeakChannelId) {
+            result = { success: false, message: 'Channel ID is required' };
+          } else {
+            result = await testThingSpeakConnection(
+              platformConfig.thingspeakChannelId,
+              platformConfig.thingspeakReadApiKey
+            );
+          }
+          break;
+          
+        case 'esp-rainmaker':
+          if (!platformConfig.rainmakerNodeId) {
+            result = { success: false, message: 'Node ID is required' };
+          } else {
+            result = await testRainMakerConnection(platformConfig.rainmakerNodeId);
+          }
+          break;
+          
+        case 'mqtt':
+          if (!platformConfig.mqttBrokerUrl || !platformConfig.mqttTopic) {
+            result = { success: false, message: 'Broker URL and Topic are required' };
+          } else {
+            result = await testMQTTConnection(
+              platformConfig.mqttBrokerUrl,
+              platformConfig.mqttTopic
+            );
+          }
+          break;
+          
+        case 'esp32':
+          if (!platformConfig.esp32IpAddress) {
+            result = { success: false, message: 'IP Address is required' };
+          } else {
+            result = await testESP32Connection(
+              platformConfig.esp32IpAddress,
+              platformConfig.esp32Port
+            );
+          }
+          break;
+          
+        case 'raspberry-pi':
+          if (!platformConfig.raspberryPiHost) {
+            result = { success: false, message: 'Host address is required' };
+          } else {
+            result = await testRaspberryPiConnection(
+              platformConfig.raspberryPiHost,
+              platformConfig.raspberryPiPort
+            );
+          }
+          break;
+          
+        default:
+          result = { success: false, message: 'No test available for this platform' };
+      }
+      
+      setTestResult(result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message });
+      toast.error(error.message);
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (
@@ -222,8 +304,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                         : "border-border hover:border-primary/50 hover:bg-muted/50"
                     )}
                   >
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", platform.bgColor)}>
-                      <IconComponent className={cn("w-7 h-7", platform.color)} />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
+                      <IconComponent className="w-7 h-7 text-foreground" />
                     </div>
                     <div className="text-center">
                       <p className="font-medium text-sm">{platform.name}</p>
@@ -255,8 +337,52 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[400px] overflow-y-auto">
               {renderPlatformConfig(selectedPlatform, platformConfig, updateConfig)}
+              
+              {/* Test Result Display */}
+              {testResult && (
+                <div className={cn(
+                  "flex items-start gap-2 p-3 rounded-lg border",
+                  testResult.success 
+                    ? "bg-primary/5 border-primary/20" 
+                    : "bg-destructive/5 border-destructive/20"
+                )}>
+                  {testResult.success ? (
+                    <CheckCircle className="w-4 h-4 text-primary mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-destructive mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <p className={cn(
+                      "text-sm",
+                      testResult.success ? "text-primary" : "text-destructive"
+                    )}>
+                      {testResult.message}
+                    </p>
+                    {testResult.latency && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Latency: {testResult.latency}ms
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              {selectedPlatform !== 'firebase' && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleTestConnection}
+                  disabled={isTesting}
+                  className="gap-2"
+                >
+                  {isTesting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wifi className="w-4 h-4" />
+                  )}
+                  Test Connection
+                </Button>
+              )}
               <Button variant="outline" onClick={handleBack}>Back</Button>
               <Button onClick={handleCreate}>
                 <CheckCircle className="w-4 h-4 mr-2" />

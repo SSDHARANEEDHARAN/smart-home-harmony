@@ -181,9 +181,12 @@ export function WorkspaceSettings() {
       addHome(name, firebaseConfig);
       toast.success(`Workspace "${name}" created with Firebase!`);
     } else if (platformConfig?.platform) {
-      // For other platforms, just create workspace with name
-      // Platform config would be stored separately in future
-      addHome(name);
+      // For other platforms, store platform config
+      const platformData: Record<string, any> = {
+        platform: platformConfig.platform,
+        ...platformConfig,
+      };
+      addHome(name, undefined, platformData);
       toast.success(`Workspace "${name}" created with ${platformConfig.platform}!`);
     } else {
       addHome(name);

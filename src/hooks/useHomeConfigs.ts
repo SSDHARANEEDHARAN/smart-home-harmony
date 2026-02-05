@@ -10,6 +10,7 @@ interface HomeConfig {
   home_id: string;
   name: string;
   firebase_config: FirebaseConfig | null;
+  platform_config: Record<string, any> | null;
   position: number;
   created_at: string;
   updated_at: string;
@@ -40,11 +41,13 @@ export function useHomeConfigs() {
       homeId,
       name,
       firebaseConfig,
+      platformConfig,
       position = 0,
     }: {
       homeId: string;
       name: string;
       firebaseConfig?: FirebaseConfig;
+      platformConfig?: Record<string, any>;
       position?: number;
     }) => {
       if (!user) throw new Error('Not authenticated');
@@ -57,6 +60,7 @@ export function useHomeConfigs() {
             home_id: homeId,
             name,
             firebase_config: firebaseConfig as any || null,
+            platform_config: platformConfig as any || null,
             position,
           }],
           { onConflict: 'user_id,home_id' }

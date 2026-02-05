@@ -183,6 +183,7 @@ export type Database = {
           home_id: string
           id: string
           name: string
+          platform_config: Json | null
           position: number | null
           updated_at: string
           user_id: string
@@ -193,6 +194,7 @@ export type Database = {
           home_id: string
           id?: string
           name: string
+          platform_config?: Json | null
           position?: number | null
           updated_at?: string
           user_id: string
@@ -203,6 +205,7 @@ export type Database = {
           home_id?: string
           id?: string
           name?: string
+          platform_config?: Json | null
           position?: number | null
           updated_at?: string
           user_id?: string
@@ -212,22 +215,31 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          developer_mode_purchased: boolean | null
+          developer_mode_purchased_at: string | null
           display_name: string | null
           id: string
+          stripe_customer_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          developer_mode_purchased?: boolean | null
+          developer_mode_purchased_at?: string | null
           display_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          developer_mode_purchased?: boolean | null
+          developer_mode_purchased_at?: string | null
           display_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
         }

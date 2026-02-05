@@ -21,6 +21,7 @@ export interface Home {
   id: string;
   name: string;
   firebaseConfig?: FirebaseConfig;
+  platformConfig?: Record<string, any>;
   position?: number;
 }
 
@@ -30,9 +31,9 @@ interface HomeContextType {
   currentHome: Home | undefined;
   setCurrentHomeId: (id: string) => void;
   getHomeForRoom: (roomId: string) => string;
-  addHome: (name: string, firebaseConfig?: FirebaseConfig) => void;
+  addHome: (name: string, firebaseConfig?: FirebaseConfig, platformConfig?: Record<string, any>) => void;
   deleteHome: (id: string) => void;
-  updateHome: (id: string, name: string, firebaseConfig?: FirebaseConfig) => void;
+  updateHome: (id: string, name: string, firebaseConfig?: FirebaseConfig, platformConfig?: Record<string, any>) => void;
   reorderHomes: (newOrder: Home[]) => void;
   isLoading: boolean;
 }
@@ -76,6 +77,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           id: config.home_id,
           name: config.name,
           firebaseConfig: config.firebase_config || undefined,
+          platformConfig: config.platform_config || undefined,
           position: config.position,
         }));
         setHomes(loadedHomes);
@@ -131,7 +133,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     return currentHomeId;
   };
 
-  const addHome = async (name: string, firebaseConfig?: FirebaseConfig) => {
+  const addHome = async (name: string, firebaseConfig?: FirebaseConfig, platformConfig?: Record<string, any>) => {
     const id = `home-${Date.now()}`;
     const position = homes.length;
 
@@ -142,6 +144,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           home_id: id,
           name,
           firebase_config: firebaseConfig as any || null,
+          platform_config: platformConfig as any || null,
           position,
         }]);
       } catch (error) {
@@ -149,7 +152,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setHomes(prev => [...prev, { id, name, firebaseConfig, position }]);
+    setHomes(prev => [...prev, { id, name, firebaseConfig, platformConfig, position }]);
     toast.success(`Created "${name}" workspace`);
   };
 
@@ -182,7 +185,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateHome = async (id: string, name: string, firebaseConfig?: FirebaseConfig) => {
+  const updateHome = async (id: string, name: string, firebaseConfig?: FirebaseConfig, platformConfig?: Record<string, any>) => {
     // Reinitialize Firebase if config changed
     if (firebaseConfig?.apiKey && firebaseConfig?.databaseURL) {
       initializeFirebaseForHome(
@@ -206,6 +209,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
             home_id: id,
             name,
             firebase_config: firebaseConfig as any || null,
+            platform_config: platformConfig as any || null,
             position: home?.position || 0,
           }], { onConflict: 'user_id,home_id' });
       } catch (error) {
@@ -214,7 +218,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     }
 
     setHomes(prev => prev.map(h => 
-      h.id === id ? { ...h, name, firebaseConfig } : h
+      h.id === id ? { ...h, name, firebaseConfig, platformConfig } : h
     ));
     toast.success(`Saved "${name}" settings`);
   };
