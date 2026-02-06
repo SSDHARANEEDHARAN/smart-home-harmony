@@ -74,14 +74,14 @@ function WorkspaceRow({
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">{home.name}</span>
             {isDefault && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground font-medium">
                 Default
-              </Badge>
+              </span>
             )}
             {isActive && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
                 Active
-              </Badge>
+              </span>
             )}
             <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
           </div>
