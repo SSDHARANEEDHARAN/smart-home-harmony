@@ -48,7 +48,7 @@ export function DeveloperModeSection() {
 
   const handlePayment = () => {
     setShowPaymentDialog(false);
-    initiatePayment();
+    toast.info('🚀 This feature is coming soon! Stay tuned.');
   };
 
   // Verify purchase on mount if user is logged in
@@ -151,7 +151,7 @@ export function DeveloperModeSection() {
                       <Badge variant="secondary" className="ml-2">50% OFF</Badge>
                     </div>
                     <Button 
-                      onClick={() => setShowPaymentDialog(true)}
+                      onClick={() => toast.info('🚀 This feature is coming soon! Stay tuned.')}
                       disabled={!user}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
