@@ -252,25 +252,7 @@ function FirebaseContent({ CodeBlock }: { CodeBlock: any }) {
 
         <AccordionItem value="step6" className="border border-border/50 rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">6. Authentication Setup</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4 space-y-4">
-            <p className="text-muted-foreground">For production, enable Firebase Authentication and update your rules:</p>
-            <CodeBlock
-              id="firebase-auth-rules"
-              code={`{
-  "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
-  }
-}`}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="step7" className="border border-border/50 rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">7. Troubleshooting</span>
+            <span className="font-medium">6. Troubleshooting</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
