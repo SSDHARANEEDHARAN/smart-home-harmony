@@ -51,12 +51,13 @@ export function DeveloperModeSection() {
     toast.info('🚀 This feature is coming soon! Stay tuned.');
   };
 
-  // Verify purchase on mount if user is logged in
+  // Verify purchase on mount if user is logged in (deduplication handled inside hook)
   useEffect(() => {
     if (user && !isPurchased) {
-      verifyPurchase();
+      verifyPurchase(false);
     }
-  }, [user, isPurchased, verifyPurchase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isPurchased]);
 
   return (
     <>
