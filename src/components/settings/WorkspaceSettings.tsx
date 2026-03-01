@@ -49,18 +49,30 @@ function ConnectionStatusDot({ isConnected, hasFirebase }: { isConnected: boolea
   );
 }
 
+function triggerHaptic(style: 'light' | 'medium' = 'light') {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(style === 'light' ? 10 : 25);
+  }
+}
+
 function WorkspaceRow({ 
   home, 
   isActive, 
   isDefault,
   onEdit,
-  onDelete
+  onDelete,
+  onLongPressStart,
+  isDragTarget,
+  isBeingDragged,
 }: { 
   home: Home; 
   isActive: boolean;
   isDefault: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onLongPressStart?: (homeId: string) => void;
+  isDragTarget?: boolean;
+  isBeingDragged?: boolean;
 }) {
   const isConnected = useFirebaseConnectionStatus(home.id);
   const hasFirebase = !!(home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL);
@@ -68,47 +80,90 @@ function WorkspaceRow({
 
   // Swipe state
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchCurrentX = useRef(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
   const rowRef = useRef<HTMLDivElement>(null);
 
   const SWIPE_THRESHOLD = 80;
   const MAX_SWIPE = 100;
+  const LONG_PRESS_DELAY = 500;
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!isMobile || isDefault) return;
+    if (!isMobile) return;
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
     touchCurrentX.current = e.touches[0].clientX;
     setIsSwiping(false);
-  }, [isMobile, isDefault]);
+    didLongPress.current = false;
+
+    // Start long-press timer for reorder
+    if (onLongPressStart) {
+      longPressTimer.current = setTimeout(() => {
+        didLongPress.current = true;
+        triggerHaptic('medium');
+        onLongPressStart(home.id);
+      }, LONG_PRESS_DELAY);
+    }
+  }, [isMobile, onLongPressStart, home.id]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isMobile || isDefault) return;
+    if (!isMobile) return;
+    const dx = touchStartX.current - e.touches[0].clientX;
+    const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
+
+    // Cancel long press on any movement
+    if (Math.abs(dx) > 5 || dy > 5) clearLongPress();
+
+    if (isDefault || didLongPress.current) return;
+
     touchCurrentX.current = e.touches[0].clientX;
-    const diff = touchStartX.current - touchCurrentX.current;
-    if (diff > 10) setIsSwiping(true);
-    const clamped = Math.max(0, Math.min(diff, MAX_SWIPE));
+    if (dx > 10) setIsSwiping(true);
+    const clamped = Math.max(0, Math.min(dx, MAX_SWIPE));
     setSwipeOffset(clamped);
-  }, [isMobile, isDefault]);
+  }, [isMobile, isDefault, clearLongPress]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!isMobile || isDefault) return;
+    if (!isMobile) return;
+    clearLongPress();
+    if (didLongPress.current) return;
+    if (isDefault) return;
+
     if (swipeOffset >= SWIPE_THRESHOLD) {
       setSwipeOffset(MAX_SWIPE);
+      triggerHaptic('medium');
     } else {
       setSwipeOffset(0);
     }
     setTimeout(() => setIsSwiping(false), 50);
-  }, [isMobile, isDefault, swipeOffset]);
+  }, [isMobile, isDefault, swipeOffset, clearLongPress]);
 
   const resetSwipe = useCallback(() => setSwipeOffset(0), []);
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-lg transition-all duration-200",
+        isDragTarget && "ring-2 ring-primary/40 scale-[1.02]",
+        isBeingDragged && "opacity-50 scale-95",
+      )}
+    >
       {/* Delete action behind */}
       {isMobile && !isDefault && (
-        <div className="absolute inset-y-0 right-0 flex items-center bg-destructive rounded-r-lg z-0">
+        <div
+          className="absolute inset-y-0 right-0 flex items-center bg-destructive rounded-r-lg z-0 transition-opacity duration-200"
+          style={{ opacity: Math.min(swipeOffset / SWIPE_THRESHOLD, 1) }}
+        >
           <button
             className="h-full px-5 flex items-center justify-center text-destructive-foreground touch-manipulation"
             onClick={() => { resetSwipe(); onDelete(); }}
@@ -120,15 +175,16 @@ function WorkspaceRow({
       {/* Card content */}
       <div
         ref={rowRef}
-        className="relative z-10 flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card min-h-[48px] transition-transform"
+        className="relative z-10 flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card min-h-[48px]"
         style={{
           transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined,
-          transition: isSwiping ? 'none' : 'transform 0.25s ease-out',
+          transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={() => {
+          if (didLongPress.current) return;
           if (swipeOffset > 0) { resetSwipe(); return; }
           onEdit();
         }}
@@ -211,7 +267,8 @@ const FIREBASE_RULES = `{
 }`;
 
 export function WorkspaceSettings() {
-  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
+  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome, reorderHomes } = useHome();
+  const isMobile = useIsMobile();
   const { settings } = useSettings();
   const isDeveloperMode = settings.developerMode.enabled && settings.developerMode.paid;
   
@@ -235,6 +292,39 @@ export function WorkspaceSettings() {
   
   // Import file input ref
   const importInputRef = useRef<HTMLInputElement>(null);
+
+  // Long-press reorder state
+  const [reorderSourceId, setReorderSourceId] = useState<string | null>(null);
+  const [reorderTargetId, setReorderTargetId] = useState<string | null>(null);
+
+  const handleLongPressStart = useCallback((homeId: string) => {
+    setReorderSourceId(homeId);
+  }, []);
+
+  const handleReorderTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!reorderSourceId) return;
+    const touch = e.touches[0];
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const target = elements.find(el => el.getAttribute('data-workspace-id'));
+    const targetId = target?.getAttribute('data-workspace-id') || null;
+    setReorderTargetId(targetId !== reorderSourceId ? targetId : null);
+  }, [reorderSourceId]);
+
+  const handleReorderTouchEnd = useCallback(() => {
+    if (reorderSourceId && reorderTargetId) {
+      const oldIndex = homes.findIndex(h => h.id === reorderSourceId);
+      const newIndex = homes.findIndex(h => h.id === reorderTargetId);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = [...homes];
+        const [moved] = reordered.splice(oldIndex, 1);
+        reordered.splice(newIndex, 0, moved);
+        reorderHomes(reordered);
+        triggerHaptic('light');
+      }
+    }
+    setReorderSourceId(null);
+    setReorderTargetId(null);
+  }, [reorderSourceId, reorderTargetId, homes, reorderHomes]);
 
   const handleAdd = () => {
     if (newName.trim()) {
@@ -584,17 +674,30 @@ export function WorkspaceSettings() {
           </div>
 
           {/* Workspace List */}
-          <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
+          <div
+            className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6"
+            onTouchMove={handleReorderTouchMove}
+            onTouchEnd={handleReorderTouchEnd}
+          >
             {homes.map((home, index) => (
-              <WorkspaceRow
-                key={home.id}
-                home={home}
-                isActive={home.id === currentHomeId}
-                isDefault={index === 0}
-                onEdit={() => openEditPanel(home)}
-                onDelete={() => setHomeToDelete(home)}
-              />
+              <div key={home.id} data-workspace-id={home.id}>
+                <WorkspaceRow
+                  home={home}
+                  isActive={home.id === currentHomeId}
+                  isDefault={index === 0}
+                  onEdit={() => openEditPanel(home)}
+                  onDelete={() => setHomeToDelete(home)}
+                  onLongPressStart={isMobile ? handleLongPressStart : undefined}
+                  isDragTarget={reorderTargetId === home.id}
+                  isBeingDragged={reorderSourceId === home.id}
+                />
+              </div>
             ))}
+            {reorderSourceId && (
+              <p className="text-[10px] text-muted-foreground text-center animate-pulse pt-1">
+                Drag to reorder · Release to drop
+              </p>
+            )}
           </div>
 
           {/* Edit Panel - Shows BELOW workspace list when selected */}
