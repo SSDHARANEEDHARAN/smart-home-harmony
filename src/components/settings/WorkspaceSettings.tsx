@@ -293,6 +293,39 @@ export function WorkspaceSettings() {
   // Import file input ref
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  // Long-press reorder state
+  const [reorderSourceId, setReorderSourceId] = useState<string | null>(null);
+  const [reorderTargetId, setReorderTargetId] = useState<string | null>(null);
+
+  const handleLongPressStart = useCallback((homeId: string) => {
+    setReorderSourceId(homeId);
+  }, []);
+
+  const handleReorderTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!reorderSourceId) return;
+    const touch = e.touches[0];
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const target = elements.find(el => el.getAttribute('data-workspace-id'));
+    const targetId = target?.getAttribute('data-workspace-id') || null;
+    setReorderTargetId(targetId !== reorderSourceId ? targetId : null);
+  }, [reorderSourceId]);
+
+  const handleReorderTouchEnd = useCallback(() => {
+    if (reorderSourceId && reorderTargetId) {
+      const oldIndex = homes.findIndex(h => h.id === reorderSourceId);
+      const newIndex = homes.findIndex(h => h.id === reorderTargetId);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = [...homes];
+        const [moved] = reordered.splice(oldIndex, 1);
+        reordered.splice(newIndex, 0, moved);
+        reorderHomes(reordered);
+        triggerHaptic('light');
+      }
+    }
+    setReorderSourceId(null);
+    setReorderTargetId(null);
+  }, [reorderSourceId, reorderTargetId, homes, reorderHomes]);
+
   const handleAdd = () => {
     if (newName.trim()) {
       addHome(newName.trim());
