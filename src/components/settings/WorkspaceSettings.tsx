@@ -600,12 +600,12 @@ export function WorkspaceSettings() {
           {/* Edit Panel - Shows BELOW workspace list when selected */}
           {selectedWorkspace && (
             <Card className="border-border/50 bg-muted/30">
-              <CardContent className="p-6">
+              <CardContent className="p-3 sm:p-6">
                 {/* Edit Header with Connection Status */}
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-6">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base">Edit Workspace</h3>
+                      <h3 className="font-semibold text-sm sm:text-base">Edit Workspace</h3>
                       {hasFirebaseConfig && (
                         <div className="flex items-center gap-1.5">
                           <ConnectionStatusDot 
