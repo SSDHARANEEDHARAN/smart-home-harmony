@@ -812,7 +812,7 @@ export function WorkspaceSettings() {
                       <Label className="text-xs text-muted-foreground mb-2 block">
                         Firebase Authentication (for secured databases)
                       </Label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
                         <div className="space-y-1">
                           <Label htmlFor="authEmail" className="text-xs">Auth Email</Label>
                           <Input
@@ -842,11 +842,11 @@ export function WorkspaceSettings() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                  <Button variant="outline" onClick={closeEditPanel}>
+                <div className="flex justify-between items-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
+                  <Button variant="outline" size="sm" className="sm:size-default" onClick={closeEditPanel}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveEdit} disabled={!editName.trim()}>
+                  <Button size="sm" className="sm:size-default" onClick={handleSaveEdit} disabled={!editName.trim()}>
                     Save Changes
                   </Button>
                 </div>
