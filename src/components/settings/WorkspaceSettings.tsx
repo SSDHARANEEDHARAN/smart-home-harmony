@@ -64,66 +64,140 @@ function WorkspaceRow({
 }) {
   const isConnected = useFirebaseConnectionStatus(home.id);
   const hasFirebase = !!(home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL);
+  const isMobile = useIsMobile();
+
+  // Swipe state
+  const touchStartX = useRef(0);
+  const touchCurrentX = useRef(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const SWIPE_THRESHOLD = 80;
+  const MAX_SWIPE = 100;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || isDefault) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchCurrentX.current = e.touches[0].clientX;
+    setIsSwiping(false);
+  }, [isMobile, isDefault]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || isDefault) return;
+    touchCurrentX.current = e.touches[0].clientX;
+    const diff = touchStartX.current - touchCurrentX.current;
+    if (diff > 10) setIsSwiping(true);
+    const clamped = Math.max(0, Math.min(diff, MAX_SWIPE));
+    setSwipeOffset(clamped);
+  }, [isMobile, isDefault]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || isDefault) return;
+    if (swipeOffset >= SWIPE_THRESHOLD) {
+      setSwipeOffset(MAX_SWIPE);
+    } else {
+      setSwipeOffset(0);
+    }
+    setTimeout(() => setIsSwiping(false), 50);
+  }, [isMobile, isDefault, swipeOffset]);
+
+  const resetSwipe = useCallback(() => setSwipeOffset(0), []);
 
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card/80 min-h-[48px]">
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-          <HomeIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-muted-foreground" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <span className="font-medium text-sm truncate">{home.name}</span>
-            {isDefault && (
-              <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-muted/50 text-muted-foreground font-medium whitespace-nowrap">
-                Default
-              </span>
-            )}
-            {isActive && (
-              <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-primary/15 text-primary font-medium whitespace-nowrap">
-                Active
-              </span>
-            )}
-            <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {hasFirebase ? (
-              isConnected ? (
-                <span className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
-                  <Wifi className="w-3 h-3" />
-                  <span className="hidden xs:inline">Firebase</span> Connected
-                </span>
-              ) : (
-                <span className="text-[11px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                  <WifiOff className="w-3 h-3" />
-                  <span className="hidden xs:inline">Firebase</span> Disconnected
-                </span>
-              )
-            ) : (
-              <span className="text-[11px] text-muted-foreground">No Firebase</span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-0.5 shrink-0 ml-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 sm:h-8 sm:w-8 touch-manipulation"
-          onClick={onEdit}
-        >
-          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </Button>
-        {!isDefault && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
-            onClick={onDelete}
+    <div className="relative overflow-hidden rounded-lg">
+      {/* Delete action behind */}
+      {isMobile && !isDefault && (
+        <div className="absolute inset-y-0 right-0 flex items-center bg-destructive rounded-r-lg z-0">
+          <button
+            className="h-full px-5 flex items-center justify-center text-destructive-foreground touch-manipulation"
+            onClick={() => { resetSwipe(); onDelete(); }}
           >
-            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </Button>
-        )}
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      {/* Card content */}
+      <div
+        ref={rowRef}
+        className="relative z-10 flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card min-h-[48px] transition-transform"
+        style={{
+          transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined,
+          transition: isSwiping ? 'none' : 'transform 0.25s ease-out',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => {
+          if (swipeOffset > 0) { resetSwipe(); return; }
+          onEdit();
+        }}
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+            <HomeIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-muted-foreground" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="font-medium text-sm truncate">{home.name}</span>
+              {isDefault && (
+                <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-muted/50 text-muted-foreground font-medium whitespace-nowrap">
+                  Default
+                </span>
+              )}
+              {isActive && (
+                <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-primary/15 text-primary font-medium whitespace-nowrap">
+                  Active
+                </span>
+              )}
+              <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {hasFirebase ? (
+                isConnected ? (
+                  <span className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <Wifi className="w-3 h-3" />
+                    <span className="hidden xs:inline">Firebase</span> Connected
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                    <WifiOff className="w-3 h-3" />
+                    <span className="hidden xs:inline">Firebase</span> Disconnected
+                  </span>
+                )
+              ) : (
+                <span className="text-[11px] text-muted-foreground">No Firebase</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0 ml-2">
+          {!isMobile && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 touch-manipulation"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              >
+                <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Button>
+              {!isDefault && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+              )}
+            </>
+          )}
+          {isMobile && (
+            <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+          )}
+        </div>
       </div>
     </div>
   );
