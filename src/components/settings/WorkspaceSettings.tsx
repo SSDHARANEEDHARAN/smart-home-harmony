@@ -621,7 +621,7 @@ export function WorkspaceSettings() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                       Update workspace settings and Firebase configuration.
                     </p>
                   </div>
@@ -636,7 +636,7 @@ export function WorkspaceSettings() {
                 </div>
 
                 {/* Two Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                   {/* Left Column */}
                   <div className="space-y-4">
                     {/* Workspace Name */}
