@@ -267,7 +267,8 @@ const FIREBASE_RULES = `{
 }`;
 
 export function WorkspaceSettings() {
-  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome } = useHome();
+  const { homes, currentHomeId, setCurrentHomeId, addHome, deleteHome, updateHome, reorderHomes } = useHome();
+  const isMobile = useIsMobile();
   const { settings } = useSettings();
   const isDeveloperMode = settings.developerMode.enabled && settings.developerMode.paid;
   
