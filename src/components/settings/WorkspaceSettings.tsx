@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,66 +64,140 @@ function WorkspaceRow({
 }) {
   const isConnected = useFirebaseConnectionStatus(home.id);
   const hasFirebase = !!(home.firebaseConfig?.apiKey && home.firebaseConfig?.databaseURL);
+  const isMobile = useIsMobile();
+
+  // Swipe state
+  const touchStartX = useRef(0);
+  const touchCurrentX = useRef(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const SWIPE_THRESHOLD = 80;
+  const MAX_SWIPE = 100;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || isDefault) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchCurrentX.current = e.touches[0].clientX;
+    setIsSwiping(false);
+  }, [isMobile, isDefault]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || isDefault) return;
+    touchCurrentX.current = e.touches[0].clientX;
+    const diff = touchStartX.current - touchCurrentX.current;
+    if (diff > 10) setIsSwiping(true);
+    const clamped = Math.max(0, Math.min(diff, MAX_SWIPE));
+    setSwipeOffset(clamped);
+  }, [isMobile, isDefault]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || isDefault) return;
+    if (swipeOffset >= SWIPE_THRESHOLD) {
+      setSwipeOffset(MAX_SWIPE);
+    } else {
+      setSwipeOffset(0);
+    }
+    setTimeout(() => setIsSwiping(false), 50);
+  }, [isMobile, isDefault, swipeOffset]);
+
+  const resetSwipe = useCallback(() => setSwipeOffset(0), []);
 
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card/80 min-h-[48px]">
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-          <HomeIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-muted-foreground" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <span className="font-medium text-sm truncate">{home.name}</span>
-            {isDefault && (
-              <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-muted/50 text-muted-foreground font-medium whitespace-nowrap">
-                Default
-              </span>
-            )}
-            {isActive && (
-              <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-primary/15 text-primary font-medium whitespace-nowrap">
-                Active
-              </span>
-            )}
-            <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {hasFirebase ? (
-              isConnected ? (
-                <span className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
-                  <Wifi className="w-3 h-3" />
-                  <span className="hidden xs:inline">Firebase</span> Connected
-                </span>
-              ) : (
-                <span className="text-[11px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                  <WifiOff className="w-3 h-3" />
-                  <span className="hidden xs:inline">Firebase</span> Disconnected
-                </span>
-              )
-            ) : (
-              <span className="text-[11px] text-muted-foreground">No Firebase</span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-0.5 shrink-0 ml-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 sm:h-8 sm:w-8 touch-manipulation"
-          onClick={onEdit}
-        >
-          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </Button>
-        {!isDefault && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
-            onClick={onDelete}
+    <div className="relative overflow-hidden rounded-lg">
+      {/* Delete action behind */}
+      {isMobile && !isDefault && (
+        <div className="absolute inset-y-0 right-0 flex items-center bg-destructive rounded-r-lg z-0">
+          <button
+            className="h-full px-5 flex items-center justify-center text-destructive-foreground touch-manipulation"
+            onClick={() => { resetSwipe(); onDelete(); }}
           >
-            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </Button>
-        )}
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      {/* Card content */}
+      <div
+        ref={rowRef}
+        className="relative z-10 flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-border/40 bg-card min-h-[48px] transition-transform"
+        style={{
+          transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined,
+          transition: isSwiping ? 'none' : 'transform 0.25s ease-out',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => {
+          if (swipeOffset > 0) { resetSwipe(); return; }
+          onEdit();
+        }}
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+            <HomeIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-muted-foreground" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="font-medium text-sm truncate">{home.name}</span>
+              {isDefault && (
+                <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-muted/50 text-muted-foreground font-medium whitespace-nowrap">
+                  Default
+                </span>
+              )}
+              {isActive && (
+                <span className="text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-primary/15 text-primary font-medium whitespace-nowrap">
+                  Active
+                </span>
+              )}
+              <ConnectionStatusDot isConnected={isConnected} hasFirebase={hasFirebase} />
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {hasFirebase ? (
+                isConnected ? (
+                  <span className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <Wifi className="w-3 h-3" />
+                    <span className="hidden xs:inline">Firebase</span> Connected
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                    <WifiOff className="w-3 h-3" />
+                    <span className="hidden xs:inline">Firebase</span> Disconnected
+                  </span>
+                )
+              ) : (
+                <span className="text-[11px] text-muted-foreground">No Firebase</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0 ml-2">
+          {!isMobile && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 touch-manipulation"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              >
+                <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Button>
+              {!isDefault && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+              )}
+            </>
+          )}
+          {isMobile && (
+            <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -525,12 +600,12 @@ export function WorkspaceSettings() {
           {/* Edit Panel - Shows BELOW workspace list when selected */}
           {selectedWorkspace && (
             <Card className="border-border/50 bg-muted/30">
-              <CardContent className="p-6">
+              <CardContent className="p-3 sm:p-6">
                 {/* Edit Header with Connection Status */}
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-6">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base">Edit Workspace</h3>
+                      <h3 className="font-semibold text-sm sm:text-base">Edit Workspace</h3>
                       {hasFirebaseConfig && (
                         <div className="flex items-center gap-1.5">
                           <ConnectionStatusDot 
@@ -546,7 +621,7 @@ export function WorkspaceSettings() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                       Update workspace settings and Firebase configuration.
                     </p>
                   </div>
@@ -561,7 +636,7 @@ export function WorkspaceSettings() {
                 </div>
 
                 {/* Two Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                   {/* Left Column */}
                   <div className="space-y-4">
                     {/* Workspace Name */}
@@ -642,7 +717,7 @@ export function WorkspaceSettings() {
                     </Label>
 
                     {/* Firebase Fields Grid */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
                       <div className="space-y-1">
                         <Label htmlFor="apiKey" className="text-xs">API Key *</Label>
                         <Input
@@ -737,7 +812,7 @@ export function WorkspaceSettings() {
                       <Label className="text-xs text-muted-foreground mb-2 block">
                         Firebase Authentication (for secured databases)
                       </Label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
                         <div className="space-y-1">
                           <Label htmlFor="authEmail" className="text-xs">Auth Email</Label>
                           <Input
@@ -767,11 +842,11 @@ export function WorkspaceSettings() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                  <Button variant="outline" onClick={closeEditPanel}>
+                <div className="flex justify-between items-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
+                  <Button variant="outline" size="sm" className="sm:size-default" onClick={closeEditPanel}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveEdit} disabled={!editName.trim()}>
+                  <Button size="sm" className="sm:size-default" onClick={handleSaveEdit} disabled={!editName.trim()}>
                     Save Changes
                   </Button>
                 </div>
