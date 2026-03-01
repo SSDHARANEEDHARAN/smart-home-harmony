@@ -674,17 +674,30 @@ export function WorkspaceSettings() {
           </div>
 
           {/* Workspace List */}
-          <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
+          <div
+            className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6"
+            onTouchMove={handleReorderTouchMove}
+            onTouchEnd={handleReorderTouchEnd}
+          >
             {homes.map((home, index) => (
-              <WorkspaceRow
-                key={home.id}
-                home={home}
-                isActive={home.id === currentHomeId}
-                isDefault={index === 0}
-                onEdit={() => openEditPanel(home)}
-                onDelete={() => setHomeToDelete(home)}
-              />
+              <div key={home.id} data-workspace-id={home.id}>
+                <WorkspaceRow
+                  home={home}
+                  isActive={home.id === currentHomeId}
+                  isDefault={index === 0}
+                  onEdit={() => openEditPanel(home)}
+                  onDelete={() => setHomeToDelete(home)}
+                  onLongPressStart={isMobile ? handleLongPressStart : undefined}
+                  isDragTarget={reorderTargetId === home.id}
+                  isBeingDragged={reorderSourceId === home.id}
+                />
+              </div>
             ))}
+            {reorderSourceId && (
+              <p className="text-[10px] text-muted-foreground text-center animate-pulse pt-1">
+                Drag to reorder · Release to drop
+              </p>
+            )}
           </div>
 
           {/* Edit Panel - Shows BELOW workspace list when selected */}
