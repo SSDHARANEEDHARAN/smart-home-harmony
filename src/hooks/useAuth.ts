@@ -57,12 +57,18 @@ export function useAuth() {
   };
 
   const resetPassword = async (email: string) => {
-    // This sends a recovery email; the user will come back to /auth to set a new password.
-    const redirectUrl = `${window.location.origin}/auth`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
+    // Sends a recovery OTP email (no redirect needed for OTP flow)
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
     return { error };
+  };
+
+  const verifyOtp = async (email: string, token: string) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'recovery',
+    });
+    return { data, error };
   };
 
   const updatePassword = async (newPassword: string) => {
