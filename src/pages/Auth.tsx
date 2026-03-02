@@ -49,23 +49,18 @@ export default function Auth() {
   } = useFirebaseAuth();
 
   useEffect(() => {
-    // Detect Supabase recovery flow (password reset)
+    // Clear any old recovery hash fragments
     const hash = window.location.hash || '';
-    const isRecovery = hash.includes('type=recovery');
-    if (isRecovery) {
-      setIsRecoveryFlow(true);
-      setAuthProvider('supabase');
-      setIsLogin(true);
+    if (hash.includes('type=recovery')) {
+      window.location.hash = '';
     }
   }, []);
 
   useEffect(() => {
-    // Redirect if either auth method has a user
     if (supabaseUser || firebaseUser) {
-      // If in recovery flow, stay on /auth until password is updated.
-      if (!isRecoveryFlow) navigate('/dashboard');
+      navigate('/dashboard');
     }
-  }, [supabaseUser, firebaseUser, navigate, isRecoveryFlow]);
+  }, [supabaseUser, firebaseUser, navigate]);
 
   const validateForm = () => {
     try {
@@ -145,46 +140,6 @@ export default function Auth() {
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      passwordSchema.parse(newPassword);
-      if (newPassword !== confirmPassword) {
-        setError('Passwords do not match');
-        return;
-      }
-    } catch (err) {
-      if (err instanceof z.ZodError) setError(err.errors[0].message);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Ensure we have a recovery session; Supabase client will set it from the URL hash.
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        setError('Recovery session not found. Please re-open the reset link from your email.');
-        return;
-      }
-
-      const { error: updateErr } = await supabaseUpdatePassword(newPassword);
-      if (updateErr) {
-        setError(updateErr.message || 'Failed to update password');
-        return;
-      }
-
-      // Clear hash so refreshing doesn’t re-enter recovery mode.
-      window.location.hash = '';
-      setIsRecoveryFlow(false);
-      navigate('/dashboard');
-    } catch {
-      setError('Failed to update password');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -206,15 +161,13 @@ export default function Auth() {
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
             <Home className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            {isRecoveryFlow ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create Account'}
+           <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
           <CardDescription>
-            {isRecoveryFlow
-              ? 'Choose a new password to regain access to your App Account.'
-              : isLogin
-                ? 'Sign in to control your smart home'
-                : 'Join us to start automating your home'}
+            {isLogin
+              ? 'Sign in to control your smart home'
+              : 'Join us to start automating your home'}
           </CardDescription>
         </CardHeader>
 
