@@ -172,58 +172,6 @@ export default function Auth() {
         </CardHeader>
 
         <CardContent>
-          {isRecoveryFlow ? (
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    Set a new password for your <span className="font-medium">App Account</span>.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Please wait…' : 'Update Password'}
-                </Button>
-              </form>
-          ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
             {/* Auth Provider Selector */}
             <div className="space-y-3">
