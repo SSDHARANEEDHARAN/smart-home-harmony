@@ -9,7 +9,6 @@ import { Home, Mail, Lock, User, AlertCircle, Flame, Database, ArrowLeft } from 
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
-import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { HexagonBackground } from '@/components/home/HexagonBackground';
 
@@ -27,9 +26,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [authProvider, setAuthProvider] = useState<AuthProvider>('firebase');
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const navigate = useNavigate();
   
@@ -39,6 +35,7 @@ export default function Auth() {
     signIn: supabaseSignIn,
     signUp: supabaseSignUp,
     resetPassword: supabaseResetPassword,
+    verifyOtp: supabaseVerifyOtp,
     updatePassword: supabaseUpdatePassword,
   } = useAuth();
   
@@ -51,23 +48,18 @@ export default function Auth() {
   } = useFirebaseAuth();
 
   useEffect(() => {
-    // Detect Supabase recovery flow (password reset)
+    // Clear any old recovery hash fragments
     const hash = window.location.hash || '';
-    const isRecovery = hash.includes('type=recovery');
-    if (isRecovery) {
-      setIsRecoveryFlow(true);
-      setAuthProvider('supabase');
-      setIsLogin(true);
+    if (hash.includes('type=recovery')) {
+      window.location.hash = '';
     }
   }, []);
 
   useEffect(() => {
-    // Redirect if either auth method has a user
     if (supabaseUser || firebaseUser) {
-      // If in recovery flow, stay on /auth until password is updated.
-      if (!isRecoveryFlow) navigate('/dashboard');
+      navigate('/dashboard');
     }
-  }, [supabaseUser, firebaseUser, navigate, isRecoveryFlow]);
+  }, [supabaseUser, firebaseUser, navigate]);
 
   const validateForm = () => {
     try {
@@ -147,46 +139,6 @@ export default function Auth() {
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      passwordSchema.parse(newPassword);
-      if (newPassword !== confirmPassword) {
-        setError('Passwords do not match');
-        return;
-      }
-    } catch (err) {
-      if (err instanceof z.ZodError) setError(err.errors[0].message);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Ensure we have a recovery session; Supabase client will set it from the URL hash.
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        setError('Recovery session not found. Please re-open the reset link from your email.');
-        return;
-      }
-
-      const { error: updateErr } = await supabaseUpdatePassword(newPassword);
-      if (updateErr) {
-        setError(updateErr.message || 'Failed to update password');
-        return;
-      }
-
-      // Clear hash so refreshing doesn’t re-enter recovery mode.
-      window.location.hash = '';
-      setIsRecoveryFlow(false);
-      navigate('/dashboard');
-    } catch {
-      setError('Failed to update password');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -208,71 +160,17 @@ export default function Auth() {
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
             <Home className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            {isRecoveryFlow ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create Account'}
+           <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
           <CardDescription>
-            {isRecoveryFlow
-              ? 'Choose a new password to regain access to your App Account.'
-              : isLogin
-                ? 'Sign in to control your smart home'
-                : 'Join us to start automating your home'}
+            {isLogin
+              ? 'Sign in to control your smart home'
+              : 'Join us to start automating your home'}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {isRecoveryFlow ? (
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    Set a new password for your <span className="font-medium">App Account</span>.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Please wait…' : 'Update Password'}
-                </Button>
-              </form>
-          ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
             {/* Auth Provider Selector */}
             <div className="space-y-3">
@@ -399,7 +297,6 @@ export default function Auth() {
               </div>
             )}
             </form>
-          )}
 
           <ForgotPasswordDialog
             open={forgotOpen}
@@ -412,10 +309,11 @@ export default function Auth() {
               }
               return supabaseResetPassword(targetEmail);
             }}
+            onVerifyOtp={authProvider === 'supabase' ? supabaseVerifyOtp : undefined}
+            onUpdatePassword={authProvider === 'supabase' ? supabaseUpdatePassword : undefined}
           />
 
-          {!isRecoveryFlow && (
-            <div className="mt-6 text-center">
+          <div className="mt-6 text-center">
             <button
               type="button"
               onClick={() => {
@@ -429,8 +327,7 @@ export default function Auth() {
                 {isLogin ? 'Sign up' : 'Sign in'}
               </span>
             </button>
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
