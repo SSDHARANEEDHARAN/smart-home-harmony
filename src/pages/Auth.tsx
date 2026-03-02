@@ -27,9 +27,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [authProvider, setAuthProvider] = useState<AuthProvider>('firebase');
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const navigate = useNavigate();
   
@@ -39,6 +36,7 @@ export default function Auth() {
     signIn: supabaseSignIn,
     signUp: supabaseSignUp,
     resetPassword: supabaseResetPassword,
+    verifyOtp: supabaseVerifyOtp,
     updatePassword: supabaseUpdatePassword,
   } = useAuth();
   
