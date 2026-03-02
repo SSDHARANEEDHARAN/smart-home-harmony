@@ -9,7 +9,6 @@ import { Home, Mail, Lock, User, AlertCircle, Flame, Database, ArrowLeft } from 
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
-import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { HexagonBackground } from '@/components/home/HexagonBackground';
 
