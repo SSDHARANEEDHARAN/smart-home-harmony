@@ -298,7 +298,6 @@ export default function Auth() {
               </div>
             )}
             </form>
-          )}
 
           <ForgotPasswordDialog
             open={forgotOpen}
@@ -311,10 +310,11 @@ export default function Auth() {
               }
               return supabaseResetPassword(targetEmail);
             }}
+            onVerifyOtp={authProvider === 'supabase' ? supabaseVerifyOtp : undefined}
+            onUpdatePassword={authProvider === 'supabase' ? supabaseUpdatePassword : undefined}
           />
 
-          {!isRecoveryFlow && (
-            <div className="mt-6 text-center">
+          <div className="mt-6 text-center">
             <button
               type="button"
               onClick={() => {
@@ -328,8 +328,7 @@ export default function Auth() {
                 {isLogin ? 'Sign up' : 'Sign in'}
               </span>
             </button>
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
