@@ -14,6 +14,7 @@ import Automation from "./pages/Automation";
 import Schedules from "./pages/Schedules";
 import Settings from "./pages/Settings";
 import Terminal from "./pages/Terminal";
+import Screen from "./pages/Screen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/energy" element={<Energy />} />
               <Route path="/automation" element={<Automation />} />
               <Route path="/schedules" element={<Schedules />} />
+              <Route path="/screen" element={<Screen />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/terminal" element={<Terminal />} />
               <Route path="*" element={<NotFound />} />
