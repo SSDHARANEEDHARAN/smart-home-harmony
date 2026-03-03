@@ -8,9 +8,9 @@ import { FirebaseActiveBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { cn } from '@/lib/utils';
 
 const navItems = [
+  { path: '/screen', label: 'Screen', icon: Monitor },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/devices', label: 'Devices', icon: Cpu },
-  { path: '/screen', label: 'Screen', icon: Monitor },
   { path: '/energy', label: 'Energy', icon: Zap },
   { path: '/automation', label: 'Automation', icon: Workflow },
   { path: '/settings', label: 'Settings', icon: Settings },
