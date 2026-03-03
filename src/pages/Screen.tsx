@@ -16,7 +16,7 @@ export default function Screen() {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  const homeDevices = devices.filter(d => !d.home_id || d.home_id === currentHomeId);
+  const homeDevices = devices.filter(d => !(d as any).home_id || (d as any).home_id === currentHomeId);
   const sensorDevices = homeDevices.filter(d => d.device_type === 'sensor');
   const cameraDevices = homeDevices.filter(d => d.device_type === 'camera');
 
