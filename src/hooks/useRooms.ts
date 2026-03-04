@@ -43,7 +43,10 @@ export function useRooms() {
       toast.success('Room created successfully');
     },
     onError: (error) => {
-      toast.error('Failed to create room: ' + error.message);
+      const msg = error.message.includes('Not authenticated') 
+        ? 'Please sign in with email/password to create rooms'
+        : 'Failed to create room: ' + error.message;
+      toast.error(msg);
     },
   });
 

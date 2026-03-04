@@ -82,7 +82,7 @@ export function EditRoomDialog({ room, open, onOpenChange }: EditRoomDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass border-border/50">
+      <DialogContent className="glass border-border/50 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {step === 'edit' ? 'Edit Room' : 'Confirm Changes'}
