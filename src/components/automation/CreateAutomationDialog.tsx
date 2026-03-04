@@ -84,7 +84,7 @@ export function CreateAutomationDialog({ devices }: CreateAutomationDialogProps)
           Add Rule
         </Button>
       </DialogTrigger>
-      <DialogContent className="glass border-border/50">
+      <DialogContent className="glass border-border/50 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Create Automation Rule</DialogTitle>
         </DialogHeader>

@@ -122,7 +122,7 @@ export function EditDeviceDialog({ device, rooms, open, onOpenChange }: EditDevi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass border-border/50 rounded-xl">
+      <DialogContent className="glass border-border/50 rounded-xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {step === 'edit' ? 'Edit Device' : 'Review Changes'}

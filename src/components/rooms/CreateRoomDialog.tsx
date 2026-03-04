@@ -55,7 +55,7 @@ export function CreateRoomDialog() {
           Add Room
         </Button>
       </DialogTrigger>
-      <DialogContent className="glass border-border/50">
+      <DialogContent className="glass border-border/50 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Create New Room</DialogTitle>
         </DialogHeader>
