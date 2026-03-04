@@ -61,6 +61,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
     power_consumption: 10,
     relay_pin: '' as string | number,
     slider_step: 10,
+    api_endpoint: '',
   });
 
   // Filter rooms by selected workspace
@@ -87,7 +88,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       temperature: 24,
       icon: 'power',
       relay_pin: formData.relay_pin ? Number(formData.relay_pin) : null,
-      api_endpoint: null,
+      api_endpoint: formData.api_endpoint || null,
       slider_step: formData.slider_step,
       home_id: formData.home_id,
     } as any);
@@ -104,6 +105,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       power_consumption: 10,
       relay_pin: '',
       slider_step: 10,
+      api_endpoint: '',
     });
   };
 
@@ -249,51 +251,6 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Toggle Style</Label>
-              <Select
-                value={formData.toggle_style}
-                onValueChange={(v) => setFormData({ ...formData, toggle_style: v as ToggleStyle })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TOGGLE_STYLES.map((style) => (
-                    <SelectItem key={style.value} value={style.value}>
-                      {style.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Glow Color</Label>
-              <Select
-                value={formData.glow_color}
-                onValueChange={(v) => setFormData({ ...formData, glow_color: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {GLOW_COLORS.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: color.value }}
-                        />
-                        {color.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
           {formData.toggle_style === 'slider' && (
             <div className="space-y-2">
@@ -343,6 +300,19 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
             />
             <p className="text-xs text-muted-foreground">
               This pin will be triggered when the device is toggled
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="api_endpoint">API Endpoint (Optional)</Label>
+            <Input
+              id="api_endpoint"
+              value={formData.api_endpoint}
+              onChange={(e) => setFormData({ ...formData, api_endpoint: e.target.value })}
+              placeholder="http://192.168.1.100/mjpeg or sensor URL"
+            />
+            <p className="text-xs text-muted-foreground">
+              MJPEG stream URL for cameras or data endpoint for sensors
             </p>
           </div>
 
