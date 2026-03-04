@@ -251,51 +251,6 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Toggle Style</Label>
-              <Select
-                value={formData.toggle_style}
-                onValueChange={(v) => setFormData({ ...formData, toggle_style: v as ToggleStyle })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TOGGLE_STYLES.map((style) => (
-                    <SelectItem key={style.value} value={style.value}>
-                      {style.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Glow Color</Label>
-              <Select
-                value={formData.glow_color}
-                onValueChange={(v) => setFormData({ ...formData, glow_color: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {GLOW_COLORS.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: color.value }}
-                        />
-                        {color.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
           {formData.toggle_style === 'slider' && (
             <div className="space-y-2">
