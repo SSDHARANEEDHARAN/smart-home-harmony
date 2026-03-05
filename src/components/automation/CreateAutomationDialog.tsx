@@ -86,7 +86,7 @@ export function CreateAutomationDialog({ devices }: CreateAutomationDialogProps)
       </DialogTrigger>
       <DialogContent className="glass border-border/50 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Create Automation Rule</DialogTitle>
+          <DialogTitle>Create Automation Rule</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">

@@ -147,7 +147,7 @@ export function DeveloperModeSection() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-3xl font-bold text-foreground">₹4,999</span>
+                      <span className="text-xl font-bold text-foreground">₹4,999</span>
                       <span className="text-muted-foreground ml-2 line-through">₹9,999</span>
                       <Badge variant="secondary" className="ml-2">50% OFF</Badge>
                     </div>
@@ -197,7 +197,7 @@ export function DeveloperModeSection() {
           <div className="space-y-4 py-4">
             {/* Price */}
             <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-4xl font-bold text-foreground">₹4,999</div>
+              <div className="text-2xl font-bold text-foreground">₹4,999</div>
               <div className="text-sm text-muted-foreground">Lifetime Access</div>
             </div>
 

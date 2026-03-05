@@ -45,8 +45,8 @@ export default function Screen() {
             <Monitor className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Screen</h1>
-            <p className="text-sm text-muted-foreground">Live monitoring dashboard</p>
+            <h1 className="text-base sm:text-lg font-bold text-foreground">Screen</h1>
+            <p className="text-xs text-muted-foreground">Live monitoring dashboard</p>
           </div>
         </div>
 

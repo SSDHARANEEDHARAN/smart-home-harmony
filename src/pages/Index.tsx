@@ -120,7 +120,7 @@ export default function Index() {
               </div>
 
               {/* Title */}
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6 tracking-tight">
                 Control Your Home
                 <br />
                 <span className="text-muted-foreground">From Anywhere</span>
@@ -200,7 +200,7 @@ export default function Index() {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Everything You Need</h2>
+              <h2 className="text-lg md:text-xl font-bold mb-4">Everything You Need</h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
                 Complete control over your smart home ecosystem
               </p>
@@ -238,7 +238,7 @@ export default function Index() {
 
               <div className="relative z-10 text-center">
                 <BookOpen className="w-12 h-12 mx-auto mb-4 text-foreground/50" />
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Build?</h2>
+                <h2 className="text-lg md:text-xl font-bold mb-4">Ready to Build?</h2>
                 <p className="text-muted-foreground max-w-xl mx-auto mb-8">
                   Explore our comprehensive documentation for ESP32, Raspberry Pi, Firebase, 
                   ThingSpeak, ESP RainMaker, and MQTT integration guides.

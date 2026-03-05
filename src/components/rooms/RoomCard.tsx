@@ -56,7 +56,7 @@ export function RoomCard({
               }}
             />
             <div>
-              <CardTitle className="text-lg">{room.name}</CardTitle>
+              <CardTitle className="text-sm">{room.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {activeDevices}/{devices.length} active
               </p>
