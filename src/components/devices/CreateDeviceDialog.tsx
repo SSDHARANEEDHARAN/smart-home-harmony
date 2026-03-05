@@ -119,7 +119,7 @@ export function CreateDeviceDialog({ rooms, defaultRoomId }: CreateDeviceDialogP
       </DialogTrigger>
       <DialogContent className="glass border-border/50 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Create New Device</DialogTitle>
+          <DialogTitle>Create New Device</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
