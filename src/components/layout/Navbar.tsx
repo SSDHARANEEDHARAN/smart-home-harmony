@@ -1,11 +1,20 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Cpu, Zap, Workflow, Settings, LogOut, LogIn, Home, Monitor } from 'lucide-react';
+import { LayoutDashboard, Cpu, Zap, Workflow, Settings, LogOut, LogIn, Home, Monitor, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useHome } from '@/contexts/HomeContext';
 import { FirebaseActiveBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
 
 const navItems = [
   { path: '/screen', label: 'Screen', icon: Monitor },
@@ -22,14 +31,14 @@ export function Navbar() {
   const { user: supabaseUser, signOut: supabaseSignOut } = useAuth();
   const { user: firebaseUser, signOut: firebaseSignOut } = useFirebaseAuth();
   const { currentHome } = useHome();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // User is logged in if either auth method has a user
   const user = supabaseUser || firebaseUser;
 
   const handleLogout = async () => {
-    // Sign out from both to be safe
     if (supabaseUser) await supabaseSignOut();
     if (firebaseUser) await firebaseSignOut();
+    setMobileOpen(false);
     navigate('/auth');
   };
 
@@ -43,7 +52,7 @@ export function Navbar() {
               <Home className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
             </div>
             <div className="hidden xs:flex flex-col">
-              <span className="text-base sm:text-lg font-bold text-foreground leading-tight">
+              <span className="text-sm sm:text-base font-bold text-foreground leading-tight">
                 SmartHome
               </span>
               {user && currentHome && (
@@ -82,18 +91,71 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Auth Button */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Right side: Auth + Hamburger */}
+          <div className="flex items-center gap-2">
             {user ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              <>
+                {/* Desktop logout */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="hidden md:flex text-muted-foreground hover:text-destructive"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+
+                {/* Mobile hamburger */}
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden w-9 h-9">
+                      <Menu className="w-5 h-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[260px] p-0 glass">
+                    <SheetHeader className="p-4 border-b border-border/50">
+                      <SheetTitle className="flex items-center gap-2 text-sm">
+                        <Home className="w-4 h-4" />
+                        SmartHome
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex flex-col py-2">
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.path;
+                        return (
+                          <SheetClose asChild key={item.path}>
+                            <Link
+                              to={item.path}
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
+                                isActive
+                                  ? "bg-foreground/10 text-foreground border-l-2 border-foreground"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                              )}
+                            >
+                              <Icon className="w-4 h-4" />
+                              {item.label}
+                            </Link>
+                          </SheetClose>
+                        );
+                      })}
+                    </div>
+                    <div className="border-t border-border/50 p-4 mt-auto">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleLogout}
+                        className="w-full justify-start text-muted-foreground hover:text-destructive gap-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </>
             ) : (
               <Button
                 variant="ghost"
@@ -108,33 +170,6 @@ export function Navbar() {
           </div>
         </div>
       </div>
-
-      {/* Mobile Navigation - Bottom Tab Bar */}
-      {user && (
-        <div className="md:hidden border-t border-border/50 safe-area-bottom">
-          <div className="flex items-center justify-around py-1.5 sm:py-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-w-[56px]",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-[10px] sm:text-xs">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
