@@ -144,7 +144,7 @@ export function SensorLiveValues({ sensorDevices, homeId, firebaseConfig }: Sens
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">Live Sensor Readings</h2>
+        <h2 className="text-sm font-semibold text-foreground">Live Sensor Readings</h2>
         {allReadings.length > 0 && (
           <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
         )}
@@ -175,7 +175,7 @@ export function SensorLiveValues({ sensorDevices, homeId, firebaseConfig }: Sens
                     </span>
                   </div>
                   <div className="mt-3">
-                    <span className="text-2xl font-bold text-foreground tabular-nums">
+                    <span className="text-lg font-bold text-foreground tabular-nums">
                       {typeof reading.value === 'number' ? reading.value.toFixed(1) : reading.value}
                     </span>
                     {reading.unit && (

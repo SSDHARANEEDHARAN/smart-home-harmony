@@ -173,7 +173,7 @@ export default function Schedules() {
               <Calendar className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Schedules</h1>
+              <h1 className="text-xl font-bold">Schedules</h1>
               <p className="text-muted-foreground">
                 {rules.length} automation {rules.length === 1 ? 'rule' : 'rules'}
               </p>

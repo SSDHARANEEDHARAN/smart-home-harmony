@@ -110,7 +110,7 @@ export function DocumentationPage({ onBack }: DocumentationPageProps) {
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
                 <CurrentIcon className="w-8 h-8" />
-                <h2 className="text-2xl font-bold">{currentSection?.name}</h2>
+                <h2 className="text-lg font-bold">{currentSection?.name}</h2>
               </div>
               <p className="text-muted-foreground">
                 {getDescription(activeSection)}
