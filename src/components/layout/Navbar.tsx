@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useHome } from '@/contexts/HomeContext';
-import { FirebaseActiveBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -56,12 +55,9 @@ export function Navbar() {
                 SmartHome
               </span>
               {user && currentHome && (
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    {currentHome.name}
-                  </span>
-                  <FirebaseActiveBadge />
-                </div>
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  {currentHome.name}
+                </span>
               )}
             </div>
           </Link>
