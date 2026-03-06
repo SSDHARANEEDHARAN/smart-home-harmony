@@ -37,14 +37,18 @@ export function CreateRoomDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    await createRoom.mutateAsync({
-      name: formData.name,
-      icon: formData.icon,
-      home_id: formData.home_id,
-    });
+    try {
+      await createRoom.mutateAsync({
+        name: formData.name,
+        icon: formData.icon,
+        home_id: formData.home_id || currentHomeId,
+      });
 
-    setOpen(false);
-    setFormData({ name: '', icon: 'Home', home_id: currentHomeId });
+      setOpen(false);
+      setFormData({ name: '', icon: 'Home', home_id: currentHomeId });
+    } catch (error) {
+      // Error is already handled in useRooms onError
+    }
   };
 
   return (
