@@ -161,13 +161,19 @@ export function FirebaseConfigFields({ config, onChange }: FirebaseConfigFieldsP
           value={pasteValue}
           onChange={(e) => {
             setPasteValue(e.target.value);
-            if (e.target.value.includes('apiKey')) {
-              parseAndFillConfig(e.target.value);
-            }
           }}
           onPaste={(e) => {
             const pasted = e.clipboardData.getData('text');
-            setTimeout(() => parseAndFillConfig(pasted), 50);
+            if (pasted && pasted.trim()) {
+              e.preventDefault();
+              setPasteValue(pasted);
+              setTimeout(() => parseAndFillConfig(pasted), 0);
+            }
+          }}
+          onBlur={() => {
+            if (pasteValue.trim() && (pasteValue.includes('apiKey') || pasteValue.includes('databaseURL'))) {
+              parseAndFillConfig(pasteValue);
+            }
           }}
           placeholder="Paste your Firebase config here (JSON or JS snippet)..."
           className={cn(
