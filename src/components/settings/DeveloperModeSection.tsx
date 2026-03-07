@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock, Loader2, ExternalLink } from 'lucide-react';
+import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock, Loader2 } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { UPIPaymentDialog } from './UPIPaymentDialog';
 
 export function DeveloperModeSection() {
   const { settings, updateDeveloperModeSettings } = useSettings();
@@ -27,8 +28,6 @@ export function DeveloperModeSection() {
     isPurchased, 
     isEnabled,
     isVerifying, 
-    isProcessingPayment, 
-    initiatePayment,
     verifyPurchase
   } = useDeveloperMode();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -46,12 +45,10 @@ export function DeveloperModeSection() {
     }
   };
 
-  const handlePayment = () => {
+  const handlePaymentComplete = () => {
     setShowPaymentDialog(false);
-    toast.info('🚀 This feature is coming soon! Stay tuned.');
   };
 
-  // Verify purchase on mount if user is logged in (deduplication handled inside hook)
   useEffect(() => {
     if (user && !isPurchased) {
       verifyPurchase(false);
@@ -152,11 +149,17 @@ export function DeveloperModeSection() {
                       <Badge variant="secondary" className="ml-2">50% OFF</Badge>
                     </div>
                     <Button 
-                      onClick={() => toast.info('🚀 This feature is coming soon! Stay tuned.')}
+                      onClick={() => {
+                        if (!user) {
+                          toast.error('Please log in first');
+                          return;
+                        }
+                        setShowPaymentDialog(true);
+                      }}
                       disabled={!user}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
-                      {user ? 'Upgrade Now' : 'Login to Upgrade'}
+                      {user ? 'Pay via UPI' : 'Login to Upgrade'}
                     </Button>
                   </div>
                 </div>
@@ -181,60 +184,12 @@ export function DeveloperModeSection() {
         </CardContent>
       </Card>
 
-      {/* Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Crown className="w-8 h-8 text-foreground" />
-            </div>
-            <DialogTitle className="text-center text-xl">Upgrade to Developer Mode</DialogTitle>
-            <DialogDescription className="text-center">
-              Unlock all premium features with a one-time payment
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Price */}
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-foreground">₹4,999</div>
-              <div className="text-sm text-muted-foreground">Lifetime Access</div>
-            </div>
-
-            {/* Benefits */}
-            <div className="space-y-3">
-              <BenefitRow text="Select from 6+ IoT platforms" />
-              <BenefitRow text="No-code integration setup" />
-              <BenefitRow text="Firebase, MQTT, ThingSpeak support" />
-              <BenefitRow text="ESP32 & Raspberry Pi ready" />
-              <BenefitRow text="Lifetime updates included" />
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col gap-2">
-            <Button 
-              onClick={handlePayment}
-              disabled={isProcessingPayment}
-              className="w-full"
-            >
-              {isProcessingPayment ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Opening Stripe...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Pay ₹4,999 with Stripe
-                </>
-              )}
-            </Button>
-            <Button variant="ghost" onClick={() => setShowPaymentDialog(false)} className="w-full">
-              Maybe Later
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* UPI Payment Dialog */}
+      <UPIPaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </>
   );
 }
@@ -268,15 +223,6 @@ function FeatureItem({
         <p className={`font-medium text-sm ${locked ? 'text-muted-foreground' : 'text-foreground'}`}>{title}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-    </div>
-  );
-}
-
-function BenefitRow({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-      <span className="text-sm text-foreground">{text}</span>
     </div>
   );
 }
