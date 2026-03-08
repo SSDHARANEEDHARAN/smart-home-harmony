@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { SOUND_TYPES, playNotificationSound, SoundType } from '@/utils/sound';
 import { WorkspaceSettings } from '@/components/settings/WorkspaceSettings';
 import { DeveloperModeSection } from '@/components/settings/DeveloperModeSection';
+import { PaymentHistorySection } from '@/components/settings/PaymentHistorySection';
 import {
   Dialog,
   DialogContent,
@@ -387,6 +388,9 @@ export default function Settings() {
           <TabsContent value="account" className="space-y-6">
             {/* Developer Mode Section */}
             <DeveloperModeSection />
+
+            {/* Payment History */}
+            <PaymentHistorySection />
 
             <Card className="border-border/50">
               <CardHeader>
