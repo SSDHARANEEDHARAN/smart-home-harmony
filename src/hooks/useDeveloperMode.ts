@@ -108,6 +108,34 @@ export function useDeveloperMode() {
     }
   };
 
+  // Verify purchase from database on mount (security: don't trust localStorage alone)
+  useEffect(() => {
+    if (!user || hasVerifiedRef.current) return;
+    hasVerifiedRef.current = true;
+
+    const verifyFromDatabase = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('developer_mode_purchased')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile?.developer_mode_purchased) {
+          setVerifiedPurchase(true);
+          activateDeveloperMode();
+        } else {
+          setVerifiedPurchase(false);
+        }
+      } catch (error) {
+        console.error('[DevMode] Failed to verify from database:', error);
+        setVerifiedPurchase(false);
+      }
+    };
+
+    verifyFromDatabase();
+  }, [user, activateDeveloperMode]);
+
   // Check for payment success on page load (only once)
   useEffect(() => {
     if (hasCheckedRef.current) return;
@@ -119,6 +147,7 @@ export function useDeveloperMode() {
     if (paymentStatus === 'success' && user) {
       verifyPurchase(true).then((success) => {
         if (success) {
+          setVerifiedPurchase(true);
           toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
         }
       });
