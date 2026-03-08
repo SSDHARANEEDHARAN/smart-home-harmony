@@ -97,6 +97,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <h1 className="font-bold">Dashboard</h1>
                 <FirebaseStatusBadge variant="compact" />
+                <NodeServerStatusBadge variant="compact" />
               </div>
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Power className="w-3 h-3 sm:w-4 sm:h-4" />
