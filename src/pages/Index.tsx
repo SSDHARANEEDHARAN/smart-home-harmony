@@ -120,7 +120,7 @@ export default function Index() {
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6 tracking-tight">
+              <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 tracking-tight">
                 Control Your Home
                 <br />
                 <span className="text-muted-foreground">From Anywhere</span>
