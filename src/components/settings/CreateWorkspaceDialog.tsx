@@ -312,42 +312,60 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                 </div>
               </div>
             </DialogHeader>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
-              {ALL_PLATFORMS.map((platform) => {
-                const IconComponent = platform.icon;
-                const isLocked = platform.premium && !isDeveloperMode;
-                return (
-                  <button
-                    key={platform.id}
-                    onClick={() => isLocked ? handleLockedPlatformClick(platform.name) : handlePlatformSelect(platform.id)}
-                    className={cn(
-                      "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-                      isLocked
-                        ? "border-border/30 opacity-60 cursor-pointer hover:opacity-80"
-                        : selectedPlatform === platform.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
-                    )}
-                  >
-                    {isLocked && (
-                      <div className="absolute top-1.5 right-1.5">
-                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 gap-0.5">
-                          <Lock className="w-2.5 h-2.5" />
-                          Premium
-                        </Badge>
+            <TooltipProvider delayDuration={100}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
+                {ALL_PLATFORMS.map((platform) => {
+                  const IconComponent = platform.icon;
+                  const isLocked = platform.premium && !isDeveloperMode;
+                  
+                  const buttonContent = (
+                    <button
+                      key={platform.id}
+                      onClick={() => isLocked ? handleLockedPlatformClick(platform.name) : handlePlatformSelect(platform.id)}
+                      className={cn(
+                        "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all w-full",
+                        isLocked
+                          ? "border-border/30 opacity-60 cursor-pointer hover:opacity-80"
+                          : selectedPlatform === platform.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
+                      )}
+                    >
+                      {isLocked && (
+                        <div className="absolute top-1.5 right-1.5">
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 gap-0.5">
+                            <Lock className="w-2.5 h-2.5" />
+                            Premium
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
+                        <IconComponent className="w-7 h-7 text-foreground" />
                       </div>
-                    )}
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
-                      <IconComponent className="w-7 h-7 text-foreground" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-medium text-sm">{platform.name}</p>
-                      <p className="text-xs text-muted-foreground">{platform.description}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="text-center">
+                        <p className="font-medium text-sm">{platform.name}</p>
+                        <p className="text-xs text-muted-foreground">{platform.description}</p>
+                      </div>
+                    </button>
+                  );
+
+                  if (isLocked) {
+                    return (
+                      <Tooltip key={platform.id}>
+                        <TooltipTrigger asChild>
+                          {buttonContent}
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                          <p className="text-xs font-medium">🔓 Upgrade to unlock</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  return buttonContent;
+                })}
+              </div>
+            </TooltipProvider>
             <DialogFooter>
               <Button variant="outline" onClick={handleBack}>Back</Button>
               <Button variant="outline" onClick={handleCreate}>Skip & Create</Button>
