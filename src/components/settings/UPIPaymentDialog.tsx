@@ -24,6 +24,7 @@ interface UPIPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPaymentComplete: (tier: SubscriptionTier) => void;
+  currentTier?: SubscriptionTier;
 }
 
 export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
