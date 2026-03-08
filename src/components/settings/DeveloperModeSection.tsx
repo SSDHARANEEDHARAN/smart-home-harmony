@@ -3,15 +3,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock, Loader2 } from 'lucide-react';
+import { Code2, Sparkles, Crown, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { SUBSCRIPTION_TIERS, getTierConfig } from '@/config/subscriptionTiers';
-import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon, ESPHomeIcon, NodeServerIcon } from '@/components/home/IoTIcons';
 import { UPIPaymentDialog } from './UPIPaymentDialog';
 
 export function DeveloperModeSection() {
@@ -41,6 +42,13 @@ export function DeveloperModeSection() {
   };
 
   const tierConfig = subscriptionTier ? getTierConfig(subscriptionTier) : null;
+
+  // Check if subscription expires within 30 days
+  const daysUntilExpiry = subscriptionExpiresAt
+    ? Math.ceil((new Date(subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const showExpiryWarning = isPurchased && subscriptionTier !== 'ultimate' && daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+  const isExpired = isPurchased && subscriptionTier !== 'ultimate' && daysUntilExpiry !== null && daysUntilExpiry <= 0;
 
   // Show skeleton while verifying
   if (isVerifying) {
@@ -103,14 +111,48 @@ export function DeveloperModeSection() {
 
         <CardContent className="p-6 space-y-6">
           {/* Platform Icons Grid */}
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
             <PlatformIconCard icon={ESP32Icon} name="ESP32" />
             <PlatformIconCard icon={RaspberryPiIcon} name="Raspberry Pi" />
             <PlatformIconCard icon={FirebaseIcon} name="Firebase" />
             <PlatformIconCard icon={RainMakerIcon} name="RainMaker" />
             <PlatformIconCard icon={ThingSpeakIcon} name="ThingSpeak" />
             <PlatformIconCard icon={MQTTIcon} name="MQTT" />
+            <PlatformIconCard icon={ESPHomeIcon} name="ESPHome" />
+            <PlatformIconCard icon={NodeServerIcon} name="Node Server" />
           </div>
+
+          {/* Expiry Warning Banner */}
+          {showExpiryWarning && (
+            <Alert className="border-yellow-500/50 bg-yellow-500/10">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertDescription className="text-sm text-foreground">
+                Your <span className="font-semibold">{tierConfig?.name}</span> plan expires in{' '}
+                <span className="font-semibold">{daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}</span>.{' '}
+                <button 
+                  className="underline font-medium text-primary hover:text-primary/80"
+                  onClick={() => setShowPaymentDialog(true)}
+                >
+                  Renew now
+                </button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isExpired && (
+            <Alert className="border-destructive/50 bg-destructive/10">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="text-sm text-foreground">
+                Your <span className="font-semibold">{tierConfig?.name}</span> plan has expired.{' '}
+                <button 
+                  className="underline font-medium text-primary hover:text-primary/80"
+                  onClick={() => setShowPaymentDialog(true)}
+                >
+                  Renew to continue access
+                </button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Subscription Status */}
           {isPurchased && tierConfig && (

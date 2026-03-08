@@ -177,3 +177,40 @@ export function ArduinoIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+// ESPHome Icon
+export function ESPHomeIcon({ className }: IconProps) {
+  return (
+    <svg className={cn("w-6 h-6", className)} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* House shape */}
+      <path d="M24 6L6 22H12V40H36V22H42L24 6Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+      {/* WiFi signal inside */}
+      <path d="M18 30C18 30 20 28 24 28C28 28 30 30 30 30" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M15 26C15 26 18 22 24 22C30 22 33 26 33 26" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <circle cx="24" cy="34" r="2" fill="currentColor"/>
+      {/* Chip indicator */}
+      <rect x="20" y="14" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1" fill="currentColor" opacity="0.3"/>
+    </svg>
+  );
+}
+
+// Node Server Icon
+export function NodeServerIcon({ className }: IconProps) {
+  return (
+    <svg className={cn("w-6 h-6", className)} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Server rack */}
+      <rect x="8" y="6" width="32" height="12" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <rect x="8" y="20" width="32" height="12" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <rect x="8" y="34" width="32" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+      {/* LEDs */}
+      <circle cx="14" cy="12" r="2" fill="currentColor" opacity="0.6"/>
+      <circle cx="14" cy="26" r="2" fill="currentColor" opacity="0.6"/>
+      <circle cx="14" cy="38" r="2" fill="currentColor" opacity="0.6"/>
+      {/* Drive bays */}
+      <line x1="22" y1="10" x2="34" y2="10" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <line x1="22" y1="14" x2="34" y2="14" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <line x1="22" y1="24" x2="34" y2="24" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <line x1="22" y1="28" x2="34" y2="28" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+    </svg>
+  );
+}

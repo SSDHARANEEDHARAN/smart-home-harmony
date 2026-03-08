@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { isPlatformUnlocked, getRequiredTier, getTierConfig } from '@/config/subscriptionTiers';
 import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
-import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon, ESPHomeIcon, NodeServerIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
   testRainMakerConnection, 
@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-export type PlatformType = 'firebase' | 'esp32' | 'raspberry-pi' | 'esp-rainmaker' | 'thingspeak' | 'mqtt' | null;
+export type PlatformType = 'firebase' | 'esp32' | 'raspberry-pi' | 'esp-rainmaker' | 'thingspeak' | 'mqtt' | 'esphome' | 'node-server' | null;
 
 export interface PlatformConfig {
   platform: PlatformType;
@@ -118,6 +118,20 @@ const ALL_PLATFORMS = [
     name: 'ThingSpeak',
     description: 'IoT Analytics Platform',
     icon: ThingSpeakIcon,
+    premium: true,
+  },
+  {
+    id: 'esphome' as PlatformType,
+    name: 'ESPHome',
+    description: 'Home automation firmware',
+    icon: ESPHomeIcon,
+    premium: true,
+  },
+  {
+    id: 'node-server' as PlatformType,
+    name: 'Node Server',
+    description: 'Custom Node.js backend',
+    icon: NodeServerIcon,
     premium: true,
   },
 ];
