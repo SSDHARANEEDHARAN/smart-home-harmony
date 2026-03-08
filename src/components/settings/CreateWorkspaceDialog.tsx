@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { useSettings } from '@/hooks/useSettings';
+import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
@@ -122,8 +122,8 @@ const ALL_PLATFORMS = [
 ];
 
 export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }: CreateWorkspaceDialogProps) {
-  const { settings } = useSettings();
-  const isDeveloperMode = settings.developerMode.enabled && settings.developerMode.paid;
+  const { isPurchased } = useDeveloperMode();
+  const isDeveloperMode = isPurchased;
   
   const [step, setStep] = useState<'name' | 'platform' | 'config'>('name');
   const [name, setName] = useState('');

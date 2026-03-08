@@ -14,10 +14,13 @@ export function useDeveloperMode() {
   const { settings, activateDeveloperMode } = useSettings();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [verifiedPurchase, setVerifiedPurchase] = useState<boolean | null>(null);
   const hasCheckedRef = useRef(false);
+  const hasVerifiedRef = useRef(false);
 
-  const isPurchased = settings.developerMode.paid;
-  const isEnabled = settings.developerMode.enabled;
+  // Use database-verified status, fallback to localStorage only if not yet verified
+  const isPurchased = verifiedPurchase ?? settings.developerMode.paid;
+  const isEnabled = settings.developerMode.enabled && isPurchased;
 
   const verifyPurchase = useCallback(async (force = false) => {
     if (!user) return false;
@@ -105,6 +108,34 @@ export function useDeveloperMode() {
     }
   };
 
+  // Verify purchase from database on mount (security: don't trust localStorage alone)
+  useEffect(() => {
+    if (!user || hasVerifiedRef.current) return;
+    hasVerifiedRef.current = true;
+
+    const verifyFromDatabase = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('developer_mode_purchased')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile?.developer_mode_purchased) {
+          setVerifiedPurchase(true);
+          activateDeveloperMode();
+        } else {
+          setVerifiedPurchase(false);
+        }
+      } catch (error) {
+        console.error('[DevMode] Failed to verify from database:', error);
+        setVerifiedPurchase(false);
+      }
+    };
+
+    verifyFromDatabase();
+  }, [user, activateDeveloperMode]);
+
   // Check for payment success on page load (only once)
   useEffect(() => {
     if (hasCheckedRef.current) return;
@@ -116,6 +147,7 @@ export function useDeveloperMode() {
     if (paymentStatus === 'success' && user) {
       verifyPurchase(true).then((success) => {
         if (success) {
+          setVerifiedPurchase(true);
           toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
         }
       });
