@@ -128,12 +128,12 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
               </div>
             </div>
 
-            <DialogFooter className="flex-col gap-2">
-              <Button onClick={() => setStep('confirm')} className="w-full">
-                <CheckCircle className="w-4 h-4 mr-2" />
+            <DialogFooter className="flex-col gap-1.5">
+              <Button onClick={() => setStep('confirm')} className="w-full text-xs h-8">
+                <CheckCircle className="w-3 h-3 mr-1.5" />
                 I've Completed Payment
               </Button>
-              <Button variant="ghost" onClick={handleClose} className="w-full">
+              <Button variant="ghost" onClick={handleClose} className="w-full text-xs h-8">
                 Maybe Later
               </Button>
             </DialogFooter>
