@@ -132,7 +132,7 @@ export default function Index() {
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-16 px-2">
                 <Button
                   size="lg"
                   onClick={() => navigate('/auth')}
