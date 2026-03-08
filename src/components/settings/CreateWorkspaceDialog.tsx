@@ -308,7 +308,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               </div>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-3 py-4">
-              {PLATFORMS.map((platform) => {
+              {availablePlatforms.map((platform) => {
                 const IconComponent = platform.icon;
                 return (
                   <button
