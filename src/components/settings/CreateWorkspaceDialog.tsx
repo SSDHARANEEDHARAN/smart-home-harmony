@@ -362,7 +362,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                           {buttonContent}
                         </TooltipTrigger>
                         <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                          <p className="text-xs font-medium">🔓 Upgrade to unlock</p>
+                          <p className="text-xs font-medium">🔓 Requires {getTierConfig(requiredTier)?.name ?? 'Premium'} plan</p>
                         </TooltipContent>
                       </Tooltip>
                     );
