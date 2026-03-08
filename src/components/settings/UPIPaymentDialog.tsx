@@ -33,7 +33,6 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
   const { activateDeveloperMode } = useSettings();
   const { user } = useAuth();
   const [step, setStep] = useState<'pay' | 'confirm'>('pay');
-  const [step, setStep] = useState<'pay' | 'confirm'>('pay');
 
   const handleClose = () => {
     setStep('pay');
