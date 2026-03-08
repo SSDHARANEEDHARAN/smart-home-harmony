@@ -176,6 +176,15 @@ export function isNodeServerConnected(homeId: string): boolean {
   return instances.get(homeId)?.connected ?? false;
 }
 
+/** Manually trigger a reconnect attempt */
+export function reconnectNodeServer(homeId: string): void {
+  const instance = instances.get(homeId);
+  if (!instance) return;
+  if (instance.reconnectTimer) clearTimeout(instance.reconnectTimer);
+  instance.reconnectAttempts = 0;
+  connectWebSocket(instance);
+}
+
 export function subscribeToNodeServerDeviceState(
   homeId: string,
   callback: DeviceStateCallback
