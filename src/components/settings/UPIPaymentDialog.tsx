@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown, CheckCircle, Smartphone, Copy, ExternalLink } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -29,6 +31,7 @@ interface UPIPaymentDialogProps {
 
 export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
   const { activateDeveloperMode } = useSettings();
+  const { user } = useAuth();
   const [step, setStep] = useState<'pay' | 'confirm'>('pay');
 
   const handleClose = () => {
@@ -45,7 +48,19 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
     window.location.href = UPI_LINK;
   };
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
+    // Log the payment transaction
+    if (user) {
+      await supabase.from('payment_transactions').insert({
+        user_id: user.id,
+        amount: Number(AMOUNT),
+        currency: 'INR',
+        payment_method: 'UPI',
+        upi_id: UPI_ID,
+        product: 'developer_mode',
+        status: 'confirmed',
+      } as any);
+    }
     activateDeveloperMode();
     toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
     handleClose();
