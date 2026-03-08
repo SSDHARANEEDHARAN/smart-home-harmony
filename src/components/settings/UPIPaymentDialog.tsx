@@ -91,8 +91,12 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
                 <Crown className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Choose Your Plan</h3>
-                <p className="text-xs text-muted-foreground">Select a subscription tier</p>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {currentTier ? 'Upgrade Your Plan' : 'Choose Your Plan'}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {currentTier ? `Current: ${currentTierConfig?.name} — select a higher tier` : 'Select a subscription tier'}
+                </p>
               </div>
             </div>
 
