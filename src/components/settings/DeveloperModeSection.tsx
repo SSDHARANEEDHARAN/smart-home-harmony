@@ -12,7 +12,7 @@ import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { SUBSCRIPTION_TIERS, getTierConfig } from '@/config/subscriptionTiers';
-import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon, ESPHomeIcon, NodeServerIcon } from '@/components/home/IoTIcons';
 import { UPIPaymentDialog } from './UPIPaymentDialog';
 
 export function DeveloperModeSection() {
