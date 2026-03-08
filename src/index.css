@@ -142,21 +142,35 @@
   }
 
   body {
-    @apply bg-background text-foreground text-[11px] sm:text-xs;
+    @apply bg-background text-foreground text-[11px] xs:text-xs sm:text-sm;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   /* Global responsive typography */
   h1 {
-    @apply text-sm sm:text-base;
+    @apply text-base sm:text-lg md:text-xl;
   }
 
   h2 {
-    @apply text-xs sm:text-sm;
+    @apply text-sm sm:text-base;
   }
 
   h3 {
-    @apply text-[11px] sm:text-xs;
+    @apply text-xs sm:text-sm;
+  }
+
+  /* Ensure inputs are at least 16px on iOS to prevent zoom */
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: inherit;
+    }
   }
 }
 
@@ -198,35 +212,40 @@
     text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
   }
 
-  /* Responsive container */
+  /* Responsive container — fluid with max constraint */
   .container-responsive {
-    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl;
+    @apply w-full px-3 xs:px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl;
   }
 
-  /* Responsive card grid */
+  /* Responsive card grid — adapts across all breakpoints */
   .card-grid {
-    @apply grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4;
+    @apply grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4;
   }
 
   /* Responsive flex header */
   .header-responsive {
-    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4;
+    @apply flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3 sm:gap-4;
   }
 
-  /* Touch-friendly buttons on mobile */
+  /* Touch-friendly tap targets on mobile */
   @media (max-width: 640px) {
     .btn-touch {
       @apply min-h-[44px] min-w-[44px];
     }
   }
 
-  /* Safe area padding for mobile */
+  /* Safe area padding for mobile notch / home bar */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Section spacing utility */
+  .section-gap {
+    @apply mb-4 xs:mb-5 sm:mb-6 md:mb-8;
   }
 }
 
@@ -249,10 +268,30 @@
   background: hsl(var(--muted-foreground));
 }
 
-/* Mobile-specific overrides */
+/* Dialog responsive sizing */
 @media (max-width: 480px) {
-  .dialog-content {
-    max-width: calc(100vw - 2rem) !important;
-    max-height: calc(100vh - 4rem) !important;
+  [role="dialog"] {
+    max-width: calc(100vw - 1.5rem) !important;
+    max-height: 85vh !important;
+    border-radius: 1rem !important;
   }
+  [role="dialog"] > div {
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  [role="dialog"] {
+    max-width: min(90vw, 480px) !important;
+  }
+}
+
+/* Smooth page transitions */
+main {
+  animation: fade-in 0.2s ease-out;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

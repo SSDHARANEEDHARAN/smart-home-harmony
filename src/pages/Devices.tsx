@@ -233,7 +233,7 @@ export default function Devices() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            className="w-8 h-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                             onClick={() => {
                               setRoomToEdit(room);
                               setEditRoomDialogOpen(true);
@@ -244,7 +244,7 @@ export default function Devices() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            className="w-8 h-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               setRoomToDelete(room.id);
                               setRoomDeleteDialogOpen(true);

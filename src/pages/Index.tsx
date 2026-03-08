@@ -110,7 +110,7 @@ export default function Index() {
         </nav>
 
         {/* Hero Section */}
-        <section className="py-20 md:py-32">
+        <section className="py-12 xs:py-16 sm:py-20 md:py-32">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-4xl mx-auto">
               {/* Badge */}
@@ -120,19 +120,19 @@ export default function Index() {
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6 tracking-tight">
+              <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 tracking-tight">
                 Control Your Home
                 <br />
                 <span className="text-muted-foreground">From Anywhere</span>
               </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+              <p className="text-sm xs:text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-10 px-2">
                 A powerful, open-source smart home platform. Connect ESP32, Raspberry Pi, 
                 and integrate with Firebase, ThingSpeak, MQTT, and more.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-16 px-2">
                 <Button
                   size="lg"
                   onClick={() => navigate('/auth')}
@@ -152,7 +152,7 @@ export default function Index() {
               </div>
 
               {/* Platform Icons */}
-              <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+              <div className="grid grid-cols-3 xs:flex xs:flex-wrap justify-center items-center gap-3 xs:gap-4 sm:gap-6 md:gap-10">
                 {platforms.map((platform) => {
                   const Icon = platform.icon;
                   return (
@@ -174,7 +174,7 @@ export default function Index() {
         {/* Highlights */}
         <section className="py-12 border-t border-border/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {highlights.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -206,7 +206,7 @@ export default function Index() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
