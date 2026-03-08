@@ -120,6 +120,20 @@ const ALL_PLATFORMS = [
     icon: ThingSpeakIcon,
     premium: true,
   },
+  {
+    id: 'esphome' as PlatformType,
+    name: 'ESPHome',
+    description: 'Home automation firmware',
+    icon: ESPHomeIcon,
+    premium: true,
+  },
+  {
+    id: 'node-server' as PlatformType,
+    name: 'Node Server',
+    description: 'Custom Node.js backend',
+    icon: NodeServerIcon,
+    premium: true,
+  },
 ];
 
 export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }: CreateWorkspaceDialogProps) {
