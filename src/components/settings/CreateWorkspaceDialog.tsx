@@ -60,18 +60,35 @@ interface CreateWorkspaceDialogProps {
   onCreateWorkspace: (name: string, platformConfig?: PlatformConfig) => void;
 }
 
-const PLATFORMS = [
+const FREE_PLATFORMS = [
+  {
+    id: 'firebase' as PlatformType,
+    name: 'Firebase',
+    description: 'Google Realtime Database',
+    icon: FirebaseIcon,
+  },
+  {
+    id: 'mqtt' as PlatformType,
+    name: 'MQTT',
+    description: 'Lightweight Messaging Protocol',
+    icon: MQTTIcon,
+  },
+];
+
+const PREMIUM_PLATFORMS = [
   {
     id: 'esp32' as PlatformType,
     name: 'ESP32',
     description: 'Microcontroller with WiFi & Bluetooth',
     icon: ESP32Icon,
+    premium: true,
   },
   {
     id: 'raspberry-pi' as PlatformType,
     name: 'Raspberry Pi',
     description: 'Single-board computer for IoT',
     icon: RaspberryPiIcon,
+    premium: true,
   },
   {
     id: 'firebase' as PlatformType,
@@ -84,12 +101,14 @@ const PLATFORMS = [
     name: 'ESP RainMaker',
     description: 'Espressif IoT Cloud Platform',
     icon: RainMakerIcon,
+    premium: true,
   },
   {
     id: 'thingspeak' as PlatformType,
     name: 'ThingSpeak',
     description: 'IoT Analytics Platform',
     icon: ThingSpeakIcon,
+    premium: true,
   },
   {
     id: 'mqtt' as PlatformType,
@@ -110,6 +129,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
+  const availablePlatforms = isDeveloperMode ? PREMIUM_PLATFORMS : FREE_PLATFORMS;
+
   const handleClose = () => {
     setStep('name');
     setName('');
@@ -122,7 +143,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const handleCreate = () => {
     if (!name.trim()) return;
     
-    if (isDeveloperMode && selectedPlatform) {
+    if (selectedPlatform) {
       onCreateWorkspace(name.trim(), { ...platformConfig, platform: selectedPlatform });
     } else {
       onCreateWorkspace(name.trim());
@@ -132,11 +153,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
 
   const handleNameNext = () => {
     if (!name.trim()) return;
-    if (isDeveloperMode) {
-      setStep('platform');
-    } else {
-      handleCreate();
-    }
+    setStep('platform');
   };
 
   const handlePlatformSelect = (platformId: PlatformType) => {
@@ -261,17 +278,11 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   autoFocus
                 />
               </div>
-              {isDeveloperMode && (
-                <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <Badge className="bg-primary/10 text-primary border-0">Developer Mode</Badge>
-                  <span className="text-xs text-muted-foreground">Platform selection available</span>
-                </div>
-              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
               <Button onClick={handleNameNext} disabled={!name.trim()}>
-                {isDeveloperMode ? 'Next' : 'Create'}
+                Next
               </Button>
             </DialogFooter>
           </>
@@ -291,7 +302,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               </div>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-3 py-4">
-              {PLATFORMS.map((platform) => {
+              {availablePlatforms.map((platform) => {
                 const IconComponent = platform.icon;
                 return (
                   <button
@@ -330,7 +341,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <div>
-                  <DialogTitle>Configure {PLATFORMS.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
+                  <DialogTitle>Configure {availablePlatforms.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
                   <DialogDescription>Enter configuration for your platform</DialogDescription>
                 </div>
               </div>
