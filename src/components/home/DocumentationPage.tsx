@@ -1162,10 +1162,11 @@ function NodeServerContent({ CodeBlock }: { CodeBlock: any }) {
             <span className="font-medium">1. Overview</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
-            <p className="text-muted-foreground">Run a custom Node.js server to control IoT devices with full programming flexibility. Perfect for advanced automations, custom protocols, and integrating multiple device types.</p>
+            <p className="text-muted-foreground">Run a custom Node.js server to control IoT devices with full programming flexibility. Includes real-time WebSocket support for instant device state updates.</p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>Full Node.js runtime for custom logic</li>
               <li>REST API for device control</li>
+              <li><strong>WebSocket server</strong> for real-time bi-directional sync</li>
               <li>Support for GPIO, serial, and network protocols</li>
               <li>Run on Raspberry Pi, cloud server, or any Linux machine</li>
             </ul>
@@ -1177,23 +1178,27 @@ function NodeServerContent({ CodeBlock }: { CodeBlock: any }) {
             <span className="font-medium">2. Server Setup</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
-            <p className="text-muted-foreground">Initialize your Node.js project:</p>
+            <p className="text-muted-foreground">Initialize your Node.js project with WebSocket support:</p>
             <CodeBlock id="node-init" code={`mkdir smarthome-server && cd smarthome-server
 npm init -y
-npm install express cors dotenv`} />
+npm install express cors dotenv ws`} />
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="step3" className="border border-border/50 rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">3. Server Code</span>
+            <span className="font-medium">3. Server Code with WebSocket</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Complete server with REST API and WebSocket real-time sync:</p>
             <CodeBlock
               id="node-server-code"
               code={`const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 const app = express();
+const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
@@ -1209,56 +1214,185 @@ app.use((req, res, next) => {
 // Device state store
 let devices = {};
 
-// GET device state
+// --- REST API ---
+
 app.get('/api/devices/:id', (req, res) => {
   const state = devices[req.params.id] || { is_on: false };
   res.json(state);
 });
 
-// POST toggle device
 app.post('/api/devices/:id/toggle', (req, res) => {
   const id = req.params.id;
   devices[id] = { ...devices[id], is_on: !devices[id]?.is_on };
+  // Broadcast change to all WebSocket clients
+  broadcast({ type: 'device_state', deviceId: id, state: devices[id] });
   res.json(devices[id]);
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
+// --- WebSocket Server ---
+
+const wss = new WebSocketServer({ server, path: '/ws' });
+const clients = new Set();
+
+wss.on('connection', (ws, req) => {
+  // Optional: validate API key from query param
+  const url = new URL(req.url, 'http://localhost');
+  const key = url.searchParams.get('apiKey');
+  if (key && key !== API_KEY) {
+    ws.close(4001, 'Unauthorized');
+    return;
+  }
+
+  clients.add(ws);
+  console.log('Client connected. Total:', clients.size);
+
+  ws.on('message', (raw) => {
+    try {
+      const msg = JSON.parse(raw);
+      handleWsMessage(ws, msg);
+    } catch (e) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+    }
+  });
+
+  ws.on('close', () => {
+    clients.delete(ws);
+    console.log('Client disconnected. Total:', clients.size);
+  });
+
+  // Send pong for heartbeat
+  ws.on('ping', () => ws.pong());
+});
+
+function handleWsMessage(ws, msg) {
+  switch (msg.type) {
+    case 'get_state':
+      // Send current state of all devices
+      ws.send(JSON.stringify({ type: 'bulk_state', devices }));
+      break;
+
+    case 'device_command':
+      // Handle device command from dashboard
+      const { deviceId, ...command } = msg;
+      if (deviceId) {
+        devices[deviceId] = { ...devices[deviceId], ...command };
+        broadcast({ type: 'device_state', deviceId, state: devices[deviceId] });
+      }
+      break;
+
+    case 'relay_command':
+      // Handle relay toggle from dashboard
+      const { relayPin, state } = msg;
+      // Find device by relay pin or handle GPIO here
+      console.log('Relay command: pin', relayPin, '→', state);
+      // TODO: Write to actual GPIO here
+      break;
+
+    case 'ping':
+      ws.send(JSON.stringify({ type: 'pong' }));
+      break;
+
+    default:
+      ws.send(JSON.stringify({ type: 'error', message: 'Unknown type' }));
+  }
+}
+
+function broadcast(data) {
+  const payload = JSON.stringify(data);
+  clients.forEach(client => {
+    if (client.readyState === 1) client.send(payload);
+  });
+}
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(\`Server on port \${PORT}\`));`}
+server.listen(PORT, () => console.log(\`Server on port \${PORT}\`));`}
             />
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="step4" className="border border-border/50 rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">4. GPIO Control (Raspberry Pi)</span>
+            <span className="font-medium">4. WebSocket Protocol Reference</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
-            <p className="text-muted-foreground">For Raspberry Pi GPIO control, install onoff:</p>
-            <CodeBlock id="node-gpio-install" code={`npm install onoff`} />
-            <CodeBlock
-              id="node-gpio-code"
-              code={`const { Gpio } = require('onoff');
-const relay1 = new Gpio(17, 'out');
+            <p className="text-muted-foreground">The dashboard communicates with your server using these JSON message types:</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium mb-1">Dashboard → Server</p>
+                <CodeBlock id="ws-proto-client" code={`// Request all device states
+{ "type": "get_state" }
 
-app.post('/api/gpio/:pin/toggle', (req, res) => {
-  const pin = parseInt(req.params.pin);
-  const gpio = new Gpio(pin, 'out');
-  const current = gpio.readSync();
-  gpio.writeSync(current === 0 ? 1 : 0);
-  res.json({ pin, state: gpio.readSync() === 1 });
-});`}
-            />
+// Send device command
+{ "type": "device_command", "deviceId": "abc-123", "is_on": true }
+
+// Toggle relay pin
+{ "type": "relay_command", "relayPin": 1, "state": true }
+
+// Heartbeat
+{ "type": "ping" }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Server → Dashboard</p>
+                <CodeBlock id="ws-proto-server" code={`// Single device update
+{ "type": "device_state", "deviceId": "abc-123", "state": { "is_on": true } }
+
+// Bulk state (response to get_state)
+{ "type": "bulk_state", "devices": { "abc-123": { "is_on": true } } }
+
+// Relay change (from hardware)
+{ "type": "relay_change", "relayPin": 1, "state": true, "deviceId": "abc-123" }
+
+// Heartbeat response
+{ "type": "pong" }`} />
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="step5" className="border border-border/50 rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">5. Connect to SmartHome</span>
+            <span className="font-medium">5. Hardware Integration (GPIO)</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">For Raspberry Pi GPIO control with real-time WebSocket notifications:</p>
+            <CodeBlock id="node-gpio-install" code={`npm install onoff`} />
+            <CodeBlock
+              id="node-gpio-ws-code"
+              code={`const { Gpio } = require('onoff');
+
+// Handle relay_command messages from WebSocket
+function handleRelayCommand(relayPin, state) {
+  const gpio = new Gpio(relayPin, 'out');
+  gpio.writeSync(state ? 1 : 0);
+
+  // Notify all clients of hardware change
+  broadcast({
+    type: 'relay_change',
+    relayPin,
+    state,
+    deviceId: pinToDeviceMap[relayPin] // your mapping
+  });
+}
+
+// Watch physical button for hardware triggers
+const button = new Gpio(4, 'in', 'both');
+button.watch((err, value) => {
+  if (err) return;
+  const relayPin = 17;
+  const state = value === 1;
+  handleRelayCommand(relayPin, state);
+});`}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step6" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">6. Connect & Deploy</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
             <p className="text-muted-foreground">In the workspace creation dialog:</p>
@@ -1267,22 +1401,15 @@ app.post('/api/gpio/:pin/toggle', (req, res) => {
               <li>Enter the server host (e.g., <code className="bg-muted px-1 rounded">192.168.1.50</code>)</li>
               <li>Set port (default: <code className="bg-muted px-1 rounded">3000</code>)</li>
               <li>Choose protocol (http or https)</li>
+              <li>WebSocket URL auto-derives from host/port, or set a custom one</li>
               <li>Enter your API key for authentication</li>
             </ol>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="step6" className="border border-border/50 rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <span className="font-medium">6. Running as a Service</span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4 space-y-4">
-            <p className="text-muted-foreground">Use PM2 to keep your server running:</p>
+            <p className="text-muted-foreground mt-3">Use PM2 to keep your server running:</p>
             <CodeBlock id="node-pm2" code={`npm install -g pm2
 pm2 start server.js --name smarthome
 pm2 startup
 pm2 save`} />
-            <p className="text-muted-foreground mt-2">Your server will now auto-restart on boot and after crashes.</p>
+            <p className="text-muted-foreground mt-2">Your server will now auto-restart on boot and after crashes. The dashboard will automatically reconnect the WebSocket if the connection drops.</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
