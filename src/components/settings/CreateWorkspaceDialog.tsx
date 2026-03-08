@@ -80,6 +80,7 @@ export interface PlatformConfig {
   nodeServerPort?: string;
   nodeServerApiKey?: string;
   nodeServerProtocol?: string;
+  nodeServerWsUrl?: string;
 }
 
 interface CreateWorkspaceDialogProps {
