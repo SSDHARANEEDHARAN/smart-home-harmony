@@ -218,6 +218,7 @@ export function DeveloperModeSection() {
       <UPIPaymentDialog
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
+        currentTier={subscriptionTier}
         onPaymentComplete={async (tier) => {
           await activateSubscription(tier);
           setShowPaymentDialog(false);

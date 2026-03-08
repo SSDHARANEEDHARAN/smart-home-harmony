@@ -268,7 +268,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
             <div className="p-4 bg-muted/50 rounded-lg border border-border text-center mb-6">
               <p className="text-xs text-muted-foreground mb-1">Payment to</p>
               <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
-              <p className="text-xl font-bold text-foreground mt-2">₹{selectedTier.price.toLocaleString()}</p>
+              <p className="text-xl font-bold text-foreground mt-2">₹{getUpgradePrice(selectedTier).toLocaleString()}</p>
               <Badge variant="secondary" className="mt-2 text-[10px]">{selectedTier.name} - {selectedTier.duration}</Badge>
             </div>
 
