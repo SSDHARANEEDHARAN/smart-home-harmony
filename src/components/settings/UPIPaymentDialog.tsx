@@ -101,37 +101,64 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {SUBSCRIPTION_TIERS.map((tier) => (
-                <button
-                  key={tier.id}
-                  onClick={() => handleSelectTier(tier)}
-                  className={cn(
-                    "relative flex flex-col p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02]",
-                    tier.badge === 'Popular'
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  {tier.badge && (
-                    <Badge variant="secondary" className="absolute -top-2 right-3 text-[9px]">
-                      {tier.badge}
-                    </Badge>
-                  )}
-                  <p className="font-semibold text-sm text-foreground">{tier.name}</p>
-                  <div className="mt-2">
-                    <span className="text-xl font-bold text-foreground">₹{tier.price.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground">{tier.durationLabel}</span>
-                  </div>
-                  <ul className="mt-3 space-y-1.5">
-                    {tier.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                        <CheckCircle className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </button>
-              ))}
+              {SUBSCRIPTION_TIERS.map((tier, index) => {
+                const isCurrentTier = tier.id === currentTier;
+                const isLowerTier = currentTierIndex >= 0 && index <= currentTierIndex;
+                const upgradePrice = getUpgradePrice(tier);
+                const isDisabled = isCurrentTier || (isLowerTier && !isCurrentTier);
+
+                return (
+                  <button
+                    key={tier.id}
+                    onClick={() => !isDisabled && handleSelectTier(tier)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "relative flex flex-col p-4 rounded-xl border-2 transition-all text-left",
+                      isCurrentTier
+                        ? "border-primary/50 bg-primary/5 opacity-70 cursor-default"
+                        : isDisabled
+                          ? "border-border/30 opacity-40 cursor-not-allowed"
+                          : tier.badge === 'Popular'
+                            ? "border-primary bg-primary/5 hover:scale-[1.02]"
+                            : "border-border hover:border-primary/50 hover:scale-[1.02]"
+                    )}
+                  >
+                    {isCurrentTier && (
+                      <Badge variant="default" className="absolute -top-2 right-3 text-[9px]">
+                        Current Plan
+                      </Badge>
+                    )}
+                    {!isCurrentTier && tier.badge && (
+                      <Badge variant="secondary" className="absolute -top-2 right-3 text-[9px]">
+                        {tier.badge}
+                      </Badge>
+                    )}
+                    <p className="font-semibold text-sm text-foreground">{tier.name}</p>
+                    <div className="mt-2">
+                      {currentTier && !isDisabled && upgradePrice !== tier.price ? (
+                        <>
+                          <span className="text-xs text-muted-foreground line-through mr-1">₹{tier.price.toLocaleString()}</span>
+                          <span className="text-xl font-bold text-primary">₹{upgradePrice.toLocaleString()}</span>
+                          <Badge variant="secondary" className="ml-1.5 text-[9px]">Upgrade</Badge>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xl font-bold text-foreground">₹{tier.price.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">{tier.durationLabel}</span>
+                        </>
+                      )}
+                    </div>
+                    <ul className="mt-3 space-y-1.5">
+                      {tier.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                          <CheckCircle className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </button>
+                );
+              })}
             </div>
 
             <Button variant="ghost" onClick={handleClose} className="w-full mt-4 text-xs h-9">
