@@ -27,10 +27,18 @@ interface UPIPaymentDialogProps {
   currentTier?: SubscriptionTier;
 }
 
-export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
+export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, currentTier }: UPIPaymentDialogProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'select' | 'pay' | 'confirm'>('select');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(null);
+
+  const currentTierConfig = currentTier ? SUBSCRIPTION_TIERS.find(t => t.id === currentTier) : null;
+  const currentTierIndex = currentTier ? SUBSCRIPTION_TIERS.findIndex(t => t.id === currentTier) : -1;
+
+  const getUpgradePrice = (tier: TierConfig): number => {
+    if (!currentTierConfig) return tier.price;
+    return Math.max(0, tier.price - currentTierConfig.price);
+  };
 
   const handleClose = () => {
     setStep('select');
