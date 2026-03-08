@@ -389,6 +389,9 @@ export default function Settings() {
             {/* Developer Mode Section */}
             <DeveloperModeSection />
 
+            {/* Payment History */}
+            <PaymentHistorySection />
+
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
