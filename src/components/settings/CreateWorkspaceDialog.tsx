@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { isPlatformUnlocked, getRequiredTier, getTierConfig } from '@/config/subscriptionTiers';
 import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
-import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
+import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon, ESPHomeIcon, NodeServerIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
   testRainMakerConnection, 
