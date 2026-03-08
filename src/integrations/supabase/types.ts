@@ -256,6 +256,9 @@ export type Database = {
           display_name: string | null
           id: string
           stripe_customer_id: string | null
+          subscription_expires_at: string | null
+          subscription_purchased_at: string | null
+          subscription_tier: string | null
           updated_at: string
           user_id: string
         }
@@ -266,6 +269,9 @@ export type Database = {
           display_name?: string | null
           id?: string
           stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_purchased_at?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           user_id: string
         }
@@ -276,6 +282,9 @@ export type Database = {
           display_name?: string | null
           id?: string
           stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_purchased_at?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           user_id?: string
         }
