@@ -152,7 +152,7 @@ export default function Index() {
               </div>
 
               {/* Platform Icons */}
-              <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+              <div className="grid grid-cols-3 xs:flex xs:flex-wrap justify-center items-center gap-3 xs:gap-4 sm:gap-6 md:gap-10">
                 {platforms.map((platform) => {
                   const Icon = platform.icon;
                   return (
