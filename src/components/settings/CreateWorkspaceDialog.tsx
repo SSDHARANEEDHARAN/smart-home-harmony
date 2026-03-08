@@ -289,19 +289,31 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               </div>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-3 py-4">
-              {availablePlatforms.map((platform) => {
+              {ALL_PLATFORMS.map((platform) => {
                 const IconComponent = platform.icon;
+                const isLocked = platform.premium && !isDeveloperMode;
                 return (
                   <button
                     key={platform.id}
-                    onClick={() => handlePlatformSelect(platform.id)}
+                    onClick={() => !isLocked && handlePlatformSelect(platform.id)}
+                    disabled={isLocked}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02]",
-                      selectedPlatform === platform.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                      "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                      isLocked
+                        ? "border-border/30 opacity-50 cursor-not-allowed"
+                        : selectedPlatform === platform.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
                     )}
                   >
+                    {isLocked && (
+                      <div className="absolute top-1.5 right-1.5">
+                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 gap-0.5">
+                          <Lock className="w-2.5 h-2.5" />
+                          Premium
+                        </Badge>
+                      </div>
+                    )}
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
                       <IconComponent className="w-7 h-7 text-foreground" />
                     </div>
