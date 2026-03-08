@@ -13,6 +13,8 @@ import {
   testMQTTConnection,
   testESP32Connection,
   testRaspberryPiConnection,
+  testESPHomeConnection,
+  testNodeServerConnection,
   TestResult 
 } from '@/services/platformTestService';
 import { toast } from 'sonner';
