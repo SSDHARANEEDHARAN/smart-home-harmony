@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Code2, Sparkles, Zap, Crown, CheckCircle, Lock, Loader2 } from 'lucide-react';
+import { Code2, Sparkles, Crown, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
 import { useAuth } from '@/hooks/useAuth';
