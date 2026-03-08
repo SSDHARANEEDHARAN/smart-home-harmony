@@ -99,7 +99,7 @@ export default function Dashboard() {
                 <FirebaseStatusBadge variant="compact" />
                 <NodeServerStatusBadge variant="compact" />
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <div className="flex items-center gap-1.5 xs:gap-2 text-muted-foreground text-xs sm:text-sm">
                 <Power className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{activeDevicesCount}/{filteredDevices.length} devices active</span>
               </div>
