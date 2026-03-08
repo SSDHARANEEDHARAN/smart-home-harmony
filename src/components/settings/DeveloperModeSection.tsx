@@ -43,6 +43,13 @@ export function DeveloperModeSection() {
 
   const tierConfig = subscriptionTier ? getTierConfig(subscriptionTier) : null;
 
+  // Check if subscription expires within 30 days
+  const daysUntilExpiry = subscriptionExpiresAt
+    ? Math.ceil((new Date(subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const showExpiryWarning = isPurchased && subscriptionTier !== 'ultimate' && daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+  const isExpired = isPurchased && subscriptionTier !== 'ultimate' && daysUntilExpiry !== null && daysUntilExpiry <= 0;
+
   // Show skeleton while verifying
   if (isVerifying) {
     return (
