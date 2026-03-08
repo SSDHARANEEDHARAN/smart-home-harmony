@@ -231,7 +231,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
               
               <div className="p-4 bg-white rounded-xl shadow-lg">
                 <QRCodeSVG
-                  value={getUpiLink(selectedTier.price, selectedTier.name)}
+                  value={getUpiLink(getUpgradePrice(selectedTier), selectedTier.name)}
                   size={180}
                   level="H"
                   includeMargin={false}
