@@ -69,6 +69,15 @@ export interface PlatformConfig {
   // Raspberry Pi
   raspberryPiHost?: string;
   raspberryPiPort?: string;
+  // ESPHome
+  esphomeHost?: string;
+  esphomePort?: string;
+  esphomeApiKey?: string;
+  // Node Server
+  nodeServerHost?: string;
+  nodeServerPort?: string;
+  nodeServerApiKey?: string;
+  nodeServerProtocol?: string;
 }
 
 interface CreateWorkspaceDialogProps {
