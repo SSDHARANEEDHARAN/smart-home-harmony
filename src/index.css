@@ -142,21 +142,21 @@
   }
 
   body {
-    @apply bg-background text-foreground text-xs sm:text-sm;
+    @apply bg-background text-foreground text-[11px] sm:text-xs;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   /* Global responsive typography */
   h1 {
-    @apply text-base sm:text-xl;
-  }
-
-  h2 {
     @apply text-sm sm:text-base;
   }
 
-  h3 {
+  h2 {
     @apply text-xs sm:text-sm;
+  }
+
+  h3 {
+    @apply text-[11px] sm:text-xs;
   }
 }
 
