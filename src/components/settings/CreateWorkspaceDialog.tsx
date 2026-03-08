@@ -288,7 +288,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                 </div>
               </div>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-3 py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
               {ALL_PLATFORMS.map((platform) => {
                 const IconComponent = platform.icon;
                 const isLocked = platform.premium && !isDeveloperMode;
