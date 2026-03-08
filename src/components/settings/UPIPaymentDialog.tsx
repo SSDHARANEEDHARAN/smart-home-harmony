@@ -180,15 +180,27 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
                   <Crown className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">{selectedTier.name} Plan</h3>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {currentTier ? `Upgrade to ${selectedTier.name}` : `${selectedTier.name} Plan`}
+                  </h3>
                   <p className="text-xs text-muted-foreground">{selectedTier.duration} access</p>
                 </div>
               </div>
 
-              <div className="p-4 bg-muted/50 rounded-lg mb-4">
-                <div className="text-2xl font-bold text-foreground">₹{selectedTier.price.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">One-time payment</div>
-              </div>
+              {(() => {
+                const payAmount = getUpgradePrice(selectedTier);
+                return (
+                  <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                    <div className="text-2xl font-bold text-foreground">₹{payAmount.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {currentTier && payAmount !== selectedTier.price
+                        ? `Upgrade price (₹${selectedTier.price.toLocaleString()} − ₹${currentTierConfig!.price.toLocaleString()} paid)`
+                        : 'One-time payment'
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border mb-4">
                 <div>
