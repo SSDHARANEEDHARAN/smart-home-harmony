@@ -31,6 +31,8 @@ interface UPIPaymentDialogProps {
 
 export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
   const { activateDeveloperMode } = useSettings();
+  const { user } = useAuth();
+  const [step, setStep] = useState<'pay' | 'confirm'>('pay');
   const [step, setStep] = useState<'pay' | 'confirm'>('pay');
 
   const handleClose = () => {
