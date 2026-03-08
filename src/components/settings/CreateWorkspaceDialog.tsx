@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSettings } from '@/hooks/useSettings';
-import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
