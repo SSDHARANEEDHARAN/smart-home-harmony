@@ -154,43 +154,45 @@ export function DeveloperModeSection() {
             </Alert>
           )}
 
-          {/* Subscription Status */}
+          {/* Subscription Status - only show validity */}
           {isPurchased && tierConfig && (
             <>
               <Separator />
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="font-medium text-sm text-foreground">
-                      {tierConfig.name} Plan Active
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {subscriptionTier === 'ultimate' 
-                        ? 'Lifetime access — never expires'
-                        : subscriptionExpiresAt 
-                          ? `Expires: ${new Date(subscriptionExpiresAt).toLocaleDateString()}`
-                          : tierConfig.duration + ' access'
-                      }
-                    </p>
+              <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">
+                        {tierConfig.name} Plan Active
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {subscriptionTier === 'ultimate' 
+                          ? '♾️ Lifetime access — never expires'
+                          : subscriptionExpiresAt 
+                            ? `Valid until ${new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                            : tierConfig.duration + ' access'
+                        }
+                      </p>
+                    </div>
                   </div>
+                  {subscriptionTier !== 'ultimate' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowPaymentDialog(true)}
+                      className="text-xs gap-1.5"
+                    >
+                      <Crown className="w-3.5 h-3.5" />
+                      Upgrade
+                    </Button>
+                  )}
                 </div>
-                {subscriptionTier !== 'ultimate' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowPaymentDialog(true)}
-                    className="text-xs gap-1.5"
-                  >
-                    <Crown className="w-3.5 h-3.5" />
-                    Upgrade
-                  </Button>
-                )}
               </div>
             </>
           )}
 
-          {/* Pricing Tiers for unpurchased users */}
+          {/* Subscribe via UPI for unpurchased users */}
           {!isPurchased && (
             <>
               <Separator />

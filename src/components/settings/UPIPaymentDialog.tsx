@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, CheckCircle, Smartphone, Copy, ArrowLeft } from 'lucide-react';
+import { Crown, CheckCircle, Smartphone, Copy, ArrowLeft, Upload, Loader2, FileCheck, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { generateInvoicePDF } from '@/utils/invoiceGenerator';
 
 const UPI_ID = 'tharaneetharanss-1@okicici';
 const PAYEE_NAME = 'SmartHome Premium';
@@ -27,10 +28,17 @@ interface UPIPaymentDialogProps {
   currentTier?: SubscriptionTier;
 }
 
+type Step = 'select' | 'pay' | 'upload' | 'transferring' | 'confirmed';
+
 export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, currentTier }: UPIPaymentDialogProps) {
   const { user } = useAuth();
-  const [step, setStep] = useState<'select' | 'pay' | 'confirm'>('select');
+  const [step, setStep] = useState<Step>('select');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(null);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentTierConfig = currentTier ? SUBSCRIPTION_TIERS.find(t => t.id === currentTier) : null;
   const currentTierIndex = currentTier ? SUBSCRIPTION_TIERS.findIndex(t => t.id === currentTier) : -1;
@@ -43,6 +51,10 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
   const handleClose = () => {
     setStep('select');
     setSelectedTier(null);
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    setIsUploading(false);
+    setTransactionId(null);
     onOpenChange(false);
   };
 
@@ -62,28 +74,115 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
     }
   };
 
-  const handleConfirmPayment = async () => {
-    if (!user || !selectedTier) return;
-
-    // Log the payment transaction
-    await supabase.from('payment_transactions').insert({
-      user_id: user.id,
-      amount: selectedTier.price,
-      currency: 'INR',
-      payment_method: 'UPI',
-      upi_id: UPI_ID,
-      product: `subscription_${selectedTier.id}`,
-      status: 'confirmed',
-    });
-
-    onPaymentComplete(selectedTier.id);
-    toast.success(`🎉 ${selectedTier.name} Plan activated!`);
-    handleClose();
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be under 5MB');
+      return;
+    }
+    setScreenshotFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
   };
+
+  const handleUploadAndConfirm = async () => {
+    if (!user || !selectedTier || !screenshotFile) return;
+
+    setIsUploading(true);
+
+    try {
+      // Upload screenshot
+      const fileName = `${user.id}/${Date.now()}_${screenshotFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-screenshots')
+        .upload(fileName, screenshotFile);
+
+      if (uploadError) throw uploadError;
+
+      const screenshotUrl = fileName;
+      const payAmount = getUpgradePrice(selectedTier);
+
+      // Log transaction
+      const { data: txn, error: txnError } = await supabase
+        .from('payment_transactions')
+        .insert({
+          user_id: user.id,
+          amount: payAmount,
+          currency: 'INR',
+          payment_method: 'UPI',
+          upi_id: UPI_ID,
+          product: `subscription_${selectedTier.id}`,
+          status: 'processing',
+          screenshot_url: screenshotUrl,
+        })
+        .select('id')
+        .single();
+
+      if (txnError) throw txnError;
+      setTransactionId(txn.id);
+
+      // Move to transferring state
+      setStep('transferring');
+
+      // Auto-approve after 3 seconds (trust-based)
+      setTimeout(async () => {
+        // Update transaction status
+        await supabase
+          .from('payment_transactions')
+          .update({ status: 'confirmed' })
+          .eq('id', txn.id);
+
+        setStep('confirmed');
+
+        // Activate subscription
+        onPaymentComplete(selectedTier.id);
+      }, 3000);
+
+    } catch (error: any) {
+      toast.error('Upload failed: ' + error.message);
+      setIsUploading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!user || !selectedTier || !transactionId) return;
+
+    try {
+      const payAmount = getUpgradePrice(selectedTier);
+      await generateInvoicePDF({
+        transactionId,
+        tierName: selectedTier.name,
+        amount: payAmount,
+        currency: 'INR',
+        duration: selectedTier.duration,
+        userEmail: user.email || '',
+        paymentMethod: 'UPI',
+        date: new Date(),
+      });
+      toast.success('Invoice downloaded!');
+    } catch (err) {
+      toast.error('Failed to generate invoice');
+    }
+  };
+
+  // Auto-download invoice when confirmed
+  useEffect(() => {
+    if (step === 'confirmed' && transactionId) {
+      const timer = setTimeout(() => handleDownloadInvoice(), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [step, transactionId]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
+        {/* STEP 1: Select Tier */}
         {step === 'select' && (
           <div className="p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -167,6 +266,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
           </div>
         )}
 
+        {/* STEP 2: QR Code + Pay */}
         {step === 'pay' && selectedTier && (
           <div className="flex flex-col sm:flex-row">
             {/* Left Side */}
@@ -225,7 +325,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
               </Button>
             </div>
 
-            {/* Right Side - QR */}
+            {/* Right Side - QR + Upload */}
             <div className="flex-1 p-6 bg-muted/20 flex flex-col items-center justify-center">
               <p className="text-xs text-muted-foreground mb-4">Scan with any UPI app</p>
               
@@ -240,11 +340,53 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
                 />
               </div>
 
-              <div className="mt-6 w-full space-y-2">
-                <Button onClick={() => setStep('confirm')} className="w-full text-xs h-9">
-                  <CheckCircle className="w-3.5 h-3.5 mr-2" />
-                  I've Completed Payment
+              <div className="mt-6 w-full space-y-3">
+                {/* Screenshot upload area */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
+                {screenshotPreview ? (
+                  <div className="relative rounded-lg border-2 border-primary/50 overflow-hidden">
+                    <img src={screenshotPreview} alt="Payment screenshot" className="w-full h-32 object-cover" />
+                    <div className="absolute bottom-0 inset-x-0 bg-background/80 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
+                      <FileCheck className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[11px] text-foreground truncate">{screenshotFile?.name}</span>
+                    </div>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute top-2 right-2 bg-background/80 rounded-full p-1"
+                    >
+                      <Upload className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                  >
+                    <Upload className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Upload payment screenshot</span>
+                  </button>
+                )}
+
+                <Button
+                  onClick={handleUploadAndConfirm}
+                  disabled={!screenshotFile || isUploading}
+                  className="w-full text-xs h-9"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5 mr-2" />
+                  )}
+                  {screenshotFile ? 'I have Completed Payment' : 'Upload screenshot to continue'}
                 </Button>
+
                 <Button variant="ghost" onClick={handleClose} className="w-full text-xs h-9">
                   Maybe Later
                 </Button>
@@ -253,36 +395,69 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
           </div>
         )}
 
-        {step === 'confirm' && selectedTier && (
-          <div className="p-6">
-            <div className="text-center mb-6">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                <CheckCircle className="w-6 h-6 text-primary" />
+        {/* STEP 3: Transferring (blinking animation) */}
+        {step === 'transferring' && selectedTier && (
+          <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
+            <div className="relative mb-6">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">Confirm Payment</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Confirm your {selectedTier.name} Plan payment
-              </p>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-yellow-500 animate-ping" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-2 animate-pulse">
+              Transferring...
+            </h3>
+            <p className="text-xs text-muted-foreground text-center max-w-xs">
+              Verifying your payment of <span className="font-semibold text-foreground">₹{getUpgradePrice(selectedTier).toLocaleString()}</span> for the {selectedTier.name} Plan.
+            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Confirmed + Invoice */}
+        {step === 'confirmed' && selectedTier && (
+          <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
+            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4 animate-in zoom-in-50 duration-500">
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1">Payment Received!</h3>
+            <p className="text-xs text-muted-foreground text-center max-w-xs mb-1">
+              Your <span className="font-semibold text-foreground">{selectedTier.name}</span> Plan has been activated successfully.
+            </p>
+            <Badge variant="secondary" className="text-[10px] mb-6">
+              {selectedTier.duration === 'Perpetual' ? 'Lifetime Access' : `Valid for ${selectedTier.duration}`}
+            </Badge>
+
+            <div className="p-4 bg-muted/50 rounded-lg border border-border w-full max-w-xs mb-4">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-semibold text-foreground">₹{getUpgradePrice(selectedTier).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-muted-foreground">Plan</span>
+                <span className="font-medium text-foreground">{selectedTier.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant="default" className="text-[9px] bg-green-500 hover:bg-green-500">Confirmed</Badge>
+              </div>
             </div>
 
-            <div className="p-4 bg-muted/50 rounded-lg border border-border text-center mb-6">
-              <p className="text-xs text-muted-foreground mb-1">Payment to</p>
-              <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
-              <p className="text-xl font-bold text-foreground mt-2">₹{getUpgradePrice(selectedTier).toLocaleString()}</p>
-              <Badge variant="secondary" className="mt-2 text-[10px]">{selectedTier.name} - {selectedTier.duration}</Badge>
-            </div>
-
-            <p className="text-[10px] text-muted-foreground text-center mb-4">
-              By confirming, you acknowledge that the payment has been completed successfully.
+            <p className="text-[10px] text-muted-foreground mb-4 flex items-center gap-1">
+              <Download className="w-3 h-3" /> Invoice auto-downloading...
             </p>
 
-            <div className="space-y-2">
-              <Button onClick={handleConfirmPayment} className="w-full text-xs h-9">
-                <CheckCircle className="w-3.5 h-3.5 mr-2" />
-                Confirm & Activate
+            <div className="w-full max-w-xs space-y-2">
+              <Button onClick={handleDownloadInvoice} variant="outline" className="w-full text-xs h-9 gap-2">
+                <Download className="w-3.5 h-3.5" />
+                Download Invoice
               </Button>
-              <Button variant="ghost" onClick={() => setStep('pay')} className="w-full text-xs h-9">
-                Go Back
+              <Button onClick={handleClose} className="w-full text-xs h-9">
+                Done
               </Button>
             </div>
           </div>

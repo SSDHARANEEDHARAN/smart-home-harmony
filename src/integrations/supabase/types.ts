@@ -220,6 +220,7 @@ export type Database = {
           id: string
           payment_method: string
           product: string
+          screenshot_url: string | null
           status: string
           upi_id: string | null
           user_id: string
@@ -231,6 +232,7 @@ export type Database = {
           id?: string
           payment_method?: string
           product?: string
+          screenshot_url?: string | null
           status?: string
           upi_id?: string | null
           user_id: string
@@ -242,6 +244,7 @@ export type Database = {
           id?: string
           payment_method?: string
           product?: string
+          screenshot_url?: string | null
           status?: string
           upi_id?: string | null
           user_id?: string
