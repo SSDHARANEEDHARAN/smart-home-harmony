@@ -73,27 +73,27 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
         {step === 'pay' && (
           <>
             <DialogHeader>
-              <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                <Crown className="w-8 h-8 text-foreground" />
+              <div className="mx-auto w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2">
+                <Crown className="w-5 h-5 text-foreground" />
               </div>
-              <DialogTitle className="text-center text-xl">Pay via UPI</DialogTitle>
-              <DialogDescription className="text-center">
+              <DialogTitle className="text-center text-sm">Pay via UPI</DialogTitle>
+              <DialogDescription className="text-center text-xs">
                 Scan the QR code or use UPI ID to pay
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
+            <div className="space-y-3 py-2">
               {/* Price */}
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold text-foreground">₹{AMOUNT}</div>
-                <div className="text-sm text-muted-foreground">Lifetime Access</div>
+              <div className="text-center p-2 bg-muted/50 rounded-lg">
+                <div className="text-lg font-bold text-foreground">₹{AMOUNT}</div>
+                <div className="text-xs text-muted-foreground">Lifetime Access</div>
               </div>
 
               {/* QR Code */}
-              <div className="flex justify-center p-4 bg-white rounded-xl">
+              <div className="flex justify-center p-3 bg-white rounded-xl">
                 <QRCodeSVG
                   value={UPI_LINK}
-                  size={200}
+                  size={160}
                   level="H"
                   includeMargin={false}
                   bgColor="#ffffff"
