@@ -129,6 +129,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
+  const availablePlatforms = isDeveloperMode ? PREMIUM_PLATFORMS : FREE_PLATFORMS;
+
   const handleClose = () => {
     setStep('name');
     setName('');
@@ -141,7 +143,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const handleCreate = () => {
     if (!name.trim()) return;
     
-    if (isDeveloperMode && selectedPlatform) {
+    if (selectedPlatform) {
       onCreateWorkspace(name.trim(), { ...platformConfig, platform: selectedPlatform });
     } else {
       onCreateWorkspace(name.trim());
@@ -151,11 +153,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
 
   const handleNameNext = () => {
     if (!name.trim()) return;
-    if (isDeveloperMode) {
-      setStep('platform');
-    } else {
-      handleCreate();
-    }
+    setStep('platform');
   };
 
   const handlePlatformSelect = (platformId: PlatformType) => {
