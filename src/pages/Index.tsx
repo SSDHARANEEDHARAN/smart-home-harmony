@@ -174,7 +174,7 @@ export default function Index() {
         {/* Highlights */}
         <section className="py-12 border-t border-border/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {highlights.map((item) => {
                 const Icon = item.icon;
                 return (
