@@ -139,6 +139,8 @@ function getDescription(section: DocSection): string {
     thingspeak: 'Integrate ThingSpeak for IoT analytics and data visualization of your smart home sensors.',
     rainmaker: 'Connect with ESP RainMaker for cloud-based device provisioning and management.',
     mqtt: 'Implement MQTT protocol for lightweight, efficient IoT device communication.',
+    esphome: 'Configure ESPHome for easy, YAML-based smart home device firmware management.',
+    'node-server': 'Set up a custom Node.js server for advanced IoT device control and automation.',
   };
   return descriptions[section];
 }
