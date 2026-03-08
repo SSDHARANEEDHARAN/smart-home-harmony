@@ -143,33 +143,33 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
         {step === 'confirm' && (
           <>
             <DialogHeader>
-              <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <CheckCircle className="w-8 h-8 text-primary" />
+              <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                <CheckCircle className="w-5 h-5 text-primary" />
               </div>
-              <DialogTitle className="text-center text-xl">Confirm Payment</DialogTitle>
-              <DialogDescription className="text-center">
+              <DialogTitle className="text-center text-sm">Confirm Payment</DialogTitle>
+              <DialogDescription className="text-center text-xs">
                 Please confirm that you have successfully completed the UPI payment of ₹{AMOUNT}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="py-4 space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg border border-border text-center">
-                <p className="text-sm text-muted-foreground mb-1">Payment to</p>
-                <p className="font-mono text-sm font-medium text-foreground">{UPI_ID}</p>
-                <p className="text-lg font-bold text-foreground mt-2">₹{AMOUNT}</p>
+            <div className="py-2 space-y-3">
+              <div className="p-3 bg-muted/50 rounded-lg border border-border text-center">
+                <p className="text-xs text-muted-foreground mb-1">Payment to</p>
+                <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
+                <p className="text-base font-bold text-foreground mt-1">₹{AMOUNT}</p>
               </div>
 
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-[10px] text-muted-foreground text-center">
                 By confirming, you acknowledge that the payment has been completed successfully.
               </p>
             </div>
 
-            <DialogFooter className="flex-col gap-2">
-              <Button onClick={handleConfirmPayment} className="w-full">
-                <CheckCircle className="w-4 h-4 mr-2" />
+            <DialogFooter className="flex-col gap-1.5">
+              <Button onClick={handleConfirmPayment} className="w-full text-xs h-8">
+                <CheckCircle className="w-3 h-3 mr-1.5" />
                 Confirm & Activate
               </Button>
-              <Button variant="ghost" onClick={() => setStep('pay')} className="w-full">
+              <Button variant="ghost" onClick={() => setStep('pay')} className="w-full text-xs h-8">
                 Go Back
               </Button>
             </DialogFooter>
