@@ -272,6 +272,31 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
             );
           }
           break;
+
+        case 'esphome':
+          if (!platformConfig.esphomeHost) {
+            result = { success: false, message: 'Host address is required' };
+          } else {
+            result = await testESPHomeConnection(
+              platformConfig.esphomeHost,
+              platformConfig.esphomePort,
+              platformConfig.esphomeApiKey
+            );
+          }
+          break;
+
+        case 'node-server':
+          if (!platformConfig.nodeServerHost) {
+            result = { success: false, message: 'Server host is required' };
+          } else {
+            result = await testNodeServerConnection(
+              platformConfig.nodeServerHost,
+              platformConfig.nodeServerPort,
+              platformConfig.nodeServerProtocol,
+              platformConfig.nodeServerApiKey
+            );
+          }
+          break;
           
         default:
           result = { success: false, message: 'No test available for this platform' };
