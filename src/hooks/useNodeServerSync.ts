@@ -11,6 +11,7 @@ import {
   subscribeToNodeServerDeviceState,
   subscribeToNodeServerConnection,
   sendRelayCommand,
+  reconnectNodeServer,
   type NodeServerConfig,
 } from '@/services/nodeServerService';
 
