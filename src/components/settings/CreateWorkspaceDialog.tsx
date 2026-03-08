@@ -313,12 +313,11 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                 return (
                   <button
                     key={platform.id}
-                    onClick={() => !isLocked && handlePlatformSelect(platform.id)}
-                    disabled={isLocked}
+                    onClick={() => isLocked ? handleLockedPlatformClick(platform.name) : handlePlatformSelect(platform.id)}
                     className={cn(
                       "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                       isLocked
-                        ? "border-border/30 opacity-50 cursor-not-allowed"
+                        ? "border-border/30 opacity-60 cursor-pointer hover:opacity-80"
                         : selectedPlatform === platform.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
