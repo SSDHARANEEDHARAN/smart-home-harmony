@@ -4,6 +4,7 @@ import { Device, DeviceType, ToggleStyle } from '@/types/smarthome';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 import { updateFirebaseRelay } from '@/services/firebaseService';
+import { sendRelayCommand } from '@/services/nodeServerService';
 import { useHome } from '@/contexts/HomeContext';
 
 export function useDevices() {
