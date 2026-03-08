@@ -322,8 +322,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
                 {ALL_PLATFORMS.map((platform) => {
                   const IconComponent = platform.icon;
-                  const isLocked = platform.premium && !isDeveloperMode;
-                  
+                  const isLocked = platform.premium && (!isEnabled || !isPlatformUnlocked(platform.id!, subscriptionTier));
+                  const requiredTier = getRequiredTier(platform.id!);
                   const buttonContent = (
                     <button
                       key={platform.id}
