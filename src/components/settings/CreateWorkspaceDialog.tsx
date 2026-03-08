@@ -340,7 +340,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <div>
-                  <DialogTitle>Configure {availablePlatforms.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
+                  <DialogTitle>Configure {ALL_PLATFORMS.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
                   <DialogDescription>Enter configuration for your platform</DialogDescription>
                 </div>
               </div>
