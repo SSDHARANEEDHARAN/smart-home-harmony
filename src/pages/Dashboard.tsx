@@ -152,7 +152,7 @@ export default function Dashboard() {
                 <h2 className="font-semibold">Quick Scenes</h2>
               </div>
             </div>
-            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6">
               {scenes.slice(0, 6).map((scene) => (
                 <SceneCard
                   key={scene.id}

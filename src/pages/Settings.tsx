@@ -94,28 +94,26 @@ export default function Settings() {
 
         <Tabs defaultValue="workspaces" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-4 sm:mb-6 h-auto">
-            <TabsTrigger value="workspaces" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
-              <Home className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Workspaces</span>
+            <TabsTrigger value="workspaces" className="gap-1 sm:gap-2 text-[10px] xs:text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Home className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="hidden xs:inline truncate">Workspaces</span>
               <span className="xs:hidden">Home</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
-              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Notify</span>
-              <span className="xs:hidden">Notify</span>
+            <TabsTrigger value="notifications" className="gap-1 sm:gap-2 text-[10px] xs:text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Bell className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">Notify</span>
             </TabsTrigger>
-            <TabsTrigger value="voice" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
-              <Mic className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Voice</span>
+            <TabsTrigger value="voice" className="gap-1 sm:gap-2 text-[10px] xs:text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Mic className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">Voice</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
-              <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Theme</span>
-              <span className="xs:hidden">Theme</span>
+            <TabsTrigger value="appearance" className="gap-1 sm:gap-2 text-[10px] xs:text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <Palette className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">Theme</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2 px-1 sm:px-3">
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Account</span>
+            <TabsTrigger value="account" className="gap-1 sm:gap-2 text-[10px] xs:text-xs sm:text-sm py-2 px-1 sm:px-3">
+              <User className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">Account</span>
             </TabsTrigger>
           </TabsList>
 
