@@ -61,6 +61,10 @@ export function DocumentationPage({ onBack }: DocumentationPageProps) {
         return <RainMakerContent CodeBlock={CodeBlock} />;
       case 'mqtt':
         return <MQTTContent CodeBlock={CodeBlock} />;
+      case 'esphome':
+        return <ESPHomeContent CodeBlock={CodeBlock} />;
+      case 'node-server':
+        return <NodeServerContent CodeBlock={CodeBlock} />;
       default:
         return null;
     }
