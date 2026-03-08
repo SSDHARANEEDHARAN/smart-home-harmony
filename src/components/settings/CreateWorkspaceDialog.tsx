@@ -419,6 +419,53 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
           </>
         )}
       </DialogContent>
+
+      {/* Upgrade Prompt for Locked Platforms */}
+      <AlertDialog open={showUpgradePrompt} onOpenChange={setShowUpgradePrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <Crown className="w-6 h-6 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-center">
+              {lockedPlatformName} Requires Developer Mode
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Unlock {lockedPlatformName} and 4 other premium IoT platforms with Developer Mode. 
+              Get lifetime access for just ₹4,999.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>ESP32, Raspberry Pi, RainMaker, ThingSpeak</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>No-code integration setup</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>Lifetime updates included</span>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Maybe Later</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowUpgradePrompt(false);
+                handleClose();
+                // Navigate to settings to upgrade
+                window.location.href = '/settings?tab=account';
+              }}
+              className="gap-2"
+            >
+              <Crown className="w-4 h-4" />
+              Upgrade Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
