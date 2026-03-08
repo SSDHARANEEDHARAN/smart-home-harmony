@@ -116,7 +116,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  const availablePlatforms = isDeveloperMode ? PREMIUM_PLATFORMS : FREE_PLATFORMS;
+  // All platforms shown, but premium ones locked for free users
 
   const handleClose = () => {
     setStep('name');
