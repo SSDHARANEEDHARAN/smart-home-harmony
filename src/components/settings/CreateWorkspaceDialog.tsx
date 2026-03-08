@@ -123,8 +123,7 @@ const ALL_PLATFORMS = [
 ];
 
 export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }: CreateWorkspaceDialogProps) {
-  const { isPurchased, isEnabled, isVerifying } = useDeveloperMode();
-  const isDeveloperMode = isEnabled;
+  const { isPurchased, isEnabled, isVerifying, subscriptionTier } = useDeveloperMode();
   
   const [step, setStep] = useState<'name' | 'platform' | 'config'>('name');
   const [name, setName] = useState('');
