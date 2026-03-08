@@ -14,10 +14,13 @@ export function useDeveloperMode() {
   const { settings, activateDeveloperMode } = useSettings();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [verifiedPurchase, setVerifiedPurchase] = useState<boolean | null>(null);
   const hasCheckedRef = useRef(false);
+  const hasVerifiedRef = useRef(false);
 
-  const isPurchased = settings.developerMode.paid;
-  const isEnabled = settings.developerMode.enabled;
+  // Use database-verified status, fallback to localStorage only if not yet verified
+  const isPurchased = verifiedPurchase ?? settings.developerMode.paid;
+  const isEnabled = settings.developerMode.enabled && isPurchased;
 
   const verifyPurchase = useCallback(async (force = false) => {
     if (!user) return false;
