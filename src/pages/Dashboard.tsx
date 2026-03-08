@@ -88,7 +88,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container-responsive py-6 sm:py-8">
+      <div className="container-responsive py-4 xs:py-5 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8 header-responsive">
           <div className="flex items-center gap-3">
