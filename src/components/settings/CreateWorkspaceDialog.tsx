@@ -278,17 +278,11 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   autoFocus
                 />
               </div>
-              {isDeveloperMode && (
-                <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <Badge className="bg-primary/10 text-primary border-0">Developer Mode</Badge>
-                  <span className="text-xs text-muted-foreground">Platform selection available</span>
-                </div>
-              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
               <Button onClick={handleNameNext} disabled={!name.trim()}>
-                {isDeveloperMode ? 'Next' : 'Create'}
+                Next
               </Button>
             </DialogFooter>
           </>
