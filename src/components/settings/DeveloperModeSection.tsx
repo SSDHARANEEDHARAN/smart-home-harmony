@@ -94,7 +94,7 @@ export function DeveloperModeSection() {
 
   return (
     <>
-      <Card className="border-border/50 overflow-hidden">
+      <Card className="border-border/50 overflow-hidden animate-fade-in">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
