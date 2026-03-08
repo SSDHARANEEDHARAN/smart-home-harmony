@@ -58,7 +58,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, curren
 
   const openUpiApp = () => {
     if (selectedTier) {
-      window.location.href = getUpiLink(selectedTier.price, selectedTier.name);
+      window.location.href = getUpiLink(getUpgradePrice(selectedTier), selectedTier.name);
     }
   };
 
