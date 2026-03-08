@@ -10,7 +10,7 @@ interface DocumentationPageProps {
   onBack: () => void;
 }
 
-type DocSection = 'firebase' | 'thingspeak' | 'rainmaker' | 'esp32' | 'raspberry' | 'mqtt';
+type DocSection = 'firebase' | 'thingspeak' | 'rainmaker' | 'esp32' | 'raspberry' | 'mqtt' | 'esphome' | 'node-server';
 
 const sections = [
   { id: 'firebase' as DocSection, name: 'Firebase Integration', icon: FirebaseIcon },
@@ -19,6 +19,8 @@ const sections = [
   { id: 'thingspeak' as DocSection, name: 'ThingSpeak Integration', icon: ThingSpeakIcon },
   { id: 'rainmaker' as DocSection, name: 'ESP RainMaker', icon: RainMakerIcon },
   { id: 'mqtt' as DocSection, name: 'MQTT Protocol', icon: MQTTIcon },
+  { id: 'esphome' as DocSection, name: 'ESPHome', icon: ESPHomeIcon },
+  { id: 'node-server' as DocSection, name: 'Node Server', icon: NodeServerIcon },
 ];
 
 export function DocumentationPage({ onBack }: DocumentationPageProps) {
