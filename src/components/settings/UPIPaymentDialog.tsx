@@ -2,41 +2,44 @@ import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, CheckCircle, Smartphone, Copy, ExternalLink } from 'lucide-react';
-import { useSettings } from '@/hooks/useSettings';
+import { Crown, CheckCircle, Smartphone, Copy, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SUBSCRIPTION_TIERS, SubscriptionTier, TierConfig } from '@/config/subscriptionTiers';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const UPI_ID = 'tharaneetharanss-1@okicici';
-const AMOUNT = '4999';
-const PAYEE_NAME = 'SmartHome Developer Mode';
+const PAYEE_NAME = 'SmartHome Premium';
 
-// UPI deep link format
-const UPI_LINK = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${AMOUNT}&cu=INR&tn=${encodeURIComponent('Developer Mode - Lifetime Access')}`;
+function getUpiLink(amount: number, tierName: string) {
+  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`${tierName} Plan - SmartHome`)}`;
+}
 
 interface UPIPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPaymentComplete: () => void;
+  onPaymentComplete: (tier: SubscriptionTier) => void;
 }
 
 export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
-  const { activateDeveloperMode } = useSettings();
   const { user } = useAuth();
-  const [step, setStep] = useState<'pay' | 'confirm'>('pay');
+  const [step, setStep] = useState<'select' | 'pay' | 'confirm'>('select');
+  const [selectedTier, setSelectedTier] = useState<TierConfig | null>(null);
 
   const handleClose = () => {
-    setStep('pay');
+    setStep('select');
+    setSelectedTier(null);
     onOpenChange(false);
+  };
+
+  const handleSelectTier = (tier: TierConfig) => {
+    setSelectedTier(tier);
+    setStep('pay');
   };
 
   const copyUpiId = () => {
@@ -45,52 +48,108 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
   };
 
   const openUpiApp = () => {
-    window.location.href = UPI_LINK;
+    if (selectedTier) {
+      window.location.href = getUpiLink(selectedTier.price, selectedTier.name);
+    }
   };
 
   const handleConfirmPayment = async () => {
+    if (!user || !selectedTier) return;
+
     // Log the payment transaction
-    if (user) {
-      await supabase.from('payment_transactions').insert({
-        user_id: user.id,
-        amount: Number(AMOUNT),
-        currency: 'INR',
-        payment_method: 'UPI',
-        upi_id: UPI_ID,
-        product: 'developer_mode',
-        status: 'confirmed',
-      } as any);
-    }
-    activateDeveloperMode();
-    toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
+    await supabase.from('payment_transactions').insert({
+      user_id: user.id,
+      amount: selectedTier.price,
+      currency: 'INR',
+      payment_method: 'UPI',
+      upi_id: UPI_ID,
+      product: `subscription_${selectedTier.id}`,
+      status: 'confirmed',
+    });
+
+    onPaymentComplete(selectedTier.id);
+    toast.success(`🎉 ${selectedTier.name} Plan activated!`);
     handleClose();
-    onPaymentComplete();
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
-        {step === 'pay' && (
+        {step === 'select' && (
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Choose Your Plan</h3>
+                <p className="text-xs text-muted-foreground">Select a subscription tier</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {SUBSCRIPTION_TIERS.map((tier) => (
+                <button
+                  key={tier.id}
+                  onClick={() => handleSelectTier(tier)}
+                  className={cn(
+                    "relative flex flex-col p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02]",
+                    tier.badge === 'Popular'
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  {tier.badge && (
+                    <Badge variant="secondary" className="absolute -top-2 right-3 text-[9px]">
+                      {tier.badge}
+                    </Badge>
+                  )}
+                  <p className="font-semibold text-sm text-foreground">{tier.name}</p>
+                  <div className="mt-2">
+                    <span className="text-xl font-bold text-foreground">₹{tier.price.toLocaleString()}</span>
+                    <span className="text-xs text-muted-foreground">{tier.durationLabel}</span>
+                  </div>
+                  <ul className="mt-3 space-y-1.5">
+                    {tier.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                        <CheckCircle className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </button>
+              ))}
+            </div>
+
+            <Button variant="ghost" onClick={handleClose} className="w-full mt-4 text-xs h-9">
+              Maybe Later
+            </Button>
+          </div>
+        )}
+
+        {step === 'pay' && selectedTier && (
           <div className="flex flex-col sm:flex-row">
-            {/* Left Side - Payment Info & Status */}
+            {/* Left Side */}
             <div className="flex-1 p-6 bg-card border-r border-border">
+              <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-xs gap-1" onClick={() => setStep('select')}>
+                <ArrowLeft className="w-3 h-3" /> Change Plan
+              </Button>
+
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Crown className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">Developer Mode</h3>
-                  <p className="text-xs text-muted-foreground">Lifetime Access</p>
+                  <h3 className="text-sm font-semibold text-foreground">{selectedTier.name} Plan</h3>
+                  <p className="text-xs text-muted-foreground">{selectedTier.duration} access</p>
                 </div>
               </div>
 
-              {/* Price Display */}
               <div className="p-4 bg-muted/50 rounded-lg mb-4">
-                <div className="text-2xl font-bold text-foreground">₹{AMOUNT}</div>
+                <div className="text-2xl font-bold text-foreground">₹{selectedTier.price.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">One-time payment</div>
               </div>
 
-              {/* UPI ID */}
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border mb-4">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">UPI ID</p>
@@ -101,29 +160,26 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
                 </Button>
               </div>
 
-              {/* Benefits */}
               <div className="space-y-2 mb-6">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Includes</p>
-                <BenefitRow text="6+ IoT platform support" />
-                <BenefitRow text="ESP32 & Raspberry Pi" />
-                <BenefitRow text="Firebase & MQTT" />
-                <BenefitRow text="Lifetime updates" />
+                {selectedTier.features.map((f, i) => (
+                  <BenefitRow key={i} text={f} />
+                ))}
               </div>
 
-              {/* Mobile UPI Button */}
               <Button variant="outline" className="w-full gap-2 text-xs h-9 sm:hidden" onClick={openUpiApp}>
                 <Smartphone className="w-3.5 h-3.5" />
                 Open UPI App
               </Button>
             </div>
 
-            {/* Right Side - QR Code */}
+            {/* Right Side - QR */}
             <div className="flex-1 p-6 bg-muted/20 flex flex-col items-center justify-center">
               <p className="text-xs text-muted-foreground mb-4">Scan with any UPI app</p>
               
               <div className="p-4 bg-white rounded-xl shadow-lg">
                 <QRCodeSVG
-                  value={UPI_LINK}
+                  value={getUpiLink(selectedTier.price, selectedTier.name)}
                   size={180}
                   level="H"
                   includeMargin={false}
@@ -145,7 +201,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
           </div>
         )}
 
-        {step === 'confirm' && (
+        {step === 'confirm' && selectedTier && (
           <div className="p-6">
             <div className="text-center mb-6">
               <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
@@ -153,14 +209,15 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
               </div>
               <h3 className="text-sm font-semibold text-foreground">Confirm Payment</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Please confirm that you have completed the UPI payment
+                Confirm your {selectedTier.name} Plan payment
               </p>
             </div>
 
             <div className="p-4 bg-muted/50 rounded-lg border border-border text-center mb-6">
               <p className="text-xs text-muted-foreground mb-1">Payment to</p>
               <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
-              <p className="text-xl font-bold text-foreground mt-2">₹{AMOUNT}</p>
+              <p className="text-xl font-bold text-foreground mt-2">₹{selectedTier.price.toLocaleString()}</p>
+              <Badge variant="secondary" className="mt-2 text-[10px]">{selectedTier.name} - {selectedTier.duration}</Badge>
             </div>
 
             <p className="text-[10px] text-muted-foreground text-center mb-4">

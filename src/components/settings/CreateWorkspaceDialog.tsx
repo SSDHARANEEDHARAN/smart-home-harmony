@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useDeveloperMode } from '@/hooks/useDeveloperMode';
+import { isPlatformUnlocked, getRequiredTier, getTierConfig } from '@/config/subscriptionTiers';
 import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
@@ -122,8 +123,7 @@ const ALL_PLATFORMS = [
 ];
 
 export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }: CreateWorkspaceDialogProps) {
-  const { isPurchased, isEnabled, isVerifying } = useDeveloperMode();
-  const isDeveloperMode = isEnabled;
+  const { isPurchased, isEnabled, isVerifying, subscriptionTier } = useDeveloperMode();
   
   const [step, setStep] = useState<'name' | 'platform' | 'config'>('name');
   const [name, setName] = useState('');
@@ -322,8 +322,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
                 {ALL_PLATFORMS.map((platform) => {
                   const IconComponent = platform.icon;
-                  const isLocked = platform.premium && !isDeveloperMode;
-                  
+                  const isLocked = platform.premium && (!isEnabled || !isPlatformUnlocked(platform.id!, subscriptionTier));
+                  const requiredTier = getRequiredTier(platform.id!);
                   const buttonContent = (
                     <button
                       key={platform.id}
@@ -362,7 +362,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                           {buttonContent}
                         </TooltipTrigger>
                         <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                          <p className="text-xs font-medium">🔓 Upgrade to unlock</p>
+                          <p className="text-xs font-medium">🔓 Requires {getTierConfig(requiredTier)?.name ?? 'Premium'} plan</p>
                         </TooltipContent>
                       </Tooltip>
                     );
@@ -462,8 +462,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               {lockedPlatformName} Requires Developer Mode
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Unlock {lockedPlatformName} and 4 other premium IoT platforms with Developer Mode. 
-              Get lifetime access for just ₹4,999.
+              Unlock {lockedPlatformName} with a premium subscription plan starting at ₹1,499/year.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-3 space-y-2">
