@@ -313,6 +313,12 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               </div>
             </DialogHeader>
             <TooltipProvider delayDuration={100}>
+              {isVerifying ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Verifying account status...</p>
+                </div>
+              ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
                 {ALL_PLATFORMS.map((platform) => {
                   const IconComponent = platform.icon;
