@@ -11,6 +11,7 @@ import {
   subscribeToNodeServerDeviceState,
   subscribeToNodeServerConnection,
   sendRelayCommand,
+  reconnectNodeServer,
   type NodeServerConfig,
 } from '@/services/nodeServerService';
 
@@ -114,5 +115,6 @@ export function useNodeServerSync() {
     hasNodeServerConfig: hasConfig,
     sendRelayCommand: (relayPin: number, state: boolean) =>
       sendRelayCommand(currentHomeId, relayPin, state),
+    reconnect: () => reconnectNodeServer(currentHomeId),
   };
 }
