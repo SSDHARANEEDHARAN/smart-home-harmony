@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSettings } from '@/hooks/useSettings';
-import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 export type PlatformType = 'firebase' | 'esp32' | 'raspberry-pi' | 'esp-rainmaker' | 'thingspeak' | 'mqtt' | null;
