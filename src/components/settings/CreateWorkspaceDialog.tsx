@@ -371,6 +371,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   return buttonContent;
                 })}
               </div>
+              )}
             </TooltipProvider>
             <DialogFooter>
               <Button variant="outline" onClick={handleBack}>Back</Button>
