@@ -126,7 +126,7 @@ export default function Index() {
                 <span className="text-muted-foreground">From Anywhere</span>
               </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+              <p className="text-sm xs:text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-10 px-2">
                 A powerful, open-source smart home platform. Connect ESP32, Raspberry Pi, 
                 and integrate with Firebase, ThingSpeak, MQTT, and more.
               </p>
