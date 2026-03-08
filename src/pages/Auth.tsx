@@ -155,7 +155,7 @@ export default function Auth() {
         Back to Home
       </Button>
 
-      <Card className="w-full max-w-md relative z-10 bg-card/60 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/20 rounded-2xl">
+      <Card className="w-full max-w-[calc(100vw-2rem)] xs:max-w-md relative z-10 bg-card/60 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/20 rounded-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
             <Home className="w-8 h-8 text-primary-foreground" />
