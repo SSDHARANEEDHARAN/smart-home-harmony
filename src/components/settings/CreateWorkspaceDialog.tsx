@@ -33,6 +33,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export type PlatformType = 'firebase' | 'esp32' | 'raspberry-pi' | 'esp-rainmaker' | 'thingspeak' | 'mqtt' | null;
