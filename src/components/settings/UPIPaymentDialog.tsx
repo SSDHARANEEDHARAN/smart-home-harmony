@@ -69,7 +69,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
         {step === 'pay' && (
           <>
             <DialogHeader>
