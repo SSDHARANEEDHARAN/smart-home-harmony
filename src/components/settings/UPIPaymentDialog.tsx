@@ -24,12 +24,21 @@ interface UPIPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPaymentComplete: (tier: SubscriptionTier) => void;
+  currentTier?: SubscriptionTier;
 }
 
-export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIPaymentDialogProps) {
+export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete, currentTier }: UPIPaymentDialogProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'select' | 'pay' | 'confirm'>('select');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(null);
+
+  const currentTierConfig = currentTier ? SUBSCRIPTION_TIERS.find(t => t.id === currentTier) : null;
+  const currentTierIndex = currentTier ? SUBSCRIPTION_TIERS.findIndex(t => t.id === currentTier) : -1;
+
+  const getUpgradePrice = (tier: TierConfig): number => {
+    if (!currentTierConfig) return tier.price;
+    return Math.max(0, tier.price - currentTierConfig.price);
+  };
 
   const handleClose = () => {
     setStep('select');
@@ -49,7 +58,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
 
   const openUpiApp = () => {
     if (selectedTier) {
-      window.location.href = getUpiLink(selectedTier.price, selectedTier.name);
+      window.location.href = getUpiLink(getUpgradePrice(selectedTier), selectedTier.name);
     }
   };
 
@@ -82,43 +91,74 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
                 <Crown className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Choose Your Plan</h3>
-                <p className="text-xs text-muted-foreground">Select a subscription tier</p>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {currentTier ? 'Upgrade Your Plan' : 'Choose Your Plan'}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {currentTier ? `Current: ${currentTierConfig?.name} — select a higher tier` : 'Select a subscription tier'}
+                </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {SUBSCRIPTION_TIERS.map((tier) => (
-                <button
-                  key={tier.id}
-                  onClick={() => handleSelectTier(tier)}
-                  className={cn(
-                    "relative flex flex-col p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02]",
-                    tier.badge === 'Popular'
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  {tier.badge && (
-                    <Badge variant="secondary" className="absolute -top-2 right-3 text-[9px]">
-                      {tier.badge}
-                    </Badge>
-                  )}
-                  <p className="font-semibold text-sm text-foreground">{tier.name}</p>
-                  <div className="mt-2">
-                    <span className="text-xl font-bold text-foreground">₹{tier.price.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground">{tier.durationLabel}</span>
-                  </div>
-                  <ul className="mt-3 space-y-1.5">
-                    {tier.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                        <CheckCircle className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </button>
-              ))}
+              {SUBSCRIPTION_TIERS.map((tier, index) => {
+                const isCurrentTier = tier.id === currentTier;
+                const isLowerTier = currentTierIndex >= 0 && index <= currentTierIndex;
+                const upgradePrice = getUpgradePrice(tier);
+                const isDisabled = isCurrentTier || (isLowerTier && !isCurrentTier);
+
+                return (
+                  <button
+                    key={tier.id}
+                    onClick={() => !isDisabled && handleSelectTier(tier)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "relative flex flex-col p-4 rounded-xl border-2 transition-all text-left",
+                      isCurrentTier
+                        ? "border-primary/50 bg-primary/5 opacity-70 cursor-default"
+                        : isDisabled
+                          ? "border-border/30 opacity-40 cursor-not-allowed"
+                          : tier.badge === 'Popular'
+                            ? "border-primary bg-primary/5 hover:scale-[1.02]"
+                            : "border-border hover:border-primary/50 hover:scale-[1.02]"
+                    )}
+                  >
+                    {isCurrentTier && (
+                      <Badge variant="default" className="absolute -top-2 right-3 text-[9px]">
+                        Current Plan
+                      </Badge>
+                    )}
+                    {!isCurrentTier && tier.badge && (
+                      <Badge variant="secondary" className="absolute -top-2 right-3 text-[9px]">
+                        {tier.badge}
+                      </Badge>
+                    )}
+                    <p className="font-semibold text-sm text-foreground">{tier.name}</p>
+                    <div className="mt-2">
+                      {currentTier && !isDisabled && upgradePrice !== tier.price ? (
+                        <>
+                          <span className="text-xs text-muted-foreground line-through mr-1">₹{tier.price.toLocaleString()}</span>
+                          <span className="text-xl font-bold text-primary">₹{upgradePrice.toLocaleString()}</span>
+                          <Badge variant="secondary" className="ml-1.5 text-[9px]">Upgrade</Badge>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xl font-bold text-foreground">₹{tier.price.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">{tier.durationLabel}</span>
+                        </>
+                      )}
+                    </div>
+                    <ul className="mt-3 space-y-1.5">
+                      {tier.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                          <CheckCircle className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </button>
+                );
+              })}
             </div>
 
             <Button variant="ghost" onClick={handleClose} className="w-full mt-4 text-xs h-9">
@@ -140,15 +180,27 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
                   <Crown className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">{selectedTier.name} Plan</h3>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {currentTier ? `Upgrade to ${selectedTier.name}` : `${selectedTier.name} Plan`}
+                  </h3>
                   <p className="text-xs text-muted-foreground">{selectedTier.duration} access</p>
                 </div>
               </div>
 
-              <div className="p-4 bg-muted/50 rounded-lg mb-4">
-                <div className="text-2xl font-bold text-foreground">₹{selectedTier.price.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">One-time payment</div>
-              </div>
+              {(() => {
+                const payAmount = getUpgradePrice(selectedTier);
+                return (
+                  <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                    <div className="text-2xl font-bold text-foreground">₹{payAmount.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {currentTier && payAmount !== selectedTier.price
+                        ? `Upgrade price (₹${selectedTier.price.toLocaleString()} − ₹${currentTierConfig!.price.toLocaleString()} paid)`
+                        : 'One-time payment'
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border mb-4">
                 <div>
@@ -179,7 +231,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
               
               <div className="p-4 bg-white rounded-xl shadow-lg">
                 <QRCodeSVG
-                  value={getUpiLink(selectedTier.price, selectedTier.name)}
+                  value={getUpiLink(getUpgradePrice(selectedTier), selectedTier.name)}
                   size={180}
                   level="H"
                   includeMargin={false}
@@ -216,7 +268,7 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
             <div className="p-4 bg-muted/50 rounded-lg border border-border text-center mb-6">
               <p className="text-xs text-muted-foreground mb-1">Payment to</p>
               <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
-              <p className="text-xl font-bold text-foreground mt-2">₹{selectedTier.price.toLocaleString()}</p>
+              <p className="text-xl font-bold text-foreground mt-2">₹{getUpgradePrice(selectedTier).toLocaleString()}</p>
               <Badge variant="secondary" className="mt-2 text-[10px]">{selectedTier.name} - {selectedTier.duration}</Badge>
             </div>
 

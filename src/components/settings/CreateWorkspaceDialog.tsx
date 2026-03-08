@@ -69,6 +69,15 @@ export interface PlatformConfig {
   // Raspberry Pi
   raspberryPiHost?: string;
   raspberryPiPort?: string;
+  // ESPHome
+  esphomeHost?: string;
+  esphomePort?: string;
+  esphomeApiKey?: string;
+  // Node Server
+  nodeServerHost?: string;
+  nodeServerPort?: string;
+  nodeServerApiKey?: string;
+  nodeServerProtocol?: string;
 }
 
 interface CreateWorkspaceDialogProps {
@@ -708,6 +717,81 @@ function renderPlatformConfig(
         </div>
       );
     
+    case 'esphome':
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>ESPHome Host Address *</Label>
+            <Input
+              value={config.esphomeHost || ''}
+              onChange={(e) => updateConfig('esphomeHost', e.target.value)}
+              placeholder="192.168.1.100 or esphome.local"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Port</Label>
+            <Input
+              value={config.esphomePort || ''}
+              onChange={(e) => updateConfig('esphomePort', e.target.value)}
+              placeholder="6053"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>API Key</Label>
+            <Input
+              type="password"
+              value={config.esphomeApiKey || ''}
+              onChange={(e) => updateConfig('esphomeApiKey', e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
+      );
+    
+    case 'node-server':
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Server Host *</Label>
+            <Input
+              value={config.nodeServerHost || ''}
+              onChange={(e) => updateConfig('nodeServerHost', e.target.value)}
+              placeholder="192.168.1.50 or myserver.local"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Port *</Label>
+            <Input
+              value={config.nodeServerPort || ''}
+              onChange={(e) => updateConfig('nodeServerPort', e.target.value)}
+              placeholder="3000"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Protocol</Label>
+            <Input
+              value={config.nodeServerProtocol || ''}
+              onChange={(e) => updateConfig('nodeServerProtocol', e.target.value)}
+              placeholder="http or https"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>API Key</Label>
+            <Input
+              type="password"
+              value={config.nodeServerApiKey || ''}
+              onChange={(e) => updateConfig('nodeServerApiKey', e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
+      );
+
     default:
       return null;
   }
