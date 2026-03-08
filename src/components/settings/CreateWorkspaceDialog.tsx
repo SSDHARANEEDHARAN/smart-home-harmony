@@ -60,22 +60,21 @@ interface CreateWorkspaceDialogProps {
   onCreateWorkspace: (name: string, platformConfig?: PlatformConfig) => void;
 }
 
-const FREE_PLATFORMS = [
+const ALL_PLATFORMS = [
   {
     id: 'firebase' as PlatformType,
     name: 'Firebase',
     description: 'Google Realtime Database',
     icon: FirebaseIcon,
+    premium: false,
   },
   {
     id: 'mqtt' as PlatformType,
     name: 'MQTT',
     description: 'Lightweight Messaging Protocol',
     icon: MQTTIcon,
+    premium: false,
   },
-];
-
-const PREMIUM_PLATFORMS = [
   {
     id: 'esp32' as PlatformType,
     name: 'ESP32',
@@ -91,12 +90,6 @@ const PREMIUM_PLATFORMS = [
     premium: true,
   },
   {
-    id: 'firebase' as PlatformType,
-    name: 'Firebase',
-    description: 'Google Realtime Database',
-    icon: FirebaseIcon,
-  },
-  {
     id: 'esp-rainmaker' as PlatformType,
     name: 'ESP RainMaker',
     description: 'Espressif IoT Cloud Platform',
@@ -109,12 +102,6 @@ const PREMIUM_PLATFORMS = [
     description: 'IoT Analytics Platform',
     icon: ThingSpeakIcon,
     premium: true,
-  },
-  {
-    id: 'mqtt' as PlatformType,
-    name: 'MQTT',
-    description: 'Lightweight Messaging Protocol',
-    icon: MQTTIcon,
   },
 ];
 
