@@ -3,167 +3,105 @@ import { useAuth } from './useAuth';
 import { useSettings } from './useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Module-level deduplication to prevent multiple components from triggering simultaneous calls
-let verifyInFlight: Promise<boolean> | null = null;
-let lastVerifyTime = 0;
-const VERIFY_COOLDOWN_MS = 30000; // 30 second cooldown between Stripe API calls
+import { SubscriptionTier } from '@/config/subscriptionTiers';
 
 export function useDeveloperMode() {
   const { user } = useAuth();
-  const { settings, activateDeveloperMode } = useSettings();
+  const { settings, updateDeveloperModeSettings } = useSettings();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [verifiedPurchase, setVerifiedPurchase] = useState<boolean | null>(null);
-  const hasCheckedRef = useRef(false);
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(null);
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
   const hasVerifiedRef = useRef(false);
 
-  // Use database-verified status, fallback to localStorage only if not yet verified
-  const isPurchased = verifiedPurchase ?? settings.developerMode.paid;
+  const isPurchased = subscriptionTier !== null;
   const isEnabled = settings.developerMode.enabled && isPurchased;
 
-  const verifyPurchase = useCallback(async (force = false) => {
-    if (!user) return false;
-    
-    // If already purchased locally, skip Stripe call
-    if (isPurchased && !force) return true;
-
-    // Check cooldown to prevent rate limiting
-    const now = Date.now();
-    if (!force && now - lastVerifyTime < VERIFY_COOLDOWN_MS) {
-      console.log('[DevMode] Skipping verify - cooldown active');
-      return false;
-    }
-
-    // Deduplicate: if a call is already in flight, reuse it
-    if (verifyInFlight) {
-      console.log('[DevMode] Reusing in-flight verify call');
-      return verifyInFlight;
-    }
-    
-    setIsVerifying(true);
-    const promise = (async () => {
-      try {
-        // First check the database profile before hitting Stripe
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('developer_mode_purchased')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (profile?.developer_mode_purchased) {
-          activateDeveloperMode();
-          return true;
-        }
-
-        // Only call Stripe if DB says not purchased
-        lastVerifyTime = Date.now();
-        const { data, error } = await supabase.functions.invoke('verify-developer-payment');
-        
-        if (error) {
-          console.error('Verification error:', error);
-          return false;
-        }
-
-        if (data?.purchased) {
-          activateDeveloperMode();
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error('Failed to verify purchase:', error);
-        return false;
-      } finally {
-        setIsVerifying(false);
-        verifyInFlight = null;
-      }
-    })();
-
-    verifyInFlight = promise;
-    return promise;
-  }, [user, isPurchased, activateDeveloperMode]);
-
-  const initiatePayment = async () => {
-    if (!user) {
-      toast.error('Please log in to purchase Developer Mode');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-developer-payment');
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error('Failed to initiate payment: ' + error.message);
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  // Verify purchase from database on mount (security: don't trust localStorage alone)
+  // Verify subscription from database on mount
   useEffect(() => {
     if (!user || hasVerifiedRef.current) return;
     hasVerifiedRef.current = true;
 
     const verifyFromDatabase = async () => {
+      setIsVerifying(true);
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('developer_mode_purchased')
+          .select('subscription_tier, subscription_expires_at, developer_mode_purchased')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (profile?.developer_mode_purchased) {
-          setVerifiedPurchase(true);
-          activateDeveloperMode();
+        if (profile?.subscription_tier) {
+          // Check if subscription is still valid
+          const expiresAt = profile.subscription_expires_at;
+          if (expiresAt && new Date(expiresAt) < new Date() && profile.subscription_tier !== 'ultimate') {
+            // Expired
+            setSubscriptionTier(null);
+            setSubscriptionExpiresAt(null);
+          } else {
+            setSubscriptionTier(profile.subscription_tier as SubscriptionTier);
+            setSubscriptionExpiresAt(expiresAt);
+            updateDeveloperModeSettings({ enabled: true, paid: true });
+          }
+        } else if (profile?.developer_mode_purchased) {
+          // Legacy: treat old purchases as ultimate
+          setSubscriptionTier('ultimate');
+          updateDeveloperModeSettings({ enabled: true, paid: true });
         } else {
-          setVerifiedPurchase(false);
+          setSubscriptionTier(null);
         }
       } catch (error) {
         console.error('[DevMode] Failed to verify from database:', error);
-        setVerifiedPurchase(false);
+      } finally {
+        setIsVerifying(false);
+        setVerified(true);
       }
     };
 
     verifyFromDatabase();
-  }, [user, activateDeveloperMode]);
+  }, [user, updateDeveloperModeSettings]);
 
-  // Check for payment success on page load (only once)
-  useEffect(() => {
-    if (hasCheckedRef.current) return;
-    hasCheckedRef.current = true;
+  const activateSubscription = useCallback(async (tier: SubscriptionTier) => {
+    if (!user || !tier) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
-    
-    if (paymentStatus === 'success' && user) {
-      verifyPurchase(true).then((success) => {
-        if (success) {
-          setVerifiedPurchase(true);
-          toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
-        }
-      });
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (paymentStatus === 'cancelled') {
-      toast.info('Payment was cancelled');
-      window.history.replaceState({}, '', window.location.pathname);
+    let expiresAt: string | null = null;
+    if (tier === 'starter') {
+      expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (tier === 'pro') {
+      expiresAt = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
     }
-  }, [user, verifyPurchase]);
+    // ultimate = null (perpetual)
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_tier: tier,
+        subscription_expires_at: expiresAt,
+        subscription_purchased_at: new Date().toISOString(),
+        developer_mode_purchased: true,
+        developer_mode_purchased_at: new Date().toISOString(),
+      } as any)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('[DevMode] Failed to activate subscription:', error);
+      toast.error('Failed to activate subscription');
+      return;
+    }
+
+    setSubscriptionTier(tier);
+    setSubscriptionExpiresAt(expiresAt);
+    updateDeveloperModeSettings({ enabled: true, paid: true });
+  }, [user, updateDeveloperModeSettings]);
 
   return {
     isPurchased,
     isEnabled,
-    isVerifying,
+    isVerifying: isVerifying && !verified,
     isProcessingPayment,
-    verifyPurchase,
-    initiatePayment,
+    subscriptionTier,
+    subscriptionExpiresAt,
+    activateSubscription,
   };
 }
