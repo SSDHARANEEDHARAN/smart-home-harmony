@@ -16,6 +16,7 @@ import { useDeviceNotifications } from '@/hooks/useDeviceNotifications';
 import { useSettings } from '@/hooks/useSettings';
 import { useHome } from '@/contexts/HomeContext';
 import { useFirebaseSync } from '@/hooks/useFirebaseSync';
+import { useNodeServerSync } from '@/hooks/useNodeServerSync';
 import { FirebaseStatusBadge } from '@/components/firebase/FirebaseStatusBadge';
 import { Loader2, Home, Zap, Plus, Power, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,9 @@ export default function Dashboard() {
 
   // Enable Firebase bi-directional sync
   useFirebaseSync();
+
+  // Enable Node Server WebSocket sync
+  useNodeServerSync();
 
   // Enable device notifications
   useDeviceNotifications(devices);

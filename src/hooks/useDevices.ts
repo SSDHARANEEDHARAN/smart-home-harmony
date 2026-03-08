@@ -4,6 +4,7 @@ import { Device, DeviceType, ToggleStyle } from '@/types/smarthome';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 import { updateFirebaseRelay } from '@/services/firebaseService';
+import { sendRelayCommand } from '@/services/nodeServerService';
 import { useHome } from '@/contexts/HomeContext';
 
 export function useDevices() {
@@ -140,6 +141,13 @@ export function useDevices() {
         supabase.functions.invoke('trigger-relay', {
           body: { relay_pin, state: is_on },
         }).catch(err => console.error('Relay trigger failed:', err));
+      }
+
+      // Sync with Node Server WebSocket if configured (fire and forget)
+      const platformConfig = currentHome?.platformConfig as Record<string, string> | undefined;
+      if (relay_pin && platformConfig?.platform === 'node-server' && platformConfig?.nodeServerHost) {
+        const sent = sendRelayCommand(currentHomeId, relay_pin, is_on);
+        if (sent) console.log(`Node Server WS synced: relay${relay_pin} = ${is_on}`);
       }
 
       return data;

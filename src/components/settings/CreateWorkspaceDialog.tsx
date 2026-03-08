@@ -80,6 +80,7 @@ export interface PlatformConfig {
   nodeServerPort?: string;
   nodeServerApiKey?: string;
   nodeServerProtocol?: string;
+  nodeServerWsUrl?: string;
 }
 
 interface CreateWorkspaceDialogProps {
@@ -806,6 +807,18 @@ function renderPlatformConfig(
               placeholder="http or https"
               className="font-mono text-sm"
             />
+          </div>
+          <div className="space-y-2">
+            <Label>WebSocket URL</Label>
+            <Input
+              value={config.nodeServerWsUrl || ''}
+              onChange={(e) => updateConfig('nodeServerWsUrl', e.target.value)}
+              placeholder="ws://192.168.1.50:3000/ws (auto-generated if empty)"
+              className="font-mono text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Optional. If empty, derived from host/port. Used for real-time device state updates.
+            </p>
           </div>
           <div className="space-y-2">
             <Label>API Key</Label>
