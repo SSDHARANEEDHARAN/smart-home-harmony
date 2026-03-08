@@ -1034,3 +1034,258 @@ void setup() {
     </div>
   );
 }
+
+// ESPHome Content Component
+function ESPHomeContent({ CodeBlock }: { CodeBlock: any }) {
+  return (
+    <div className="space-y-4">
+      <Accordion type="single" collapsible defaultValue="step1" className="w-full space-y-3">
+        <AccordionItem value="step1" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">1. What is ESPHome?</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">ESPHome is a system to control your ESP8266/ESP32 devices through simple YAML configuration files and control them remotely through Home Automation systems.</p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+              <li>No programming required — configure devices with YAML</li>
+              <li>Native API for fast, reliable local communication</li>
+              <li>OTA (Over-The-Air) updates</li>
+              <li>Supports ESP8266 and ESP32 boards</li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step2" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">2. Install ESPHome</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Install ESPHome using pip:</p>
+            <CodeBlock id="esphome-install" code={`pip install esphome`} />
+            <p className="text-muted-foreground mt-2">Or use the ESPHome Dashboard:</p>
+            <CodeBlock id="esphome-dashboard" code={`esphome dashboard /config`} />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step3" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">3. YAML Configuration</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Create a YAML config for your device:</p>
+            <CodeBlock
+              id="esphome-yaml"
+              code={`esphome:
+  name: smart-relay
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: "YOUR_WIFI_SSID"
+  password: "YOUR_WIFI_PASSWORD"
+
+api:
+  encryption:
+    key: "YOUR_API_KEY"
+
+ota:
+  password: "YOUR_OTA_PASSWORD"
+
+switch:
+  - platform: gpio
+    pin: GPIO26
+    name: "Relay 1"
+    id: relay1
+  - platform: gpio
+    pin: GPIO27
+    name: "Relay 2"
+    id: relay2`}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step4" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">4. Flash Your Device</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Compile and flash via USB (first time) or OTA:</p>
+            <CodeBlock id="esphome-flash" code={`# First flash via USB
+esphome run smart-relay.yaml
+
+# Subsequent OTA updates
+esphome run smart-relay.yaml --device smart-relay.local`} />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step5" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">5. Connect to SmartHome</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">In the workspace creation dialog:</p>
+            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+              <li>Select ESPHome as your platform</li>
+              <li>Enter the device host (e.g., <code className="bg-muted px-1 rounded">smart-relay.local</code>)</li>
+              <li>Set port to <code className="bg-muted px-1 rounded">6053</code> (default native API port)</li>
+              <li>Enter the API encryption key from your YAML config</li>
+            </ol>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step6" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">6. Troubleshooting</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+              <li>Ensure the device is on the same network as your browser</li>
+              <li>Check that the API component is enabled in your YAML</li>
+              <li>Verify the encryption key matches exactly</li>
+              <li>Default native API port is 6053 — make sure it's not blocked</li>
+              <li>Use <code className="bg-muted px-1 rounded">esphome logs smart-relay.yaml</code> for debugging</li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+}
+
+// Node Server Content Component
+function NodeServerContent({ CodeBlock }: { CodeBlock: any }) {
+  return (
+    <div className="space-y-4">
+      <Accordion type="single" collapsible defaultValue="step1" className="w-full space-y-3">
+        <AccordionItem value="step1" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">1. Overview</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Run a custom Node.js server to control IoT devices with full programming flexibility. Perfect for advanced automations, custom protocols, and integrating multiple device types.</p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+              <li>Full Node.js runtime for custom logic</li>
+              <li>REST API for device control</li>
+              <li>Support for GPIO, serial, and network protocols</li>
+              <li>Run on Raspberry Pi, cloud server, or any Linux machine</li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step2" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">2. Server Setup</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Initialize your Node.js project:</p>
+            <CodeBlock id="node-init" code={`mkdir smarthome-server && cd smarthome-server
+npm init -y
+npm install express cors dotenv`} />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step3" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">3. Server Code</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <CodeBlock
+              id="node-server-code"
+              code={`const express = require('express');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// API key middleware
+const API_KEY = process.env.API_KEY || 'your-secret-key';
+app.use((req, res, next) => {
+  const key = req.headers['x-api-key'];
+  if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+});
+
+// Device state store
+let devices = {};
+
+// GET device state
+app.get('/api/devices/:id', (req, res) => {
+  const state = devices[req.params.id] || { is_on: false };
+  res.json(state);
+});
+
+// POST toggle device
+app.post('/api/devices/:id/toggle', (req, res) => {
+  const id = req.params.id;
+  devices[id] = { ...devices[id], is_on: !devices[id]?.is_on };
+  res.json(devices[id]);
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(\`Server on port \${PORT}\`));`}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step4" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">4. GPIO Control (Raspberry Pi)</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">For Raspberry Pi GPIO control, install onoff:</p>
+            <CodeBlock id="node-gpio-install" code={`npm install onoff`} />
+            <CodeBlock
+              id="node-gpio-code"
+              code={`const { Gpio } = require('onoff');
+const relay1 = new Gpio(17, 'out');
+
+app.post('/api/gpio/:pin/toggle', (req, res) => {
+  const pin = parseInt(req.params.pin);
+  const gpio = new Gpio(pin, 'out');
+  const current = gpio.readSync();
+  gpio.writeSync(current === 0 ? 1 : 0);
+  res.json({ pin, state: gpio.readSync() === 1 });
+});`}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step5" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">5. Connect to SmartHome</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">In the workspace creation dialog:</p>
+            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+              <li>Select Node Server as your platform</li>
+              <li>Enter the server host (e.g., <code className="bg-muted px-1 rounded">192.168.1.50</code>)</li>
+              <li>Set port (default: <code className="bg-muted px-1 rounded">3000</code>)</li>
+              <li>Choose protocol (http or https)</li>
+              <li>Enter your API key for authentication</li>
+            </ol>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step6" className="border border-border/50 rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="font-medium">6. Running as a Service</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 space-y-4">
+            <p className="text-muted-foreground">Use PM2 to keep your server running:</p>
+            <CodeBlock id="node-pm2" code={`npm install -g pm2
+pm2 start server.js --name smarthome
+pm2 startup
+pm2 save`} />
+            <p className="text-muted-foreground mt-2">Your server will now auto-restart on boot and after crashes.</p>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+}
