@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSettings } from '@/hooks/useSettings';
-import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
@@ -60,22 +60,21 @@ interface CreateWorkspaceDialogProps {
   onCreateWorkspace: (name: string, platformConfig?: PlatformConfig) => void;
 }
 
-const FREE_PLATFORMS = [
+const ALL_PLATFORMS = [
   {
     id: 'firebase' as PlatformType,
     name: 'Firebase',
     description: 'Google Realtime Database',
     icon: FirebaseIcon,
+    premium: false,
   },
   {
     id: 'mqtt' as PlatformType,
     name: 'MQTT',
     description: 'Lightweight Messaging Protocol',
     icon: MQTTIcon,
+    premium: false,
   },
-];
-
-const PREMIUM_PLATFORMS = [
   {
     id: 'esp32' as PlatformType,
     name: 'ESP32',
@@ -91,12 +90,6 @@ const PREMIUM_PLATFORMS = [
     premium: true,
   },
   {
-    id: 'firebase' as PlatformType,
-    name: 'Firebase',
-    description: 'Google Realtime Database',
-    icon: FirebaseIcon,
-  },
-  {
     id: 'esp-rainmaker' as PlatformType,
     name: 'ESP RainMaker',
     description: 'Espressif IoT Cloud Platform',
@@ -109,12 +102,6 @@ const PREMIUM_PLATFORMS = [
     description: 'IoT Analytics Platform',
     icon: ThingSpeakIcon,
     premium: true,
-  },
-  {
-    id: 'mqtt' as PlatformType,
-    name: 'MQTT',
-    description: 'Lightweight Messaging Protocol',
-    icon: MQTTIcon,
   },
 ];
 
@@ -129,7 +116,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  const availablePlatforms = isDeveloperMode ? PREMIUM_PLATFORMS : FREE_PLATFORMS;
+  // All platforms shown, but premium ones locked for free users
 
   const handleClose = () => {
     setStep('name');
@@ -301,20 +288,32 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                 </div>
               </div>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-3 py-4">
-              {availablePlatforms.map((platform) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[60vh] overflow-y-auto">
+              {ALL_PLATFORMS.map((platform) => {
                 const IconComponent = platform.icon;
+                const isLocked = platform.premium && !isDeveloperMode;
                 return (
                   <button
                     key={platform.id}
-                    onClick={() => handlePlatformSelect(platform.id)}
+                    onClick={() => !isLocked && handlePlatformSelect(platform.id)}
+                    disabled={isLocked}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-[1.02]",
-                      selectedPlatform === platform.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                      "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                      isLocked
+                        ? "border-border/30 opacity-50 cursor-not-allowed"
+                        : selectedPlatform === platform.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
                     )}
                   >
+                    {isLocked && (
+                      <div className="absolute top-1.5 right-1.5">
+                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 gap-0.5">
+                          <Lock className="w-2.5 h-2.5" />
+                          Premium
+                        </Badge>
+                      </div>
+                    )}
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
                       <IconComponent className="w-7 h-7 text-foreground" />
                     </div>
@@ -341,7 +340,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <div>
-                  <DialogTitle>Configure {availablePlatforms.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
+                  <DialogTitle>Configure {ALL_PLATFORMS.find(p => p.id === selectedPlatform)?.name}</DialogTitle>
                   <DialogDescription>Enter configuration for your platform</DialogDescription>
                 </div>
               </div>
