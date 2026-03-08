@@ -462,8 +462,7 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
               {lockedPlatformName} Requires Developer Mode
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Unlock {lockedPlatformName} and 4 other premium IoT platforms with Developer Mode. 
-              Get lifetime access for just ₹4,999.
+              Unlock {lockedPlatformName} with a premium subscription plan starting at ₹1,499/year.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-3 space-y-2">
