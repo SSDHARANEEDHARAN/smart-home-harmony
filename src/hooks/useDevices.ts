@@ -143,6 +143,13 @@ export function useDevices() {
         }).catch(err => console.error('Relay trigger failed:', err));
       }
 
+      // Sync with Node Server WebSocket if configured (fire and forget)
+      const platformConfig = currentHome?.platformConfig as Record<string, string> | undefined;
+      if (relay_pin && platformConfig?.platform === 'node-server' && platformConfig?.nodeServerHost) {
+        const sent = sendRelayCommand(currentHomeId, relay_pin, is_on);
+        if (sent) console.log(`Node Server WS synced: relay${relay_pin} = ${is_on}`);
+      }
+
       return data;
     },
     // Optimistic update - instant UI response
