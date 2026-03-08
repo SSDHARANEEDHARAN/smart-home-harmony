@@ -102,24 +102,24 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
               </div>
 
               {/* UPI ID */}
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg border border-border">
                 <div>
-                  <p className="text-xs text-muted-foreground">UPI ID</p>
-                  <p className="font-mono text-sm font-medium text-foreground">{UPI_ID}</p>
+                  <p className="text-[10px] text-muted-foreground">UPI ID</p>
+                  <p className="font-mono text-xs font-medium text-foreground">{UPI_ID}</p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyUpiId}>
-                  <Copy className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyUpiId}>
+                  <Copy className="w-3 h-3" />
                 </Button>
               </div>
 
               {/* Open UPI App Button */}
-              <Button variant="outline" className="w-full gap-2" onClick={openUpiApp}>
-                <Smartphone className="w-4 h-4" />
+              <Button variant="outline" className="w-full gap-2 text-xs h-8" onClick={openUpiApp}>
+                <Smartphone className="w-3 h-3" />
                 Open GPay / PhonePe
               </Button>
 
               {/* Benefits */}
-              <div className="space-y-2 pt-2">
+              <div className="space-y-1.5 pt-1">
                 <BenefitRow text="Select from 6+ IoT platforms" />
                 <BenefitRow text="No-code integration setup" />
                 <BenefitRow text="Firebase, MQTT, ThingSpeak support" />
