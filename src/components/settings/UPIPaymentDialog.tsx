@@ -48,7 +48,19 @@ export function UPIPaymentDialog({ open, onOpenChange, onPaymentComplete }: UPIP
     window.location.href = UPI_LINK;
   };
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
+    // Log the payment transaction
+    if (user) {
+      await supabase.from('payment_transactions').insert({
+        user_id: user.id,
+        amount: Number(AMOUNT),
+        currency: 'INR',
+        payment_method: 'UPI',
+        upi_id: UPI_ID,
+        product: 'developer_mode',
+        status: 'confirmed',
+      } as any);
+    }
     activateDeveloperMode();
     toast.success('🎉 Developer Mode activated! Lifetime access unlocked.');
     handleClose();
