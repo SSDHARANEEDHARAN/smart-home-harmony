@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSettings } from '@/hooks/useSettings';
-import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle, Wifi, Lock, Crown } from 'lucide-react';
 import { ESP32Icon, RaspberryPiIcon, FirebaseIcon, RainMakerIcon, ThingSpeakIcon, MQTTIcon } from '@/components/home/IoTIcons';
 import { 
   testThingSpeakConnection, 
@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 export type PlatformType = 'firebase' | 'esp32' | 'raspberry-pi' | 'esp-rainmaker' | 'thingspeak' | 'mqtt' | null;
@@ -115,6 +125,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [platformConfig, setPlatformConfig] = useState<PlatformConfig>({ platform: null });
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [lockedPlatformName, setLockedPlatformName] = useState('');
 
   // All platforms shown, but premium ones locked for free users
 
@@ -124,7 +136,13 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
     setSelectedPlatform(null);
     setPlatformConfig({ platform: null });
     setTestResult(null);
+    setShowUpgradePrompt(false);
     onOpenChange(false);
+  };
+
+  const handleLockedPlatformClick = (platformName: string) => {
+    setLockedPlatformName(platformName);
+    setShowUpgradePrompt(true);
   };
 
   const handleCreate = () => {
@@ -295,12 +313,11 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
                 return (
                   <button
                     key={platform.id}
-                    onClick={() => !isLocked && handlePlatformSelect(platform.id)}
-                    disabled={isLocked}
+                    onClick={() => isLocked ? handleLockedPlatformClick(platform.name) : handlePlatformSelect(platform.id)}
                     className={cn(
                       "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                       isLocked
-                        ? "border-border/30 opacity-50 cursor-not-allowed"
+                        ? "border-border/30 opacity-60 cursor-pointer hover:opacity-80"
                         : selectedPlatform === platform.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.02]"
@@ -402,6 +419,53 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
           </>
         )}
       </DialogContent>
+
+      {/* Upgrade Prompt for Locked Platforms */}
+      <AlertDialog open={showUpgradePrompt} onOpenChange={setShowUpgradePrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <Crown className="w-6 h-6 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-center">
+              {lockedPlatformName} Requires Developer Mode
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Unlock {lockedPlatformName} and 4 other premium IoT platforms with Developer Mode. 
+              Get lifetime access for just ₹4,999.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>ESP32, Raspberry Pi, RainMaker, ThingSpeak</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>No-code integration setup</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <span>Lifetime updates included</span>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Maybe Later</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowUpgradePrompt(false);
+                handleClose();
+                // Navigate to settings to upgrade
+                window.location.href = '/settings?tab=account';
+              }}
+              className="gap-2"
+            >
+              <Crown className="w-4 h-4" />
+              Upgrade Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
