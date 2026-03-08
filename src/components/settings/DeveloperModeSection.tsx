@@ -33,6 +33,30 @@ export function DeveloperModeSection() {
   } = useDeveloperMode();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
+  const handleToggleDeveloperMode = (checked: boolean) => {
+    if (checked && !isPurchased) {
+      setShowPaymentDialog(true);
+    } else {
+      updateDeveloperModeSettings({ enabled: checked });
+      if (checked) {
+        toast.success('Developer Mode enabled!');
+      } else {
+        toast.info('Developer Mode disabled');
+      }
+    }
+  };
+
+  const handlePaymentComplete = () => {
+    setShowPaymentDialog(false);
+  };
+
+  useEffect(() => {
+    if (user && !isPurchased) {
+      verifyPurchase(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isPurchased]);
+
   // Show skeleton while verifying
   if (isVerifying && isPurchased === null) {
     return (
@@ -67,30 +91,6 @@ export function DeveloperModeSection() {
       </Card>
     );
   }
-
-  const handleToggleDeveloperMode = (checked: boolean) => {
-    if (checked && !isPurchased) {
-      setShowPaymentDialog(true);
-    } else {
-      updateDeveloperModeSettings({ enabled: checked });
-      if (checked) {
-        toast.success('Developer Mode enabled!');
-      } else {
-        toast.info('Developer Mode disabled');
-      }
-    }
-  };
-
-  const handlePaymentComplete = () => {
-    setShowPaymentDialog(false);
-  };
-
-  useEffect(() => {
-    if (user && !isPurchased) {
-      verifyPurchase(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isPurchased]);
 
   return (
     <>
