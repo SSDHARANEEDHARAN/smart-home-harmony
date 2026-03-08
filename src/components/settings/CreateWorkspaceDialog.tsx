@@ -125,6 +125,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
   const [platformConfig, setPlatformConfig] = useState<PlatformConfig>({ platform: null });
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [lockedPlatformName, setLockedPlatformName] = useState('');
 
   // All platforms shown, but premium ones locked for free users
 
@@ -134,7 +136,13 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreateWorkspace }:
     setSelectedPlatform(null);
     setPlatformConfig({ platform: null });
     setTestResult(null);
+    setShowUpgradePrompt(false);
     onOpenChange(false);
+  };
+
+  const handleLockedPlatformClick = (platformName: string) => {
+    setLockedPlatformName(platformName);
+    setShowUpgradePrompt(true);
   };
 
   const handleCreate = () => {
